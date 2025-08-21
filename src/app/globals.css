@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none; /* Standard syntax */
+}
+
+/* Disable right-click context menu */
+html {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Safari */
+  -khtml-user-select: none;    /* Konqueror HTML */
+  -moz-user-select: none;      /* Old versions of Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;           /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
+body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+@layer base {
+  :root {
+    --background: 227 44% 96%;
+    --foreground: 228 10% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 228 10% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 228 10% 20%;
+    --primary: 228 41% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 227 44% 92%;
+    --secondary-foreground: 228 10% 20%;
+    --muted: 227 44% 92%;
+    --muted-foreground: 228 10% 45%;
+    --accent: 340 41% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 227 44% 88%;
+    --input: 227 44% 90%;
+    --ring: 228 41% 51%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 228 10% 10%;
+    --foreground: 0 0% 98%;
+    --card: 228 10% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 228 10% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 228 41% 61%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 228 10% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 228 10% 18%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 340 41% 61%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 228 10% 18%;
+    --input: 228 10% 18%;
+    --ring: 228 41% 61%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
