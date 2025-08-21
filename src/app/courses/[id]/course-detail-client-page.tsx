@@ -251,6 +251,8 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
           itemPrice={course.price}
           isProcessing={isBuying}
           onConfirm={handlePurchaseConfirm}
+          itemId={course.docId!}
+          itemType="course"
         />
     </>
   );

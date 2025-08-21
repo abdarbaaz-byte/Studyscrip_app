@@ -34,7 +34,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { useAuth } from "@/hooks/use-auth";
@@ -66,6 +66,7 @@ export default function AdminDashboardPage() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [purchases, setPurchases] = useState<EnrichedPurchase[]>([]);
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
@@ -77,6 +78,9 @@ export default function AdminDashboardPage() {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [purchaseToRevoke, setPurchaseToRevoke] = useState<EnrichedPurchase | null>(null);
+  const [requestToActOn, setRequestToActOn] = useState<PaymentRequest | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [replyMessage, setReplyMessage] = useState("");
   const { toast } = useToast();
@@ -108,9 +112,13 @@ export default function AdminDashboardPage() {
       const unsubscribeNotifications = listenToNotifications((liveNotifications) => {
         setNotifications(liveNotifications);
       });
+       const unsubscribePaymentRequests = listenToPaymentRequests((requests) => {
+        setPaymentRequests(requests);
+      });
       return () => {
         unsubscribeChats();
         unsubscribeNotifications();
+        unsubscribePaymentRequests();
       };
     }
   }, [authLoading, isAdmin]);
@@ -328,6 +336,35 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleApproveRequest = async (request: PaymentRequest) => {
+      try {
+          await approvePaymentRequest(request);
+          toast({ title: "Request Approved", description: `Access granted to ${request.userName}.`, className: "bg-green-100 border-green-500"});
+          loadAdminData(); // Refresh purchases
+      } catch (error) {
+          console.error("Failed to approve request:", error);
+          toast({ variant: "destructive", title: "Approval Failed" });
+      }
+  };
+
+  const handleRejectRequest = async () => {
+      if (!requestToActOn || !rejectionReason.trim()) {
+          toast({ variant: "destructive", title: "Rejection reason cannot be empty." });
+          return;
+      }
+      setIsRejecting(true);
+      try {
+          await rejectPaymentRequest(requestToActOn.id, rejectionReason);
+          toast({ title: "Request Rejected" });
+          setRequestToActOn(null);
+          setRejectionReason("");
+      } catch (error) {
+           console.error("Failed to reject request:", error);
+           toast({ variant: "destructive", title: "Rejection Failed" });
+      }
+      setIsRejecting(false);
+  };
+
   if (loading || authLoading) {
       return (
           <div className="flex items-center justify-center min-h-screen">
@@ -443,6 +480,85 @@ export default function AdminDashboardPage() {
                 </TableCell>
               </TableRow>
             ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
+  const renderPaymentRequests = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">UPI Payment Requests</CardTitle>
+        <CardDescription>Verify and approve or reject manual UPI payment submissions.</CardDescription>
+      </CardHeader>
+      <CardContent>
+         <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Item</TableHead>
+              <TableHead>Ref. ID</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paymentRequests.map((req) => (
+              <TableRow key={req.id}>
+                <TableCell>
+                    <div className="font-medium">{req.userName}</div>
+                    <div className="text-sm text-muted-foreground">Rs. {req.itemPrice.toFixed(2)}</div>
+                </TableCell>
+                <TableCell>
+                    <div className="font-medium">{req.itemTitle}</div>
+                    <div className="text-sm text-muted-foreground capitalize">{req.itemType}</div>
+                </TableCell>
+                <TableCell className="font-mono">{req.upiReferenceId}</TableCell>
+                <TableCell>{format(req.requestDate.toDate(), 'PPP p')}</TableCell>
+                <TableCell className="text-right space-x-2">
+                    <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-100 hover:text-green-700" onClick={() => handleApproveRequest(req)}>
+                        <ShieldCheck className="mr-2 h-4 w-4" /> Approve
+                    </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                           <Button size="sm" variant="destructive" onClick={() => setRequestToActOn(req)}>
+                                <ShieldAlert className="mr-2 h-4 w-4" /> Reject
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Reject Payment Request?</DialogTitle>
+                                <DialogDescription>
+                                    Please provide a reason for rejecting this request for user <span className="font-bold">{requestToActOn?.userName}</span>.
+                                </DialogDescription>
+                            </DialogHeader>
+                             <div className="py-4">
+                                <Textarea 
+                                    placeholder="e.g., Transaction ID not found, incorrect amount..."
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button variant="ghost" onClick={() => {setRequestToActOn(null); setRejectionReason("");}}>Cancel</Button>
+                                <Button variant="destructive" onClick={handleRejectRequest} disabled={isRejecting}>
+                                    {isRejecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                                    Confirm Rejection
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </TableCell>
+              </TableRow>
+            ))}
+            {paymentRequests.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        No pending payment requests.
+                    </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
@@ -593,6 +709,14 @@ export default function AdminDashboardPage() {
              <Button variant={activeTab === 'courses' ? 'default' : 'outline'} onClick={() => setActiveTab('courses')}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Courses
             </Button>
+             <Button variant={activeTab === 'requests' ? 'default' : 'outline'} onClick={() => setActiveTab('requests')} className="relative">
+                <ShieldAlert className="mr-2 h-4 w-4" /> Payment Requests
+                 {paymentRequests.length > 0 && (
+                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+                        {paymentRequests.length}
+                    </span>
+                 )}
+            </Button>
             <Button variant={activeTab === 'access' ? 'default' : 'outline'} onClick={() => setActiveTab('access')}>
                 <UserCheck className="mr-2 h-4 w-4" /> Manual Access
             </Button>
@@ -603,6 +727,7 @@ export default function AdminDashboardPage() {
 
         {activeTab === 'academics' && renderAcademicsManagement()}
         {activeTab === 'courses' && renderCourseManagement()}
+        {activeTab === 'requests' && renderPaymentRequests()}
         {activeTab === 'access' && renderManualAccessGrant()}
         {activeTab === 'purchases' && renderPurchaseManagement()}
         

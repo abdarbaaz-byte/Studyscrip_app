@@ -71,6 +71,22 @@ export type Payment = {
   razorpayPaymentId: string;
 };
 
+// For Manual UPI Verification
+export type PaymentRequest = {
+    id: string; // doc id
+    userId: string;
+    userName: string;
+    itemId: string;
+    itemTitle: string;
+    itemType: 'course' | 'subject';
+    itemPrice: number;
+    upiReferenceId: string;
+    status: 'pending' | 'approved' | 'rejected';
+    requestDate: Timestamp;
+    actionDate?: Timestamp;
+    adminNotes?: string;
+};
+
 export async function createPurchase(
     userId: string, 
     userName: string,
@@ -233,6 +249,74 @@ export async function revokePurchase(purchaseId: string): Promise<void> {
 }
 
 
+// --- UPI Payment Requests ---
+
+export async function createPaymentRequest(
+    data: Omit<PaymentRequest, 'id' | 'status' | 'requestDate'>
+) {
+    const requestsCol = collection(db, 'paymentRequests');
+    await addDoc(requestsCol, {
+        ...data,
+        status: 'pending',
+        requestDate: serverTimestamp(),
+    });
+}
+
+export function listenToPaymentRequests(callback: (requests: PaymentRequest[]) => void) {
+    const requestsCol = collection(db, 'paymentRequests');
+    const q = query(requestsCol, where('status', '==', 'pending'), orderBy('requestDate', 'desc'));
+    
+    return onSnapshot(q, (snapshot) => {
+        const requests = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            return {
+                id: docSnap.id,
+                ...data,
+                requestDate: data.requestDate,
+            } as PaymentRequest;
+        });
+        callback(requests);
+    });
+}
+
+export async function approvePaymentRequest(request: PaymentRequest): Promise<void> {
+    const batch = writeBatch(db);
+
+    // 1. Create a purchase record for the user
+    const purchasesCol = collection(db, 'purchases');
+    const newPurchaseRef = doc(purchasesCol);
+    const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1)); // 1 year access
+
+    const newPurchase: Omit<Purchase, 'id'> = {
+        userId: request.userId,
+        itemId: request.itemId,
+        itemType: request.itemType,
+        purchaseDate: Timestamp.fromDate(new Date()),
+        expiryDate: Timestamp.fromDate(expiry),
+    };
+    batch.set(newPurchaseRef, newPurchase);
+
+    // 2. Update the request status to 'approved'
+    const requestDocRef = doc(db, 'paymentRequests', request.id);
+    batch.update(requestDocRef, {
+        status: 'approved',
+        actionDate: serverTimestamp(),
+    });
+
+    await batch.commit();
+}
+
+
+export async function rejectPaymentRequest(requestId: string, reason: string): Promise<void> {
+    const requestDocRef = doc(db, 'paymentRequests', requestId);
+    await updateDoc(requestDocRef, {
+        status: 'rejected',
+        adminNotes: reason,
+        actionDate: serverTimestamp(),
+    });
+}
+
+
 // --- Chat Logic ---
 
 export async function sendMessage(chatId: string, message: ChatMessage, userInfo: { userId: string; userName: string }) {
@@ -344,5 +428,3 @@ export async function markNotificationAsRead(userId: string, notificationId: str
         readNotifications: arrayUnion(notificationId)
     }, { merge: true });
 }
-
-    

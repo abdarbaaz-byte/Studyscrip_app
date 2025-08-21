@@ -187,12 +187,10 @@ export default function SubjectDetailClientPage() {
           itemPrice={subject.price}
           isProcessing={isBuying}
           onConfirm={handlePurchaseConfirm}
+          itemId={subject.id}
+          itemType="subject"
         />
       )}
     </>
   );
 }
-
-    
-
-    
