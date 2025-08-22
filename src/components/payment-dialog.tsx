@@ -202,7 +202,7 @@ export function PaymentDialog({
         <Tabs defaultValue="razorpay" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="razorpay">Card / Netbanking</TabsTrigger>
-                <TabsTrigger value="upi" disabled={!UPI_ID}>Pay with UPI</TabsTrigger>
+                <TabsTrigger value="upi">Pay with UPI</TabsTrigger>
             </TabsList>
             <TabsContent value="razorpay" className="py-4">
                 <p className="text-sm text-muted-foreground text-center mb-4">
@@ -216,37 +216,47 @@ export function PaymentDialog({
                 </Button>
             </TabsContent>
             <TabsContent value="upi" className="py-4 space-y-4">
-                <div className="text-center p-4 bg-secondary rounded-lg">
-                    <p className="text-sm font-medium">1. Scan QR or use UPI ID</p>
-                    <div className="flex justify-center my-2">
-                        <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${UPI_ID}&pn=StudyScript&am=${itemPrice}`} alt="UPI QR Code" width={150} height={150} />
+                {!UPI_ID ? (
+                     <div className="text-center p-4 bg-destructive/10 text-destructive rounded-lg">
+                        <AlertCircle className="mx-auto h-8 w-8 mb-2" />
+                        <h4 className="font-bold">UPI Payment Not Configured</h4>
+                        <p className="text-xs">The site administrator has not configured UPI payments yet.</p>
                     </div>
-                     <p className="text-sm font-semibold">
-                        UPI ID: <span className="font-mono p-1 rounded bg-background">{UPI_ID}</span>
-                    </p>
-                </div>
-                 <div className="text-left p-4 bg-secondary rounded-lg">
-                    <p className="text-sm font-medium">2. Submit Reference ID for verification</p>
-                     <form onSubmit={handleUpiSubmit} className="space-y-3 mt-2">
-                        <Label htmlFor="upi-ref">UPI Transaction/Reference ID</Label>
-                        <Input 
-                            id="upi-ref"
-                            placeholder="Enter 12-digit ID from your UPI app"
-                            value={upiRefId}
-                            onChange={(e) => setUpiRefId(e.target.value)}
-                            required
-                            disabled={isSubmittingUpi}
-                        />
-                         <Button type="submit" disabled={totalProcessing} className="w-full">
-                            {isSubmittingUpi ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                            {isSubmittingUpi ? 'Submitting...' : 'Submit for Verification'}
-                        </Button>
-                     </form>
-                </div>
-                 <p className="text-xs text-muted-foreground text-center flex items-center gap-2 justify-center">
-                    <AlertCircle className="h-4 w-4" />
-                    Access will be granted within 24 hours after verification.
-                </p>
+                ) : (
+                    <>
+                        <div className="text-center p-4 bg-secondary rounded-lg">
+                            <p className="text-sm font-medium">1. Scan QR or use UPI ID</p>
+                            <div className="flex justify-center my-2">
+                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${UPI_ID}&pn=StudyScript&am=${itemPrice}`} alt="UPI QR Code" width={150} height={150} />
+                            </div>
+                             <p className="text-sm font-semibold">
+                                UPI ID: <span className="font-mono p-1 rounded bg-background">{UPI_ID}</span>
+                            </p>
+                        </div>
+                         <div className="text-left p-4 bg-secondary rounded-lg">
+                            <p className="text-sm font-medium">2. Submit Reference ID for verification</p>
+                             <form onSubmit={handleUpiSubmit} className="space-y-3 mt-2">
+                                <Label htmlFor="upi-ref">UPI Transaction/Reference ID</Label>
+                                <Input 
+                                    id="upi-ref"
+                                    placeholder="Enter 12-digit ID from your UPI app"
+                                    value={upiRefId}
+                                    onChange={(e) => setUpiRefId(e.target.value)}
+                                    required
+                                    disabled={isSubmittingUpi}
+                                />
+                                 <Button type="submit" disabled={totalProcessing} className="w-full">
+                                    {isSubmittingUpi ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                                    {isSubmittingUpi ? 'Submitting...' : 'Submit for Verification'}
+                                </Button>
+                             </form>
+                        </div>
+                         <p className="text-xs text-muted-foreground text-center flex items-center gap-2 justify-center">
+                            <AlertCircle className="h-4 w-4" />
+                            Access will be granted within 24 hours after verification.
+                        </p>
+                    </>
+                )}
             </TabsContent>
         </Tabs>
         
@@ -259,5 +269,3 @@ export function PaymentDialog({
     </Dialog>
   );
 }
-
-    
