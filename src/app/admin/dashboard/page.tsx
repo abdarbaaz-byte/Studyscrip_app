@@ -341,7 +341,7 @@ export default function AdminDashboardPage() {
       try {
           await approvePaymentRequest(request);
           toast({ title: "Request Approved", description: `Access granted to ${request.userName}.`, className: "bg-green-100 border-green-500"});
-          loadAdminData(); // Refresh purchases
+          loadAdminData(); // Refresh purchases and payments
       } catch (error) {
           console.error("Failed to approve request:", error);
           toast({ variant: "destructive", title: "Approval Failed" });
@@ -355,8 +355,9 @@ export default function AdminDashboardPage() {
       }
       setIsRejecting(true);
       try {
-          await rejectPaymentRequest(requestToActOn.id, rejectionReason);
+          await rejectPaymentRequest(requestToActOn.id, rejectionReason, requestToActOn);
           toast({ title: "Request Rejected" });
+          loadAdminData(); // Refresh payments
           setRequestToActOn(null);
           setRejectionReason("");
       } catch (error) {
@@ -521,7 +522,7 @@ export default function AdminDashboardPage() {
                     <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-100 hover:text-green-700" onClick={() => handleApproveRequest(req)}>
                         <ShieldCheck className="mr-2 h-4 w-4" /> Approve
                     </Button>
-                    <Dialog>
+                    <Dialog open={requestToActOn?.id === req.id} onOpenChange={(isOpen) => !isOpen && setRequestToActOn(null)}>
                         <DialogTrigger asChild>
                            <Button size="sm" variant="destructive" onClick={() => setRequestToActOn(req)}>
                                 <ShieldAlert className="mr-2 h-4 w-4" /> Reject

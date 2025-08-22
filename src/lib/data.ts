@@ -281,39 +281,78 @@ export function listenToPaymentRequests(callback: (requests: PaymentRequest[]) =
 
 export async function approvePaymentRequest(request: PaymentRequest): Promise<void> {
     const batch = writeBatch(db);
+    const now = new Date();
 
     // 1. Create a purchase record for the user
     const purchasesCol = collection(db, 'purchases');
     const newPurchaseRef = doc(purchasesCol);
-    const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1)); // 1 year access
+    const expiry = new Date(new Date().setFullYear(now.getFullYear() + 1)); // 1 year access
 
     const newPurchase: Omit<Purchase, 'id'> = {
         userId: request.userId,
         itemId: request.itemId,
         itemType: request.itemType,
-        purchaseDate: Timestamp.fromDate(new Date()),
+        purchaseDate: Timestamp.fromDate(now),
         expiryDate: Timestamp.fromDate(expiry),
     };
     batch.set(newPurchaseRef, newPurchase);
 
-    // 2. Update the request status to 'approved'
+    // 2. Create a "succeeded" payment record for history
+    const paymentsCol = collection(db, 'payments');
+    const newPaymentRef = doc(paymentsCol);
+    const newPayment: Omit<Payment, 'id'> = {
+        userId: request.userId,
+        userName: request.userName,
+        itemId: request.itemId,
+        itemTitle: request.itemTitle,
+        itemType: request.itemType,
+        amount: request.itemPrice,
+        status: 'succeeded',
+        paymentDate: Timestamp.fromDate(now),
+        razorpayPaymentId: `UPI: ${request.upiReferenceId}`, // Store UPI ref ID here
+    };
+    batch.set(newPaymentRef, newPayment);
+
+    // 3. Update the request status to 'approved'
     const requestDocRef = doc(db, 'paymentRequests', request.id);
     batch.update(requestDocRef, {
         status: 'approved',
-        actionDate: serverTimestamp(),
+        actionDate: Timestamp.fromDate(now),
     });
 
     await batch.commit();
 }
 
 
-export async function rejectPaymentRequest(requestId: string, reason: string): Promise<void> {
+export async function rejectPaymentRequest(requestId: string, reason: string, request: PaymentRequest): Promise<void> {
+    const batch = writeBatch(db);
+    const now = new Date();
+    
+    // 1. Create a "failed" payment record for history
+    const paymentsCol = collection(db, 'payments');
+    const newPaymentRef = doc(paymentsCol);
+    const newPayment: Omit<Payment, 'id'> = {
+        userId: request.userId,
+        userName: request.userName,
+        itemId: request.itemId,
+        itemTitle: request.itemTitle,
+        itemType: request.itemType,
+        amount: request.itemPrice,
+        status: 'failed',
+        paymentDate: Timestamp.fromDate(now),
+        razorpayPaymentId: `UPI: ${request.upiReferenceId}`, // Store UPI ref ID here
+    };
+    batch.set(newPaymentRef, newPayment);
+    
+    // 2. Update the request status to 'rejected'
     const requestDocRef = doc(db, 'paymentRequests', requestId);
-    await updateDoc(requestDocRef, {
+    batch.update(requestDocRef, {
         status: 'rejected',
         adminNotes: reason,
-        actionDate: serverTimestamp(),
+        actionDate: Timestamp.fromDate(now),
     });
+
+    await batch.commit();
 }
 
 
