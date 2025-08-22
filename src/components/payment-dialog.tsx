@@ -37,7 +37,8 @@ interface PaymentDialogProps {
   onConfirm: (razorpayPaymentId: string) => void; 
 }
 
-const UPI_ID = "YOUR_UPI_ID@okaxis"; // IMPORTANT: Replace with your UPI ID
+// Read UPI ID from environment variable for better security and configuration.
+const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID;
 
 export function PaymentDialog({
   open,
@@ -201,7 +202,7 @@ export function PaymentDialog({
         <Tabs defaultValue="razorpay" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="razorpay">Card / Netbanking</TabsTrigger>
-                <TabsTrigger value="upi">Pay with UPI</TabsTrigger>
+                <TabsTrigger value="upi" disabled={!UPI_ID}>Pay with UPI</TabsTrigger>
             </TabsList>
             <TabsContent value="razorpay" className="py-4">
                 <p className="text-sm text-muted-foreground text-center mb-4">
@@ -258,3 +259,5 @@ export function PaymentDialog({
     </Dialog>
   );
 }
+
+    
