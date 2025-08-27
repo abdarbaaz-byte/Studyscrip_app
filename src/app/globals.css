@@ -2,30 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* This custom property is used to prevent screenshots on Android */
+  html {
+    --secure-view-background: #000;
+  }
+
+  html.android-screenshot-secure {
+    position: relative;
+  }
+
+  html.android-screenshot-secure::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--secure-view-background);
+    z-index: 9999;
+    display: none;
+  }
+
+  @media (platform: android) {
+    html.android-screenshot-secure.secure-view-enabled::before {
+      display: block;
+    }
+  }
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
+  /* Prevent text selection */
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10+ */
   user-select: none; /* Standard syntax */
+  /* Prevent long press to save images on mobile */
+  -webkit-touch-callout: none;
 }
 
-/* Disable right-click context menu */
+/* Disable right-click context menu on the whole page */
 html {
   -webkit-touch-callout: none; /* iOS Safari */
   -webkit-user-select: none;   /* Safari */
   -khtml-user-select: none;    /* Konqueror HTML */
   -moz-user-select: none;      /* Old versions of Firefox */
   -ms-user-select: none;       /* Internet Explorer/Edge */
-  user-select: none;           /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
-}
-
-body {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  user-select: none;           /* Non-prefixed version */
 }
 
 @layer base {
@@ -87,7 +110,7 @@ body {
     @apply bg-background text-foreground;
   }
 
-  /* Allow text selection on inputs and textareas */
+  /* Allow text selection only on inputs and textareas */
   input,
   textarea,
   .allow-selection {

@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { FcmTokenManager } from "@/components/fcm-token-manager";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "StudyScript",
@@ -20,8 +21,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // A simple check for user agent to apply screenshot protection on Android.
+  // This would ideally be done in a client component to avoid sending this to all browsers.
+  const isAndroid = typeof window !== 'undefined' && /android/i.test(navigator.userAgent);
+
   return (
-    <html lang="en">
+    <html lang="en" className={cn(isAndroid && 'android-screenshot-secure')}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
