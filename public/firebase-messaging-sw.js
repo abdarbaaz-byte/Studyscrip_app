@@ -1,13 +1,13 @@
 
-// This file needs to be present in the public folder.
-// It's used by Firebase Messaging to handle background notifications.
+// This file needs to be in the public directory.
 
-// Import the Firebase app and messaging services
-importScripts("https://www.gstatic.com/firebasejs/9.2.0/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.2.0/firebase-messaging-compat.js");
+// Import the Firebase app and messaging libraries.
+// Note: This is a special syntax for service workers.
+importScripts('https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.15.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker
-// Pass in the configuration object directly from your app's config
+// Your web app's Firebase configuration.
+// This needs to be consistent with the one in your app.
 const firebaseConfig = {
   apiKey: "AIzaSyAogMOncvmZLqQ1qom0d3RDihdqOB9XRiY",
   authDomain: "studyscript.firebaseapp.com",
@@ -19,55 +19,51 @@ const firebaseConfig = {
 };
 
 
+// Initialize Firebase
+// Using the compat libraries provides the `firebase` global object.
 firebase.initializeApp(firebaseConfig);
 
+// Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
-// If you want to handle background notifications, you can do so here
-messaging.onBackgroundMessage(function(payload) {
+
+// Handler for background messages.
+messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  
+
+  // Customize notification here
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/icons/icon-192x192.png'
+    icon: payload.notification.icon || '/logo-192x192.png' // Use your PWA icon as a fallback
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 
-// This is the new part that handles the notification click
-self.addEventListener('notificationclick', function(event) {
-  // Close the notification pop-up
+// Handle notification click event
+self.addEventListener('notificationclick', (event) => {
+  console.log('[firebase-messaging-sw.js] Notification click received.');
+
+  // Close the notification
   event.notification.close();
 
-  // The URL to open when the notification is clicked.
-  // For now, it's the home page. In the future, it could be dynamic.
-  const urlToOpen = '/';
-
-  // Check if there's an an open tab for this app. If so, focus it.
-  const promiseChain = clients.matchAll({
-    type: 'window',
-    includeUncontrolled: true
-  }).then(function(windowClients) {
-    let matchingClient = null;
-
-    for (let i = 0; i < windowClients.length; i++) {
-      const windowClient = windowClients[i];
-      if (windowClient.url === urlToOpen) {
-        matchingClient = windowClient;
-        break;
+  // This looks for an existing window and focuses it.
+  event.waitUntil(
+    clients.matchAll({
+      type: "window"
+    }).then((clientList) => {
+      // Check if there's a window open with the app's URL
+      for (const client of clientList) {
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
       }
-    }
-
-    if (matchingClient) {
-      return matchingClient.focus();
-    } else {
-      // If no tab is open, open a new one
-      return clients.openWindow(urlToOpen);
-    }
-  });
-
-  event.waitUntil(promiseChain);
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
 });
