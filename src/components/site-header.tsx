@@ -88,8 +88,11 @@ export function SiteHeader() {
             } else {
                 toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
             }
+        } else {
+             // If already requested this session and they ignored the prompt,
+             // just open the popover with in-app notifications.
+             setIsPopoverOpen(true);
         }
-        // If already requested this session, do nothing on subsequent clicks until page is reloaded.
     }
   };
   

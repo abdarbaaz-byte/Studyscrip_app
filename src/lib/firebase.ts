@@ -26,31 +26,27 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Helper function to get the messaging instance
+// Initialize Firebase Cloud Messaging and get a reference to the service
 const getMessagingInstance = async () => {
-    const isMessagingSupported = await isSupported();
-    if (typeof window !== "undefined" && isMessagingSupported) {
-        return getMessaging(app);
-    }
-    return null;
+    const supported = await isSupported();
+    return typeof window !== 'undefined' && supported ? getMessaging(app) : null;
 };
 
-// New function to request permission
-export const requestNotificationPermission = async (): Promise<boolean> => {
+// Function to request permission
+export const requestNotificationPermission = async () => {
     try {
         const messaging = await getMessagingInstance();
         if (!messaging) {
-            console.log("Firebase Messaging is not supported in this browser.");
+            console.error("Messaging not supported");
             return false;
         }
         
         await navigator.serviceWorker.ready;
+
         const permission = await Notification.requestPermission();
-        
         if (permission === 'granted') {
             console.log('Notification permission granted.');
-            // Get the token right after permission is granted
-            await getFCMToken();
+            await getFCMToken(); // Get token right after permission
             return true;
         } else {
             console.log('Unable to get permission to notify.');
@@ -62,16 +58,17 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     }
 };
 
-// New function to just get the token
 export const getFCMToken = async () => {
     try {
         const messaging = await getMessagingInstance();
-        if (!messaging) return;
-
+        if (!messaging) {
+            console.error("Messaging not supported, cannot get token.");
+            return;
+        }
         const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
         if (currentToken) {
             console.log('FCM Token:', currentToken);
-            // You would typically send this token to your server here to store it against the current user.
+            // Here you would send the token to your server
         } else {
             console.log('No registration token available. Request permission to generate one.');
         }
@@ -79,6 +76,5 @@ export const getFCMToken = async () => {
         console.error('An error occurred while retrieving token. ', error);
     }
 };
-
 
 export { app, auth, db, storage };
