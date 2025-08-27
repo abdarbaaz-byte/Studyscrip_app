@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ChatWidget } from "@/components/chat-widget";
 import { AuthProvider } from "@/hooks/use-auth";
 import { InstallPwaButton } from "@/components/install-pwa-button";
+import { FcmTokenManager } from "@/components/fcm-token-manager";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({
           <ChatWidget />
           <Toaster />
           <InstallPwaButton />
+          <FcmTokenManager />
         </AuthProvider>
       </body>
     </html>
