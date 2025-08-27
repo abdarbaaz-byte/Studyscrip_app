@@ -25,6 +25,7 @@ export function SiteHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [permissionRequestedThisSession, setPermissionRequestedThisSession] = useState(false);
   
   const unreadCount = notifications.filter(n => !readNotificationIds.includes(n.id)).length;
   const sortedNotifications = [...notifications].sort((a, b) => 
@@ -66,24 +67,29 @@ export function SiteHeader() {
         return;
     }
 
-    // Check current permission status
-    if (Notification.permission === 'granted') {
+    const permissionStatus = Notification.permission;
+
+    if (permissionStatus === 'granted') {
         setIsPopoverOpen(true);
-    } else if (Notification.permission === 'denied') {
+    } else if (permissionStatus === 'denied') {
         toast({
             variant: "destructive",
             title: "Notifications Blocked",
             description: "Please enable notifications for this site in your browser settings."
         });
-    } else {
-        // 'default' state, so ask for permission
-        const permissionGranted = await requestNotificationPermission();
-        if (permissionGranted) {
-            toast({ title: "Notifications Enabled!", description: "You will now receive updates." });
-            setIsPopoverOpen(true); // Open popover after getting permission
-        } else {
-            toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
+    } else { // permissionStatus is 'default'
+        // Only ask for permission if we haven't asked in this session
+        if (!permissionRequestedThisSession) {
+            setPermissionRequestedThisSession(true); // Mark as requested for this session
+            const permissionGranted = await requestNotificationPermission();
+            if (permissionGranted) {
+                toast({ title: "Notifications Enabled!", description: "You will now receive updates." });
+                setIsPopoverOpen(true); // Open popover after getting permission
+            } else {
+                toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
+            }
         }
+        // If already requested this session, do nothing on subsequent clicks until page is reloaded.
     }
   };
   
