@@ -1,7 +1,8 @@
+
 {
   "name": "StudyScript",
   "short_name": "StudyScript",
-  "description": "An online learning platform.",
+  "description": "An online learning platform for students.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F0F2F9",
