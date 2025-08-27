@@ -14,20 +14,23 @@ import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
+import { requestNotificationPermission } from "@/lib/firebase"; // Import the new function
+import { useToast } from "@/hooks/use-toast";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const { user, isAdmin, logOut } = useAuth();
+  const { toast } = useToast();
   const isAuthPage = ["/login", "/signup", "/forgot-password"].includes(pathname);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   
   const unreadCount = notifications.filter(n => !readNotificationIds.includes(n.id)).length;
   const sortedNotifications = [...notifications].sort((a, b) => 
       readNotificationIds.includes(a.id) === readNotificationIds.includes(b.id) ? 0 :
       readNotificationIds.includes(a.id) ? 1 : -1
   );
-
 
   useEffect(() => {
     // Listen to all notifications
@@ -53,6 +56,34 @@ export function SiteHeader() {
   const handleMarkAsRead = (id: string) => {
     if (user) {
       markNotificationAsRead(user.uid, id);
+    }
+  };
+
+  const handleBellClick = async () => {
+    // Check if Notification API is supported
+    if (!('Notification' in window)) {
+        toast({ variant: "destructive", title: "Notifications not supported on this browser."});
+        return;
+    }
+
+    // Check current permission status
+    if (Notification.permission === 'granted') {
+        setIsPopoverOpen(true);
+    } else if (Notification.permission === 'denied') {
+        toast({
+            variant: "destructive",
+            title: "Notifications Blocked",
+            description: "Please enable notifications for this site in your browser settings."
+        });
+    } else {
+        // 'default' state, so ask for permission
+        const permissionGranted = await requestNotificationPermission();
+        if (permissionGranted) {
+            toast({ title: "Notifications Enabled!", description: "You will now receive updates." });
+            setIsPopoverOpen(true); // Open popover after getting permission
+        } else {
+            toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
+        }
     }
   };
   
@@ -149,9 +180,9 @@ export function SiteHeader() {
         </Sheet>
         
         <div className="flex flex-1 items-center justify-end space-x-2">
-           <Popover>
+           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative" onClick={handleBellClick}>
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs text-white">
