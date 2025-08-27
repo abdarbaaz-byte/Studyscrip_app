@@ -10,6 +10,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "StudyScript",
   description: "An online learning platform.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -23,6 +24,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" />
+        <meta name="theme-color" content="#5062B5" />
       </head>
       <body className="min-h-screen font-body antialiased" suppressHydrationWarning>
         <AuthProvider>
