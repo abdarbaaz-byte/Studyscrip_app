@@ -419,9 +419,13 @@ export async function sendNotification(title: string, description: string) {
     await addDoc(notificationsCol, {
         title,
         description,
-        timestamp: serverTimestamp(), // Use server timestamp for consistency
-        readBy: [] // This will be an array of user IDs who have read it
+        timestamp: new Date().toISOString(),
+        // readBy is not needed here as we track reads per-user now
     });
+
+    // In a real app, you'd trigger a Firebase Function here
+    // to send the actual push notification to all devices.
+    // For this prototype, clients will listen to this collection.
 }
 
 export function listenToNotifications(callback: (notifications: Notification[]) => void) {
@@ -435,8 +439,7 @@ export function listenToNotifications(callback: (notifications: Notification[]) 
                 id: docSnap.id,
                 title: data.title,
                 description: data.description,
-                timestamp: (data.timestamp as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
-                // 'read' will be handled client-side
+                timestamp: data.timestamp, // Keep as ISO string
             } as Notification;
         });
         callback(notifications);
