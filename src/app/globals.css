@@ -86,4 +86,13 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Allow text selection on inputs and textareas */
+  input,
+  textarea,
+  .allow-selection {
+    -webkit-user-select: auto !important; /* Safari */
+    -ms-user-select: auto !important; /* IE 10+ */
+    user-select: auto !important; /* Standard syntax */
+  }
 }
