@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/toaster";
 import { ChatWidget } from "@/components/chat-widget";
 import { AuthProvider } from "@/hooks/use-auth";
+import { InstallPwaButton } from "@/components/install-pwa-button";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function RootLayout({
           </div>
           <ChatWidget />
           <Toaster />
+          <InstallPwaButton />
         </AuthProvider>
       </body>
     </html>
