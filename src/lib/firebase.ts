@@ -38,8 +38,8 @@ const getMessagingInstance = async () => {
 // New function to request permission
 export const requestNotificationPermission = async (): Promise<boolean> => {
     try {
-        const messagingInstance = await getMessagingInstance();
-        if (!messagingInstance) {
+        const messaging = await getMessagingInstance();
+        if (!messaging) {
             console.log("Firebase Messaging is not supported in this browser.");
             return false;
         }
@@ -65,10 +65,10 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 // New function to just get the token
 export const getFCMToken = async () => {
     try {
-        const messagingInstance = await getMessagingInstance();
-        if (!messagingInstance) return;
+        const messaging = await getMessagingInstance();
+        if (!messaging) return;
 
-        const currentToken = await getToken(messagingInstance, { vapidKey: VAPID_KEY });
+        const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
         if (currentToken) {
             console.log('FCM Token:', currentToken);
             // You would typically send this token to your server here to store it against the current user.

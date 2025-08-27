@@ -62,7 +62,7 @@ export function SiteHeader() {
 
   const handleBellClick = async () => {
     // Check if Notification API is supported
-    if (!('Notification' in window)) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
         toast({ variant: "destructive", title: "Notifications not supported on this browser."});
         return;
     }

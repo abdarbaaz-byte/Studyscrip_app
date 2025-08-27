@@ -1,11 +1,12 @@
 
-// Import the Firebase app and messaging services
-import { initializeApp } from "firebase/app";
-import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
+// This file needs to be in the public folder.
 
-// IMPORTANT: This file needs to be in the public folder.
+// Import the Firebase app and messaging libraries.
+// These are served locally from the node_modules folder.
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
-// Your web app's Firebase configuration.
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAogMOncvmZLqQ1qom0d3RDihdqOB9XRiY",
   authDomain: "studyscript.firebaseapp.com",
@@ -16,57 +17,40 @@ const firebaseConfig = {
   measurementId: "G-7WJ302P118"
 };
 
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
 
-// Initialize the Firebase app in the service worker
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+// Retrieve an instance of Firebase Messaging so that it can handle background messages.
+const messaging = firebase.messaging();
 
-// This handler will be called when the app is in the background or
-// closed and a push notification is received.
-onBackgroundMessage(messaging, (payload) => {
+messaging.onBackgroundMessage(function(payload) {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  // Customize the notification here
-  const notificationTitle = payload.notification?.title || 'New Notification';
+  const notificationTitle = payload.notification.title;
   const notificationOptions = {
-    body: payload.notification?.body || 'Something new happened!',
-    icon: '/icon-192x192.png',
-    badge: '/logo-icon.svg',
-    data: {
-      url: payload.fcmOptions?.link || '/' // Use link from payload or default to home
-    }
+    body: payload.notification.body,
+    icon: '/logo-192.png' // Make sure you have this icon in your public folder
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 
-// This handler is called when a user clicks on the notification.
-self.addEventListener('notificationclick', (event) => {
-  console.log('[firebase-messaging-sw.js] Notification click received.', event);
+// Handle notification click event
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close(); // Close the notification
 
-  event.notification.close();
-
-  const urlToOpen = event.notification.data.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({
-      type: "window",
-    }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
-});
-
-// This is a placeholder for any logic you might want to run when the push subscription changes.
-self.addEventListener('pushsubscriptionchange', (event) => {
-    console.log("Push subscription changed: ", event);
-    // Here you might want to re-send the new subscription to your server.
+  // This looks for an existing window and focuses it.
+  // If no window is open, it opens a new one.
+  event.waitUntil(clients.matchAll({
+    type: "window"
+  }).then(function(clientList) {
+    for (var i = 0; i < clientList.length; i++) {
+      var client = clientList[i];
+      if (client.url == '/' && 'focus' in client)
+        return client.focus();
+    }
+    if (clients.openWindow)
+      return clients.openWindow('/');
+  }));
 });
