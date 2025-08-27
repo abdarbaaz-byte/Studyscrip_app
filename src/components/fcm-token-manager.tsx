@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect } from 'react';
@@ -18,6 +17,9 @@ export function FcmTokenManager() {
     const retrieveToken = async () => {
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator && messaging) {
         try {
+          // Wait for the service worker to be ready
+          await navigator.serviceWorker.ready;
+          
           const permission = await Notification.requestPermission();
           if (permission === 'granted') {
             const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
