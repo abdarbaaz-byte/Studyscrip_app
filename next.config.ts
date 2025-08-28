@@ -6,8 +6,7 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  swSrc: 'public/firebase-messaging-sw.js', // IMPORTANT: Source from public
-  sw: 'sw.js', // The final processed service worker file
+  // swSrc is removed to let next-pwa generate a default service worker
 });
 
 
