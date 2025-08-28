@@ -31,12 +31,12 @@ export default function Home() {
   }, []);
 
   const featureItems = [
-    { icon: LayoutGrid, text: "My Courses", href: "#" },
-    { icon: FileText, text: "Free Notes", href: "#" },
-    { icon: MessageCircleQuestion, text: "Doubt", href: "#" },
-    { icon: Store, text: "Bookstore", href: "#" },
-    { icon: Radio, text: "Live Classes", href: "#" },
-    { icon: BrainCircuit, text: "Quiz", href: "#" },
+    { icon: LayoutGrid, text: "My Courses", href: "/my-courses" },
+    { icon: FileText, text: "Free Notes", href: "/free-notes" },
+    { icon: MessageCircleQuestion, text: "Doubt", href: "/my-courses" },
+    { icon: Store, text: "Bookstore", href: "/bookstore" },
+    { icon: Radio, text: "Live Classes", href: "/my-courses" },
+    { icon: BrainCircuit, text: "Quiz", href: "/my-courses" },
   ];
 
   return (

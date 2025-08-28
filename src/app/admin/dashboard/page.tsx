@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { useAuth } from "@/hooks/use-auth";
@@ -53,6 +53,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { AdminFreeNotesForm } from "@/components/admin-freenotes-form";
+import { AdminBookstoreForm } from "@/components/admin-bookstore-form";
 
 type FormattedPayment = Omit<Payment, 'paymentDate'> & { paymentDate: string };
 type SelectableItem = {
@@ -69,6 +71,8 @@ export default function AdminDashboardPage() {
   const [purchases, setPurchases] = useState<EnrichedPurchase[]>([]);
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [freeNotes, setFreeNotes] = useState<FreeNote[]>([]);
+  const [bookstoreItems, setBookstoreItems] = useState<BookstoreItem[]>([]);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [notificationTitle, setNotificationTitle] = useState("");
@@ -128,16 +132,20 @@ export default function AdminDashboardPage() {
       if (!isAdmin) return; // Don't load data if not admin
       setLoading(true);
       try {
-          const [academicsData, coursesData, paymentsData, purchasesData] = await Promise.all([
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData] = await Promise.all([
               getAcademicData(), 
               getCourses(),
               getPayments(),
-              getAllPurchases()
+              getAllPurchases(),
+              getFreeNotes(),
+              getBookstoreItems(),
           ]);
           setAcademicClasses(academicsData);
           setCourses(coursesData);
           setPayments(paymentsData);
           setPurchases(purchasesData);
+          setFreeNotes(freeNotesData);
+          setBookstoreItems(bookstoreData);
 
           // Populate selectable items for manual access
           const courseItems: SelectableItem[] = coursesData.map(c => ({ id: c.docId!, name: `(Course) ${c.title}`, type: 'course' }));
@@ -173,8 +181,7 @@ export default function AdminDashboardPage() {
   const handleSaveCourse = async (courseData: Course) => {
     try {
         await saveCourse(courseData);
-        const updatedCourses = await getCourses();
-        setCourses(updatedCourses);
+        await loadAdminData();
         toast({ title: "Course saved successfully!" });
     } catch (error) {
         console.error("Failed to save course:", error);
@@ -187,12 +194,55 @@ export default function AdminDashboardPage() {
   const handleSaveAcademics = async (updatedClasses: AcademicClass[]) => {
     try {
         await saveAcademicData(updatedClasses);
-        const refreshedData = await getAcademicData();
-        setAcademicClasses(refreshedData);
+        await loadAdminData();
         toast({ title: "Academic structure saved!", description: "Changes have been saved to the database." });
     } catch (error) {
         console.error("Failed to save academic data:", error);
         toast({ variant: "destructive", title: "Failed to save changes" });
+    }
+  };
+  
+  const handleSaveFreeNotes = async (note: FreeNote) => {
+    try {
+      await saveFreeNotes(note);
+      await loadAdminData();
+      toast({ title: "Free Note saved successfully!" });
+    } catch (error) {
+      console.error("Failed to save free note:", error);
+      toast({ variant: "destructive", title: "Failed to save Free Note" });
+    }
+  };
+
+  const handleDeleteFreeNote = async (noteId: string) => {
+    try {
+      await deleteFreeNote(noteId);
+      await loadAdminData();
+      toast({ title: "Free Note deleted successfully." });
+    } catch (error) {
+      console.error("Failed to delete free note:", error);
+      toast({ variant: "destructive", title: "Failed to delete Free Note" });
+    }
+  };
+
+  const handleSaveBookstoreItem = async (item: BookstoreItem) => {
+    try {
+      await saveBookstoreItem(item);
+      await loadAdminData();
+      toast({ title: "Bookstore item saved successfully!" });
+    } catch (error) {
+      console.error("Failed to save bookstore item:", error);
+      toast({ variant: "destructive", title: "Failed to save Bookstore Item" });
+    }
+  };
+
+  const handleDeleteBookstoreItem = async (itemId: string) => {
+    try {
+      await deleteBookstoreItem(itemId);
+      await loadAdminData();
+      toast({ title: "Bookstore item deleted successfully." });
+    } catch (error) {
+      console.error("Failed to delete bookstore item:", error);
+      toast({ variant: "destructive", title: "Failed to delete Bookstore Item" });
     }
   };
 
@@ -488,6 +538,39 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderFreeNotesManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Free Notes Management</CardTitle>
+        <CardDescription>Manage free notes topics and their content (PDFs, videos, images).</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AdminFreeNotesForm 
+          initialNotes={freeNotes}
+          onSave={handleSaveFreeNotes}
+          onDelete={handleDeleteFreeNote}
+        />
+      </CardContent>
+    </Card>
+  );
+  
+  const renderBookstoreManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Bookstore Management</CardTitle>
+        <CardDescription>Manage PDF books available in the bookstore.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AdminBookstoreForm
+          initialItems={bookstoreItems}
+          onSave={handleSaveBookstoreItem}
+          onDelete={handleDeleteBookstoreItem}
+        />
+      </CardContent>
+    </Card>
+  );
+
+
   const renderPaymentRequests = () => (
     <Card>
       <CardHeader>
@@ -711,6 +794,12 @@ export default function AdminDashboardPage() {
              <Button variant={activeTab === 'courses' ? 'default' : 'outline'} onClick={() => setActiveTab('courses')}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Courses
             </Button>
+             <Button variant={activeTab === 'free-notes' ? 'default' : 'outline'} onClick={() => setActiveTab('free-notes')}>
+                <FileText className="mr-2 h-4 w-4" /> Free Notes
+            </Button>
+            <Button variant={activeTab === 'bookstore' ? 'default' : 'outline'} onClick={() => setActiveTab('bookstore')}>
+                <BookOpen className="mr-2 h-4 w-4" /> Bookstore
+            </Button>
              <Button variant={activeTab === 'requests' ? 'default' : 'outline'} onClick={() => setActiveTab('requests')} className="relative">
                 <ShieldAlert className="mr-2 h-4 w-4" /> Payment Requests
                  {paymentRequests.length > 0 && (
@@ -729,6 +818,8 @@ export default function AdminDashboardPage() {
 
         {activeTab === 'academics' && renderAcademicsManagement()}
         {activeTab === 'courses' && renderCourseManagement()}
+        {activeTab === 'free-notes' && renderFreeNotesManagement()}
+        {activeTab === 'bookstore' && renderBookstoreManagement()}
         {activeTab === 'requests' && renderPaymentRequests()}
         {activeTab === 'access' && renderManualAccessGrant()}
         {activeTab === 'purchases' && renderPurchaseManagement()}

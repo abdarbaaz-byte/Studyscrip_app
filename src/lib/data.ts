@@ -1,10 +1,13 @@
 
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import type { Course } from './courses';
+import type { Course, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
-import { getAcademicData } from './academics';
+import { getAcademicData, type AcademicClass, type Subject } from './academics';
+
+// Re-export ContentItem for use in other modules
+export type { ContentItem } from './academics';
 
 // COURSES
 export async function getCourses(): Promise<Course[]> {
@@ -53,9 +56,10 @@ export type Purchase = {
   expiryDate: Timestamp;
 };
 
-export type EnrichedPurchase = Purchase & {
-    userEmail: string;
-    itemName: string;
+// This type is enriched with full object details for displaying in "My Courses"
+export type EnrichedPurchase = Omit<Purchase, 'itemId'> & {
+    itemId: string;
+    item: any; // Can be a Course or Subject object
 };
 
 export type Payment = {
@@ -235,10 +239,56 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
 
         return {
             ...purchase,
+            item: {
+                id: purchase.itemId,
+                name: itemName,
+                title: itemName, // for course card compatibility
+            },
             userEmail: usersMap.get(purchase.userId) || 'Unknown User',
             itemName,
         };
     });
+
+    return enrichedList;
+}
+
+export async function getUserPurchases(userId: string): Promise<EnrichedPurchase[]> {
+    const purchasesCol = collection(db, 'purchases');
+    const q = query(purchasesCol, where('userId', '==', userId), orderBy('purchaseDate', 'desc'));
+    const purchaseSnapshot = await getDocs(q);
+    
+    if (purchaseSnapshot.empty) return [];
+
+    // Fetch all courses and subjects once to avoid multiple reads
+    const allCourses = await getCourses();
+    const allAcademicData = await getAcademicData();
+    const allSubjects = allAcademicData.flatMap(ac => ac.subjects.map(s => ({ ...s, classId: ac.id, className: ac.name })));
+
+    const now = new Date();
+    const enrichedList: EnrichedPurchase[] = [];
+
+    for (const docSnap of purchaseSnapshot.docs) {
+        const purchase = { id: docSnap.id, ...docSnap.data() } as Purchase;
+        
+        // Filter out expired purchases
+        if (purchase.expiryDate.toDate() < now) {
+            continue;
+        }
+
+        let itemData: any = null;
+        if (purchase.itemType === 'course') {
+            itemData = allCourses.find(c => c.docId === purchase.itemId);
+        } else {
+            itemData = allSubjects.find(s => s.id === purchase.itemId);
+        }
+
+        if (itemData) {
+            enrichedList.push({
+                ...purchase,
+                item: itemData,
+            });
+        }
+    }
 
     return enrichedList;
 }
@@ -469,4 +519,61 @@ export async function markNotificationAsRead(userId: string, notificationId: str
     await setDoc(userDocRef, {
         readNotifications: arrayUnion(notificationId)
     }, { merge: true });
+}
+
+// --- FREE NOTES ---
+export type FreeNote = {
+  id: string; // docId
+  title: string;
+  description: string;
+  content: CourseContent[];
+};
+
+export async function getFreeNotes(): Promise<FreeNote[]> {
+  const notesCol = collection(db, 'freeNotes');
+  const q = query(notesCol, orderBy('title'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FreeNote));
+}
+
+export async function saveFreeNotes(note: FreeNote): Promise<void> {
+    const { id, ...data } = note;
+    if (id) {
+        await setDoc(doc(db, 'freeNotes', id), data, { merge: true });
+    } else {
+        await addDoc(collection(db, 'freeNotes'), data);
+    }
+}
+
+export async function deleteFreeNote(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'freeNotes', id));
+}
+
+
+// --- BOOKSTORE ---
+export type BookstoreItem = {
+    id: string; // docId
+    title: string;
+    url: string; // PDF URL
+    thumbnailUrl: string; // Image URL
+};
+
+export async function getBookstoreItems(): Promise<BookstoreItem[]> {
+    const itemsCol = collection(db, 'bookstore');
+    const q = query(itemsCol, orderBy('title'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookstoreItem));
+}
+
+export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
+    const { id, ...data } = item;
+    if (id) {
+        await setDoc(doc(db, 'bookstore', id), data, { merge: true });
+    } else {
+        await addDoc(collection(db, 'bookstore'), data);
+    }
+}
+
+export async function deleteBookstoreItem(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'bookstore', id));
 }
