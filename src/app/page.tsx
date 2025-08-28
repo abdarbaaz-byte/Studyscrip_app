@@ -68,7 +68,7 @@ export default function Home() {
           </section>
 
           <section id="features" className="py-16">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-y-8 gap-x-4 text-center">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-y-8 gap-x-4 text-center">
               {featureItems.map((item, index) => (
                 <Link href={item.href} key={index} className="group flex flex-col items-center gap-2">
                   <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
