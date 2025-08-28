@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -44,9 +44,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
+import { AdminEmployeesForm } from "@/components/admin-employees-form";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -73,6 +74,7 @@ export default function AdminDashboardPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [freeNotes, setFreeNotes] = useState<FreeNote[]>([]);
   const [bookstoreItems, setBookstoreItems] = useState<BookstoreItem[]>([]);
+  const [employees, setEmployees] = useState<EmployeeData[]>([]);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [notificationTitle, setNotificationTitle] = useState("");
@@ -91,7 +93,7 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('academics');
   const [loading, setLoading] = useState(true);
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading, hasPermission, userRole } = useAuth();
   const router = useRouter();
 
   // State for Manual Access Grant
@@ -103,7 +105,7 @@ export default function AdminDashboardPage() {
 
 
   useEffect(() => {
-    // Redirect non-admin users
+    // Redirect non-admin/employee users
     if (!authLoading && !isAdmin) {
       router.push('/');
     }
@@ -111,48 +113,49 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (!authLoading && isAdmin) {
-      const unsubscribeChats = listenToAllChats((liveChats) => {
-        setChats(liveChats);
-      });
-      const unsubscribeNotifications = listenToNotifications((liveNotifications) => {
-        setNotifications(liveNotifications);
-      });
-       const unsubscribePaymentRequests = listenToPaymentRequests((requests) => {
-        setPaymentRequests(requests);
-      });
+      const unsubscribeChats = hasPermission('view_messages') ? listenToAllChats((liveChats) => setChats(liveChats)) : () => {};
+      const unsubscribeNotifications = hasPermission('send_notifications') ? listenToNotifications((liveNotifications) => setNotifications(liveNotifications)) : () => {};
+      const unsubscribePaymentRequests = hasPermission('manage_payment_requests') ? listenToPaymentRequests((requests) => setPaymentRequests(requests)) : () => {};
+      
       return () => {
         unsubscribeChats();
         unsubscribeNotifications();
         unsubscribePaymentRequests();
       };
     }
-  }, [authLoading, isAdmin]);
+  }, [authLoading, isAdmin, hasPermission]);
 
   const loadAdminData = async () => {
-      if (!isAdmin) return; // Don't load data if not admin
+      if (!isAdmin) return;
       setLoading(true);
       try {
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData] = await Promise.all([
-              getAcademicData(), 
-              getCourses(),
-              getPayments(),
-              getAllPurchases(),
-              getFreeNotes(),
-              getBookstoreItems(),
-          ]);
+          const promises = [];
+          if (hasPermission('manage_academics')) promises.push(getAcademicData()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_courses')) promises.push(getCourses()); else promises.push(Promise.resolve([]));
+          if (hasPermission('view_payments')) promises.push(getPayments()); else promises.push(Promise.resolve([]));
+          if (hasPermission('view_purchases')) promises.push(getAllPurchases()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_free_notes')) promises.push(getFreeNotes()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_bookstore')) promises.push(getBookstoreItems()); else promises.push(Promise.resolve([]));
+          if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
+
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, employeesData] = await Promise.all(promises);
+          
           setAcademicClasses(academicsData);
           setCourses(coursesData);
           setPayments(paymentsData);
           setPurchases(purchasesData);
           setFreeNotes(freeNotesData);
           setBookstoreItems(bookstoreData);
+          setEmployees(employeesData as EmployeeData[]);
 
           // Populate selectable items for manual access
-          const courseItems: SelectableItem[] = coursesData.map(c => ({ id: c.docId!, name: `(Course) ${c.title}`, type: 'course' }));
-          const subjectItems: SelectableItem[] = academicsData.flatMap(ac => 
-              ac.subjects.map(s => ({ id: s.id, name: `(${ac.name}) ${s.name}`, type: 'subject' }))
-          );
-          setSelectableItems([...courseItems, ...subjectItems]);
+          if (hasPermission('manage_manual_access')) {
+            const courseItems: SelectableItem[] = coursesData.map(c => ({ id: c.docId!, name: `(Course) ${c.title}`, type: 'course' }));
+            const subjectItems: SelectableItem[] = academicsData.flatMap(ac => 
+                ac.subjects.map(s => ({ id: s.id, name: `(${ac.name}) ${s.name}`, type: 'subject' }))
+            );
+            setSelectableItems([...courseItems, ...subjectItems]);
+          }
 
       } catch (error) {
           console.error("Failed to load data:", error);
@@ -165,7 +168,7 @@ export default function AdminDashboardPage() {
     if (!authLoading && isAdmin) {
       loadAdminData();
     }
-  }, [authLoading, isAdmin]);
+  }, [authLoading, isAdmin, hasPermission, userRole]); // Rerun if permissions change
 
 
   useEffect(() => {
@@ -416,6 +419,17 @@ export default function AdminDashboardPage() {
       }
       setIsRejecting(false);
   };
+  
+  const handleSaveEmployee = async (employeeData: EmployeeData) => {
+    try {
+      await updateEmployeePermissions(employeeData.uid, employeeData);
+      toast({ title: "Employee Updated", description: "Permissions have been saved." });
+      loadAdminData();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: error.message });
+    }
+  };
+
 
   if (loading || authLoading) {
       return (
@@ -428,7 +442,10 @@ export default function AdminDashboardPage() {
   if (!isAdmin) {
     return (
        <div className="flex items-center justify-center min-h-screen">
-            <p className="text-destructive font-bold text-2xl">Access Denied</p>
+            <Card className="p-8 text-center">
+              <CardTitle className="text-2xl font-bold text-destructive">Access Denied</CardTitle>
+              <CardDescription className="mt-2">You do not have permission to view this page.</CardDescription>
+            </Card>
         </div>
     );
   }
@@ -784,47 +801,66 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderEmployeeManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Employee Management</CardTitle>
+        <CardDescription>Grant dashboard access permissions to your employees.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AdminEmployeesForm 
+          employees={employees}
+          onSave={handleSaveEmployee}
+        />
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="container mx-auto py-10 grid gap-8 grid-cols-1 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-8">
         <div className="flex items-center gap-2 flex-wrap">
-            <Button variant={activeTab === 'academics' ? 'default' : 'outline'} onClick={() => setActiveTab('academics')}>
+            {hasPermission('manage_academics') && <Button variant={activeTab === 'academics' ? 'default' : 'outline'} onClick={() => setActiveTab('academics')}>
                 <BookCopy className="mr-2 h-4 w-4" /> Academics
-            </Button>
-             <Button variant={activeTab === 'courses' ? 'default' : 'outline'} onClick={() => setActiveTab('courses')}>
+            </Button>}
+             {hasPermission('manage_courses') && <Button variant={activeTab === 'courses' ? 'default' : 'outline'} onClick={() => setActiveTab('courses')}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Courses
-            </Button>
-             <Button variant={activeTab === 'free-notes' ? 'default' : 'outline'} onClick={() => setActiveTab('free-notes')}>
+            </Button>}
+             {hasPermission('manage_free_notes') && <Button variant={activeTab === 'free-notes' ? 'default' : 'outline'} onClick={() => setActiveTab('free-notes')}>
                 <FileText className="mr-2 h-4 w-4" /> Free Notes
-            </Button>
-            <Button variant={activeTab === 'bookstore' ? 'default' : 'outline'} onClick={() => setActiveTab('bookstore')}>
+            </Button>}
+            {hasPermission('manage_bookstore') && <Button variant={activeTab === 'bookstore' ? 'default' : 'outline'} onClick={() => setActiveTab('bookstore')}>
                 <BookOpen className="mr-2 h-4 w-4" /> Bookstore
-            </Button>
-             <Button variant={activeTab === 'requests' ? 'default' : 'outline'} onClick={() => setActiveTab('requests')} className="relative">
+            </Button>}
+             {hasPermission('manage_payment_requests') && <Button variant={activeTab === 'requests' ? 'default' : 'outline'} onClick={() => setActiveTab('requests')} className="relative">
                 <ShieldAlert className="mr-2 h-4 w-4" /> Payment Requests
                  {paymentRequests.length > 0 && (
                     <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
                         {paymentRequests.length}
                     </span>
                  )}
-            </Button>
-            <Button variant={activeTab === 'access' ? 'default' : 'outline'} onClick={() => setActiveTab('access')}>
+            </Button>}
+            {hasPermission('manage_manual_access') && <Button variant={activeTab === 'access' ? 'default' : 'outline'} onClick={() => setActiveTab('access')}>
                 <UserCheck className="mr-2 h-4 w-4" /> Manual Access
-            </Button>
-            <Button variant={activeTab === 'purchases' ? 'default' : 'outline'} onClick={() => setActiveTab('purchases')}>
+            </Button>}
+            {hasPermission('view_purchases') && <Button variant={activeTab === 'purchases' ? 'default' : 'outline'} onClick={() => setActiveTab('purchases')}>
                 <ShoppingCart className="mr-2 h-4 w-4" /> Purchases
-            </Button>
+            </Button>}
+            {userRole === 'admin' && <Button variant={activeTab === 'employees' ? 'default' : 'outline'} onClick={() => setActiveTab('employees')}>
+                <UserCog className="mr-2 h-4 w-4" /> Employees
+            </Button>}
         </div>
 
-        {activeTab === 'academics' && renderAcademicsManagement()}
-        {activeTab === 'courses' && renderCourseManagement()}
-        {activeTab === 'free-notes' && renderFreeNotesManagement()}
-        {activeTab === 'bookstore' && renderBookstoreManagement()}
-        {activeTab === 'requests' && renderPaymentRequests()}
-        {activeTab === 'access' && renderManualAccessGrant()}
-        {activeTab === 'purchases' && renderPurchaseManagement()}
+        {activeTab === 'academics' && hasPermission('manage_academics') && renderAcademicsManagement()}
+        {activeTab === 'courses' && hasPermission('manage_courses') && renderCourseManagement()}
+        {activeTab === 'free-notes' && hasPermission('manage_free_notes') && renderFreeNotesManagement()}
+        {activeTab === 'bookstore' && hasPermission('manage_bookstore') && renderBookstoreManagement()}
+        {activeTab === 'requests' && hasPermission('manage_payment_requests') && renderPaymentRequests()}
+        {activeTab === 'access' && hasPermission('manage_manual_access') && renderManualAccessGrant()}
+        {activeTab === 'purchases' && hasPermission('view_purchases') && renderPurchaseManagement()}
+        {activeTab === 'employees' && userRole === 'admin' && renderEmployeeManagement()}
         
-        <Card>
+        {hasPermission('view_payments') && <Card>
           <CardHeader>
             <CardTitle className="font-headline text-2xl">Payment History</CardTitle>
             <CardDescription>View recent transaction details.</CardDescription>
@@ -877,89 +913,91 @@ export default function AdminDashboardPage() {
               </TableBody>
             </Table>
           </CardContent>
-        </Card>
+        </Card>}
       </div>
 
       <div className="lg:col-span-1 space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl">Send Notification</CardTitle>
-            <CardDescription>Broadcast a message to all users.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSendNotification} className="space-y-4">
-              <div className="space-y-2">
-                <Input 
-                  placeholder="Notification Title" 
-                  value={notificationTitle}
-                  onChange={(e) => setNotificationTitle(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Textarea 
-                  placeholder="Notification Message..." 
-                  value={notificationMessage}
-                  onChange={(e) => setNotificationMessage(e.target.value)}
-                  required
-                  rows={4}
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                <Send className="mr-2 h-4 w-4" />
-                Send Notification
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        {hasPermission('send_notifications') && <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline text-2xl">Send Notification</CardTitle>
+              <CardDescription>Broadcast a message to all users.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSendNotification} className="space-y-4">
+                <div className="space-y-2">
+                  <Input 
+                    placeholder="Notification Title" 
+                    value={notificationTitle}
+                    onChange={(e) => setNotificationTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Textarea 
+                    placeholder="Notification Message..." 
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                    required
+                    rows={4}
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  <Send className="mr-2 h-4 w-4" />
+                  Send Notification
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-         <Card>
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                <BellRing /> Notification Management
-            </CardTitle>
-            <CardDescription>View and delete sent notifications.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2">
-                 {notifications.map((notif) => (
-                  <div key={notif.id} className="flex items-start gap-4 p-3 rounded-lg bg-secondary">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon" onClick={() => handleDeleteNotificationClick(notif)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Notification?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete the notification titled "{notificationToDelete?.title}". This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setNotificationToDelete(null)}>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={confirmDeleteNotification}>Continue</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold break-words">{notif.title}</p>
-                      <p className="text-sm text-muted-foreground break-words">{notif.description}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{new Date(notif.timestamp).toLocaleString()}</p>
+           <Card>
+            <CardHeader>
+              <CardTitle className="font-headline text-2xl flex items-center gap-2">
+                  <BellRing /> Notification Management
+              </CardTitle>
+              <CardDescription>View and delete sent notifications.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-2">
+                  {notifications.map((notif) => (
+                    <div key={notif.id} className="flex items-start gap-4 p-3 rounded-lg bg-secondary">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteNotificationClick(notif)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Notification?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete the notification titled "{notificationToDelete?.title}". This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setNotificationToDelete(null)}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmDeleteNotification}>Continue</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold break-words">{notif.title}</p>
+                        <p className="text-sm text-muted-foreground break-words">{notif.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{new Date(notif.timestamp).toLocaleString()}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {notifications.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">No notifications sent yet.</p>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                  ))}
+                  {notifications.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No notifications sent yet.</p>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>}
+        </>}
 
-        <Card>
+        {hasPermission('view_messages') && <Card>
           <CardHeader>
             <CardTitle className="font-headline text-2xl">User Messages</CardTitle>
             <CardDescription>View user support requests.</CardDescription>
@@ -1004,7 +1042,7 @@ export default function AdminDashboardPage() {
               </Table>
             </ScrollArea>
           </CardContent>
-        </Card>
+        </Card>}
       </div>
 
 

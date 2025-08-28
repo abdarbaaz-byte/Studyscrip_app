@@ -5,6 +5,8 @@ import type { Course, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
 import { getAcademicData, type AcademicClass, type Subject } from './academics';
+import { UserPermission } from '@/hooks/use-auth';
+
 
 // Re-export ContentItem for use in other modules
 export type { ContentItem } from './academics';
@@ -254,6 +256,8 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
 
 export async function getUserPurchases(userId: string): Promise<EnrichedPurchase[]> {
     const purchasesCol = collection(db, 'purchases');
+    // Note: Removed orderBy to avoid needing a composite index. 
+    // Sorting can be done client-side if needed.
     const q = query(purchasesCol, where('userId', '==', userId));
     const purchaseSnapshot = await getDocs(q);
     
@@ -576,4 +580,57 @@ export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
 
 export async function deleteBookstoreItem(id: string): Promise<void> {
     await deleteDoc(doc(db, 'bookstore', id));
+}
+
+// --- EMPLOYEE MANAGEMENT (RBAC) ---
+export type EmployeeData = {
+    uid: string;
+    email: string;
+    role: 'employee' | null;
+    permissions: UserPermission[];
+};
+
+export async function getEmployees(): Promise<EmployeeData[]> {
+    const usersCol = collection(db, 'users');
+    const q = query(usersCol, where('role', 'in', ['employee', 'admin']));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            uid: doc.id,
+            email: data.email,
+            role: data.role,
+            permissions: data.permissions || [],
+        };
+    });
+}
+
+export async function updateEmployeePermissions(uid: string, data: Partial<EmployeeData>): Promise<void> {
+    if (!uid) throw new Error("User ID is required to update employee.");
+    const userDocRef = doc(db, 'users', uid);
+    
+    const updateData: any = {};
+    if (data.role !== undefined) updateData.role = data.role;
+    if (data.permissions !== undefined) updateData.permissions = data.permissions;
+
+    if(Object.keys(updateData).length === 0) {
+        console.warn("No data provided to update for employee:", uid);
+        return;
+    }
+
+    await updateDoc(userDocRef, updateData);
+}
+
+export async function findUserByEmail(email: string): Promise<{uid: string, email: string} | null> {
+    const usersCol = collection(db, 'users');
+    const q = query(usersCol, where('email', '==', email));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return null;
+    }
+    const userDoc = snapshot.docs[0];
+    return {
+        uid: userDoc.id,
+        email: userDoc.data().email
+    };
 }

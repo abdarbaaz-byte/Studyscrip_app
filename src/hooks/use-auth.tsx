@@ -7,6 +7,7 @@ import {
   createContext,
   useContext,
   type ReactNode,
+  useCallback,
 } from "react";
 import {
   onAuthStateChanged,
@@ -22,10 +23,26 @@ import { useRouter } from "next/navigation";
 import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 
 
+export type UserRole = 'admin' | 'employee' | null;
+export type UserPermission = 
+  | 'manage_academics'
+  | 'manage_courses'
+  | 'manage_free_notes'
+  | 'manage_bookstore'
+  | 'manage_payment_requests'
+  | 'manage_manual_access'
+  | 'view_purchases'
+  | 'view_payments'
+  | 'send_notifications'
+  | 'view_messages';
+
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
+  userRole: UserRole;
+  permissions: UserPermission[];
   loading: boolean;
+  hasPermission: (permission: UserPermission) => boolean;
   signUp: (email: string, password: string) => Promise<boolean>;
   logIn: (email: string, password: string) => Promise<boolean>;
   logOut: () => void;
@@ -34,25 +51,71 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Define the admin email here.
-// IMPORTANT: Replace this with your actual admin email address.
-const ADMIN_EMAIL = "abdarbaaz@gmail.com";
+// The primary super admin email. This user will always have all permissions.
+const SUPER_ADMIN_EMAIL = "abdarbaaz@gmail.com";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
+  
+  // This derived state is now based on userRole
+  const isAdmin = userRole === 'admin' || userRole === 'employee';
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setIsAdmin(currentUser?.email === ADMIN_EMAIL);
-      setLoading(false);
+      if (!currentUser) {
+        // If user is logged out, clear roles and stop loading
+        setUserRole(null);
+        setPermissions([]);
+        setLoading(false);
+      }
     });
-    return () => unsubscribe();
+
+    return () => unsubscribeAuth();
   }, []);
+  
+  // Effect to listen to user's role and permissions from Firestore
+  useEffect(() => {
+    if (user) {
+      // Check for super admin first
+      if (user.email === SUPER_ADMIN_EMAIL) {
+          setUserRole('admin');
+          // Super admin has all permissions
+          setPermissions([
+            'manage_academics', 'manage_courses', 'manage_free_notes', 
+            'manage_bookstore', 'manage_payment_requests', 'manage_manual_access', 
+            'view_purchases', 'view_payments', 'send_notifications', 'view_messages'
+          ]);
+          setLoading(false);
+          return;
+      }
+
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribeFirestore = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setUserRole(data.role || null);
+          setPermissions(data.permissions || []);
+        } else {
+          // If user doc doesn't exist for some reason
+          setUserRole(null);
+          setPermissions([]);
+        }
+        setLoading(false);
+      });
+      return () => unsubscribeFirestore();
+    } else {
+      // No user, clear role data
+      setUserRole(null);
+      setPermissions([]);
+      setLoading(false);
+    }
+  }, [user]);
 
   // Effect for single-device session management
    useEffect(() => {
@@ -88,17 +151,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Create a user document in Firestore right after sign-up
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
           createdAt: new Date().toISOString(),
-          readNotifications: [] // Initialize read notifications
+          readNotifications: [],
+          role: null,
+          permissions: [],
       });
 
       toast({ title: "Account created successfully!" });
-      // Redirect to login after successful signup so they can log in
       router.push("/login");
       return true;
     } catch (error: any) {
@@ -112,12 +175,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const loggedInUser = userCredential.user;
 
-      // Check if user doc exists, if not, create one (for legacy users)
       const userDocRef = doc(db, 'users', loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
       
       const sessionToken = Date.now().toString();
       localStorage.setItem('sessionToken', sessionToken);
+
+      const userData: any = { activeSessionToken: sessionToken };
+      // On first login, check if this user should be the superadmin
+      if (loggedInUser.email === SUPER_ADMIN_EMAIL && (!userDoc.exists() || !userDoc.data().role)) {
+        userData.role = 'admin';
+      }
 
       if (!userDoc.exists()) {
          await setDoc(userDocRef, {
@@ -125,15 +193,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: loggedInUser.email,
             createdAt: new Date().toISOString(),
             readNotifications: [],
-            activeSessionToken: sessionToken,
+            ...userData
          });
       } else {
-         await setDoc(userDocRef, { activeSessionToken: sessionToken }, { merge: true });
+         await setDoc(userDocRef, userData, { merge: true });
       }
 
       toast({ title: "Logged in successfully!" });
       
-      if (email === ADMIN_EMAIL) {
+      if (email === SUPER_ADMIN_EMAIL) {
         router.push("/admin/dashboard");
       } else {
         router.push("/");
@@ -149,7 +217,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if(user) {
         const userDocRef = doc(db, 'users', user.uid);
-        // Clear session token on logout
         await setDoc(userDocRef, { activeSessionToken: null }, { merge: true });
       }
       await signOut(auth);
@@ -174,17 +241,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const hasPermission = useCallback((permission: UserPermission) => {
+    if (user?.email === SUPER_ADMIN_EMAIL) return true;
+    return permissions.includes(permission);
+  }, [permissions, user]);
+
   const value = {
     user,
     isAdmin,
+    userRole,
+    permissions,
     loading,
+    hasPermission,
     signUp,
     logIn,
     logOut,
     resetPassword,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = (): AuthContextType => {
