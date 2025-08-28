@@ -1,22 +1,37 @@
-
 {
   "name": "StudyScript",
   "short_name": "StudyScript",
-  "description": "An online learning platform for students.",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#F0F2F9",
   "theme_color": "#5062B5",
+  "description": "Your personal e-learning companion.",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "logo-icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "logo-icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "9th Class",
+      "short_name": "9th",
+      "description": "View subjects for 9th Class",
+      "url": "/class/class-9",
+      "icons": [{ "src": "logo-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "10th Class",
+      "short_name": "10th",
+      "description": "View subjects for 10th Class",
+      "url": "/class/class-10",
+      "icons": [{ "src": "logo-icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
