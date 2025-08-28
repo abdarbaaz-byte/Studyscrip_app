@@ -58,9 +58,9 @@ export default function Home() {
              {academicClasses.length === 0 && <p className="text-center text-muted-foreground">No academic classes found.</p>}
           </section>
 
-          <section id="courses" className="py-16">
+          <section id="courses" className="pt-8 pb-16">
             <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
-              Our Professional Courses
+              Courses
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {courses.map((course) => (
