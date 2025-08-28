@@ -5,9 +5,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
 import { getCourses } from "@/lib/data";
-import { ArrowRight, BookOpen, Loader2 } from "lucide-react";
+import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuestion, Store, Radio, BrainCircuit } from "lucide-react";
 import type { Course } from "@/lib/courses";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { getAcademicData, AcademicClass } from "@/lib/academics";
 import { useEffect, useState } from "react";
 
@@ -29,6 +29,15 @@ export default function Home() {
     }
     loadData();
   }, []);
+
+  const featureItems = [
+    { icon: LayoutGrid, text: "My Courses", href: "#" },
+    { icon: FileText, text: "Free Notes", href: "#" },
+    { icon: MessageCircleQuestion, text: "Doubt", href: "#" },
+    { icon: Store, text: "Bookstore", href: "#" },
+    { icon: Radio, text: "Live Classes", href: "#" },
+    { icon: BrainCircuit, text: "Quiz", href: "#" },
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -56,6 +65,19 @@ export default function Home() {
               ))}
             </div>
              {academicClasses.length === 0 && <p className="text-center text-muted-foreground">No academic classes found.</p>}
+          </section>
+
+          <section id="features" className="py-16">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-y-8 gap-x-4 text-center">
+              {featureItems.map((item, index) => (
+                <Link href={item.href} key={index} className="group flex flex-col items-center gap-2">
+                  <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                    <item.icon className="w-10 h-10" />
+                  </div>
+                  <h3 className="font-headline text-lg font-semibold">{item.text}</h3>
+                </Link>
+              ))}
+            </div>
           </section>
 
           <section id="courses" className="pt-8 pb-16">
