@@ -14,8 +14,15 @@ import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
-import { requestNotificationPermission } from "@/lib/firebase"; // Import the new function
+import { requestNotificationPermission, getFCMToken } from "@/lib/firebase"; 
 import { useToast } from "@/hooks/use-toast";
+
+const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.89-5.451 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.731 6.086l.06.105-1.03 3.777 3.84-1.011.105.06zm5.012-6.958c-.273 0-.546.088-.785.263l-.11.067c-.225.136-.935.458-1.16 1.334-.225.876.225 1.632.33 1.785.105.153.225.345.315.42l.105.09c.3.24.555.375.825.375.27 0 .6-.134.885-.435.285-.3.6-.705.69-.854.09-.15.18-.3.12-.494-.06-.195-.3-.345-.435-.405-.135-.06-.27-.06-.39-.06s-.27.015-.405.045c-.135.03-.285.075-.42.195l-.105.09c-.195.165-.33.225-.435.165-.105-.06-.48-1.214-.525-1.274-.045-.06-.09-.09-.15-.09s-.12.015-.165.03c-.045.015-.12.045-.165.045-.045 0-.09-.015-.135-.015s-.225-.015-.315-.015z"/>
+    </svg>
+);
+
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -85,6 +92,7 @@ export function SiteHeader() {
             if (permissionGranted) {
                 toast({ title: "Notifications Enabled!", description: "You will now receive updates." });
                 setIsPopoverOpen(true); // Open popover after getting permission
+                getFCMToken(); // Ensure token is registered after permission
             } else {
                 toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
             }
@@ -189,6 +197,17 @@ export function SiteHeader() {
         </Sheet>
         
         <div className="flex flex-1 items-center justify-end space-x-2">
+           <a href="https://whatsapp.com/channel/your-channel-id" target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" className="hidden sm:inline-flex">
+                  <WhatsAppIcon className="h-5 w-5 mr-2" />
+                  Join WhatsApp
+              </Button>
+              <Button variant="ghost" size="icon" className="sm:hidden">
+                  <WhatsAppIcon className="h-5 w-5" />
+                  <span className="sr-only">Join WhatsApp</span>
+              </Button>
+           </a>
+
            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative" onClick={handleBellClick}>
