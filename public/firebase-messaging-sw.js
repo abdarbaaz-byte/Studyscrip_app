@@ -1,12 +1,15 @@
+/* eslint-disable no-restricted-globals */
 
-// This file needs to be in the public folder.
+// Import the workbox-precaching library
+import { precacheAndRoute } from 'workbox-precaching';
+import { initializeApp } from 'firebase/app';
+import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
 
-// Import the Firebase app and messaging libraries.
-// These are served locally from the node_modules folder.
-importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
+// This line is crucial for next-pwa to work.
+// It will be replaced by the list of files to cache.
+precacheAndRoute(self.__WB_MANIFEST || []);
 
-// Your web app's Firebase configuration
+// Give the service worker access to the Firebase config.
 const firebaseConfig = {
   apiKey: "AIzaSyAogMOncvmZLqQ1qom0d3RDihdqOB9XRiY",
   authDomain: "studyscript.firebaseapp.com",
@@ -17,40 +20,48 @@ const firebaseConfig = {
   measurementId: "G-7WJ302P118"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+// Initialize the Firebase app in the service worker
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-// Retrieve an instance of Firebase Messaging so that it can handle background messages.
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage(function(payload) {
+onBackgroundMessage(messaging, (payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  
+  if (!payload.notification) {
+    return;
+  }
   
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/logo-192.png' // Make sure you have this icon in your public folder
+    icon: '/logo-icon.png' // Make sure you have this icon in public folder
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 
-// Handle notification click event
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close(); // Close the notification
+self.addEventListener('notificationclick', (event) => {
+  console.log('[firebase-messaging-sw.js] Notification click Received.');
 
-  // This looks for an existing window and focuses it.
-  // If no window is open, it opens a new one.
-  event.waitUntil(clients.matchAll({
-    type: "window"
-  }).then(function(clientList) {
-    for (var i = 0; i < clientList.length; i++) {
-      var client = clientList[i];
-      if (client.url == '/' && 'focus' in client)
-        return client.focus();
-    }
-    if (clients.openWindow)
-      return clients.openWindow('/');
-  }));
+  event.notification.close();
+
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    }).then((clientList) => {
+      // If a window for this PWA is already open, focus it.
+      for (const client of clientList) {
+        // You can customize the URL to be more specific if needed
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise, open a new window.
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
 });
