@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FreeNote, ContentItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,7 +154,7 @@ function NoteForm({ note, onSave, onCancel, isSaving }: { note: FreeNote | null,
   const addContentItem = () => {
     setFormData(prev => ({
       ...prev,
-      content: [...prev.content, { type: 'pdf', title: '', url: '' }]
+      content: [...prev.content, { id: `new-${Date.now()}`, type: 'pdf', title: '', url: '' }]
     }));
   };
 
@@ -188,7 +188,7 @@ function NoteForm({ note, onSave, onCancel, isSaving }: { note: FreeNote | null,
         </div>
         <div className="space-y-4">
           {formData.content.map((item, index) => (
-            <div key={index} className="p-4 border rounded-md space-y-3 relative bg-secondary/50">
+            <div key={item.id || index} className="p-4 border rounded-md space-y-3 relative bg-secondary/50">
                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 text-destructive" onClick={() => removeContentItem(index)}>
                   <Trash2 className="h-4 w-4" />
                </Button>
@@ -231,3 +231,5 @@ function NoteForm({ note, onSave, onCancel, isSaving }: { note: FreeNote | null,
     </form>
   );
 }
+
+    
