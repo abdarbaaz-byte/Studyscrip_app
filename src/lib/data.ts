@@ -254,7 +254,7 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
 
 export async function getUserPurchases(userId: string): Promise<EnrichedPurchase[]> {
     const purchasesCol = collection(db, 'purchases');
-    const q = query(purchasesCol, where('userId', '==', userId), orderBy('purchaseDate', 'desc'));
+    const q = query(purchasesCol, where('userId', '==', userId));
     const purchaseSnapshot = await getDocs(q);
     
     if (purchaseSnapshot.empty) return [];
