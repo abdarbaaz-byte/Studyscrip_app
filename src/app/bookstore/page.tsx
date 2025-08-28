@@ -35,7 +35,7 @@ export default function BookstorePage() {
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {items.map((item) => (
             <Card key={item.id} className="flex flex-col overflow-hidden group">
               <CardHeader className="p-0 relative">
@@ -50,10 +50,10 @@ export default function BookstorePage() {
                 </a>
               </CardHeader>
               <CardContent className="p-4 flex flex-col flex-grow">
-                <CardTitle className="font-headline text-lg flex-grow">{item.title}</CardTitle>
-                <Button asChild className="w-full mt-4">
+                <CardTitle className="font-headline text-base flex-grow">{item.title}</CardTitle>
+                <Button asChild className="w-full mt-3">
                   <a href={item.url} target="_blank" rel="noopener noreferrer" download>
-                    <Download className="mr-2 h-4 w-4" /> Download PDF
+                    <Download className="mr-2 h-4 w-4" /> Download
                   </a>
                 </Button>
               </CardContent>
