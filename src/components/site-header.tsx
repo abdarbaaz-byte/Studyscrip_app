@@ -108,6 +108,7 @@ export function SiteHeader() {
     { href: "/contact", label: "Contact" },
     { href: "/about", label: "About" },
     { href: "/privacy", label: "Privacy Policy" },
+    { href: "/disclaimer", label: "Disclaimer" },
   ];
 
   return (
