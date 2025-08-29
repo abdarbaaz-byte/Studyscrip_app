@@ -1,16 +1,16 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { type Quiz, type Question } from "@/lib/data";
+import { type Quiz } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, Timer, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
@@ -35,7 +35,9 @@ export default function QuizAttemptPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswersState>({});
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const { toast } = useToast();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function loadQuiz() {
@@ -44,7 +46,11 @@ export default function QuizAttemptPage() {
       const quizDocRef = doc(db, 'quizzes', quizId);
       const quizSnap = await getDoc(quizDocRef);
       if (quizSnap.exists()) {
-        setQuiz({ id: quizSnap.id, ...quizSnap.data() } as Quiz);
+        const loadedQuiz = { id: quizSnap.id, ...quizSnap.data() } as Quiz;
+        setQuiz(loadedQuiz);
+        if (loadedQuiz.duration) {
+          setTimeLeft(loadedQuiz.duration * 60);
+        }
       } else {
         // Handle quiz not found
       }
@@ -52,6 +58,30 @@ export default function QuizAttemptPage() {
     }
     loadQuiz();
   }, [quizId]);
+
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (timeLeft === 0) {
+        toast({
+          title: "Time's Up!",
+          description: "Your quiz has been automatically submitted.",
+        });
+        handleSubmit();
+      }
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => (prev ? prev - 1 : 0));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft]);
+
   
   const handleAnswerChange = (questionId: string, optionIndex: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: optionIndex }));
@@ -72,11 +102,14 @@ export default function QuizAttemptPage() {
   const handleSubmit = () => {
     if (!quiz) return;
     
+    // Stop the timer
+    if (timerRef.current) clearInterval(timerRef.current);
+
     // Convert answers to a query string
     const answersQueryString = encodeURIComponent(JSON.stringify(answers));
     
     // Redirect to the results page
-    router.push(`/quizzes/${quiz.id}/results?answers=${answersQueryString}`);
+    router.replace(`/quizzes/${quizId}/results?answers=${answersQueryString}`);
   };
 
   if (loading) {
@@ -91,12 +124,25 @@ export default function QuizAttemptPage() {
   const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-3xl">{quiz.title}</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="font-headline text-3xl">{quiz.title}</CardTitle>
+            {timeLeft !== null && (
+              <div className="flex items-center gap-2 font-mono text-xl font-bold bg-secondary px-4 py-2 rounded-lg">
+                <Timer className="h-6 w-6"/>
+                <span>{formatTime(timeLeft)}</span>
+              </div>
+            )}
+          </div>
           <CardDescription>{quiz.description}</CardDescription>
           <div className="pt-4">
             <Progress value={progress} className="w-full" />
@@ -104,7 +150,7 @@ export default function QuizAttemptPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="py-6">
+          <div className="py-6 min-h-[300px]">
             <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
             <RadioGroup 
                 value={answers[currentQuestion.id]?.toString()} 
@@ -112,7 +158,7 @@ export default function QuizAttemptPage() {
                 className="space-y-4"
             >
               {currentQuestion.options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                <div key={index} className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
                   <RadioGroupItem value={index.toString()} id={`q${currentQuestionIndex}-opt${index}`} />
                   <Label htmlFor={`q${currentQuestionIndex}-opt${index}`} className="text-base font-normal flex-1 cursor-pointer">
                     {option}

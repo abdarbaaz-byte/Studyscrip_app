@@ -24,6 +24,7 @@ export type Quiz = {
     id: string; // docId
     title: string;
     description: string;
+    duration?: number; // Duration in minutes
     questions: Question[];
 };
 

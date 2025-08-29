@@ -32,6 +32,7 @@ interface AdminQuizFormProps {
 const emptyQuiz: Omit<Quiz, 'id'> = {
   title: "",
   description: "",
+  duration: 10, // Default duration
   questions: [],
 };
 
@@ -119,7 +120,10 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
             </div>
             <AccordionContent>
               <div className="space-y-4 p-2 border-t mt-3">
-                <h4 className="font-semibold">{quiz.questions.length} Questions</h4>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>{quiz.questions.length} Questions</span>
+                    <span>{quiz.duration ? `${quiz.duration} Minutes` : 'No time limit'}</span>
+                </div>
                 {quiz.questions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No questions yet. Edit the quiz to add some.</p>}
               </div>
             </AccordionContent>
@@ -137,12 +141,14 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
   const [formData, setFormData] = useState<Omit<Quiz, 'id'>>(quiz || emptyQuiz);
 
   useEffect(() => {
-    setFormData(quiz || emptyQuiz);
+    // Ensure duration is part of the form state, even for older quizzes
+    const initialData = quiz ? { ...emptyQuiz, ...quiz } : emptyQuiz;
+    setFormData(initialData);
   }, [quiz]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: name === 'duration' ? parseInt(value) || 0 : value }));
   };
   
   const addQuestion = () => {
@@ -185,13 +191,19 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Quiz Title</Label>
-        <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea id="description" name="description" value={formData.description} onChange={handleChange} required />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Quiz Title</Label>
+            <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="duration">Duration (in minutes)</Label>
+            <Input id="duration" name="duration" type="number" value={formData.duration} onChange={handleChange} placeholder="e.g., 30" />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea id="description" name="description" value={formData.description} onChange={handleChange} required />
+          </div>
       </div>
 
       <div className="space-y-4 pt-4">
