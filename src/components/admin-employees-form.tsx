@@ -42,6 +42,7 @@ const allPermissions: { id: UserPermission, label: string }[] = [
     { id: 'view_payments', label: 'View Payments' },
     { id: 'send_notifications', label: 'Send Notifications' },
     { id: 'view_messages', label: 'View Messages' },
+    { id: 'manage_site_settings', label: 'Manage Site Settings' },
 ];
 
 export function AdminEmployeesForm({ employees, onSave }: AdminEmployeesFormProps) {
@@ -184,3 +185,5 @@ export function AdminEmployeesForm({ employees, onSave }: AdminEmployeesFormProp
     </div>
   );
 }
+
+    

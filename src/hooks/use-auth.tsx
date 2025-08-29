@@ -36,7 +36,8 @@ export type UserPermission =
   | 'send_notifications'
   | 'view_messages'
   | 'manage_quizzes'
-  | 'view_quiz_attempts';
+  | 'view_quiz_attempts'
+  | 'manage_site_settings';
 
 interface AuthContextType {
   user: User | null;
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'manage_academics', 'manage_courses', 'manage_free_notes', 
             'manage_bookstore', 'manage_payment_requests', 'manage_manual_access', 
             'view_purchases', 'view_payments', 'send_notifications', 'view_messages',
-            'manage_quizzes', 'view_quiz_attempts'
+            'manage_quizzes', 'view_quiz_attempts', 'manage_site_settings'
           ]);
           setLoading(false);
           return;
@@ -272,3 +273,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+    

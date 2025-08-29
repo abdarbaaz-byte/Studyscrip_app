@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3 } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -57,6 +57,8 @@ import { format } from "date-fns";
 import { AdminFreeNotesForm } from "@/components/admin-freenotes-form";
 import { AdminBookstoreForm } from "@/components/admin-bookstore-form";
 import { AdminQuizForm } from "@/components/admin-quiz-form";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 
 type FormattedPayment = Omit<Payment, 'paymentDate'> & { paymentDate: string };
@@ -107,6 +109,10 @@ export default function AdminDashboardPage() {
   const [isGrantingAccess, setIsGrantingAccess] = useState(false);
   const [selectableItems, setSelectableItems] = useState<SelectableItem[]>([]);
 
+  // State for Banner Settings
+  const [bannerSettings, setBannerSettings] = useState<BannerSettings>({ isActive: false, imageUrl: '', linkUrl: '' });
+  const [isSavingBanner, setIsSavingBanner] = useState(false);
+
 
   useEffect(() => {
     // Redirect non-admin/employee users
@@ -142,9 +148,10 @@ export default function AdminDashboardPage() {
           if (hasPermission('manage_bookstore')) promises.push(getBookstoreItems()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_quizzes')) promises.push(getQuizzes()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_quiz_attempts')) promises.push(getQuizAttempts()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_site_settings')) promises.push(getBannerSettings()); else promises.push(Promise.resolve(null));
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, bannerData, employeesData] = await Promise.all(promises);
           
           setAcademicClasses(academicsData as AcademicClass[]);
           setCourses(coursesData as Course[]);
@@ -155,6 +162,7 @@ export default function AdminDashboardPage() {
           setQuizzes(quizzesData as Quiz[]);
           setQuizAttempts(quizAttemptsData as QuizAttempt[]);
           setEmployees(employeesData as EmployeeData[]);
+          if(bannerData) setBannerSettings(bannerData as BannerSettings);
 
           // Populate selectable items for manual access
           if (hasPermission('manage_manual_access')) {
@@ -458,6 +466,19 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       toast({ variant: "destructive", title: "Update Failed", description: error.message });
     }
+  };
+
+  const handleSaveBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingBanner(true);
+    try {
+      await saveBannerSettings(bannerSettings);
+      toast({ title: "Banner Settings Saved!" });
+    } catch (error) {
+      console.error("Failed to save banner settings:", error);
+      toast({ variant: "destructive", title: "Failed to save settings" });
+    }
+    setIsSavingBanner(false);
   };
 
 
@@ -907,6 +928,50 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderSiteSettings = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Site Settings</CardTitle>
+        <CardDescription>Manage global site settings like the homepage banner.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSaveBanner} className="space-y-6">
+          <h3 className="text-lg font-medium">Homepage Banner</h3>
+          <div className="space-y-2">
+            <Label htmlFor="banner-image-url">Banner Image URL</Label>
+            <Input
+              id="banner-image-url"
+              placeholder="https://example.com/banner.jpg"
+              value={bannerSettings.imageUrl}
+              onChange={(e) => setBannerSettings(prev => ({...prev, imageUrl: e.target.value}))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="banner-link-url">Banner Link URL (when clicked)</Label>
+            <Input
+              id="banner-link-url"
+              placeholder="/courses/your-course-id"
+              value={bannerSettings.linkUrl}
+              onChange={(e) => setBannerSettings(prev => ({...prev, linkUrl: e.target.value}))}
+            />
+          </div>
+           <div className="flex items-center space-x-2">
+            <Switch 
+                id="banner-active"
+                checked={bannerSettings.isActive}
+                onCheckedChange={(checked) => setBannerSettings(prev => ({...prev, isActive: checked}))}
+            />
+            <Label htmlFor="banner-active">Show Banner on Homepage</Label>
+          </div>
+          <Button type="submit" disabled={isSavingBanner}>
+            {isSavingBanner ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Save Banner Settings
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="container mx-auto py-10 grid gap-8 grid-cols-1 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-8">
@@ -946,6 +1011,9 @@ export default function AdminDashboardPage() {
             {userRole === 'admin' && <Button variant={activeTab === 'employees' ? 'default' : 'outline'} onClick={() => setActiveTab('employees')}>
                 <UserCog className="mr-2 h-4 w-4" /> Employees
             </Button>}
+            {hasPermission('manage_site_settings') && <Button variant={activeTab === 'settings' ? 'default' : 'outline'} onClick={() => setActiveTab('settings')}>
+                <Settings className="mr-2 h-4 w-4" /> Site Settings
+            </Button>}
         </div>
 
         {activeTab === 'academics' && hasPermission('manage_academics') && renderAcademicsManagement()}
@@ -958,6 +1026,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'access' && hasPermission('manage_manual_access') && renderManualAccessGrant()}
         {activeTab === 'purchases' && hasPermission('view_purchases') && renderPurchaseManagement()}
         {activeTab === 'employees' && userRole === 'admin' && renderEmployeeManagement()}
+        {activeTab === 'settings' && hasPermission('manage_site_settings') && renderSiteSettings()}
         
         {hasPermission('view_payments') && <Card>
           <CardHeader>
@@ -1193,3 +1262,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    

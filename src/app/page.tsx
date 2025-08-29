@@ -2,9 +2,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
-import { getCourses } from "@/lib/data";
+import { getCourses, getBannerSettings, type BannerSettings } from "@/lib/data";
 import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuestion, Store, Radio, BrainCircuit } from "lucide-react";
 import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -14,17 +15,20 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
+  const [banner, setBanner] = useState<BannerSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
         setLoading(true);
-        const [courseData, academicsData] = await Promise.all([
+        const [courseData, academicsData, bannerData] = await Promise.all([
             getCourses(),
             getAcademicData(),
+            getBannerSettings(),
         ]);
         setCourses(courseData);
         setAcademicClasses(academicsData);
+        setBanner(bannerData);
         setLoading(false);
     }
     loadData();
@@ -47,6 +51,22 @@ export default function Home() {
         </div>
       ) : (
         <>
+          {banner?.isActive && banner.imageUrl && (
+            <section className="mb-8">
+              <Link href={banner.linkUrl || '#'} target="_blank" rel="noopener noreferrer">
+                <div className="aspect-[4/1] w-full relative overflow-hidden rounded-lg">
+                  <Image
+                    src={banner.imageUrl}
+                    alt="Promotional Banner"
+                    fill
+                    className="object-cover"
+                    data-ai-hint="advertisement banner"
+                  />
+                </div>
+              </Link>
+            </section>
+          )}
+
           <section id="academics" className="pb-16">
             <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
               Choose Your Class
@@ -96,3 +116,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

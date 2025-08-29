@@ -729,3 +729,27 @@ export async function findUserByEmail(email: string): Promise<{uid: string, emai
         email: userDoc.data().email
     };
 }
+
+
+// --- SITE SETTINGS ---
+export type BannerSettings = {
+    isActive: boolean;
+    imageUrl: string;
+    linkUrl: string;
+};
+
+export async function getBannerSettings(): Promise<BannerSettings | null> {
+    const settingsDocRef = doc(db, 'settings', 'homeBanner');
+    const docSnap = await getDoc(settingsDocRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as BannerSettings;
+    }
+    return null;
+}
+
+export async function saveBannerSettings(settings: BannerSettings): Promise<void> {
+    const settingsDocRef = doc(db, 'settings', 'homeBanner');
+    await setDoc(settingsDocRef, settings, { merge: true });
+}
+
+    
