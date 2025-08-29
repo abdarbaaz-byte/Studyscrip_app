@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import type { Course, CourseContent } from './courses';
@@ -639,12 +640,12 @@ export async function getQuizzes(): Promise<Quiz[]> {
 export async function saveQuiz(quiz: Quiz): Promise<void> {
     const { id, ...data } = quiz;
 
-    // Convert Date objects to Timestamps before saving
+    // Convert Date objects to Timestamps before saving, if they are not already timestamps
     const dataToSave: any = { ...data };
-    if (data.startTime) {
+    if (data.startTime && !(data.startTime instanceof Timestamp)) {
         dataToSave.startTime = Timestamp.fromDate(data.startTime as unknown as Date);
     }
-    if (data.endTime) {
+    if (data.endTime && !(data.endTime instanceof Timestamp)) {
         dataToSave.endTime = Timestamp.fromDate(data.endTime as unknown as Date);
     }
 
