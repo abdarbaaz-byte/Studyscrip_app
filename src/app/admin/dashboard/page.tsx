@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -78,6 +78,7 @@ export default function AdminDashboardPage() {
   const [bookstoreItems, setBookstoreItems] = useState<BookstoreItem[]>([]);
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [notificationTitle, setNotificationTitle] = useState("");
@@ -140,9 +141,10 @@ export default function AdminDashboardPage() {
           if (hasPermission('manage_free_notes')) promises.push(getFreeNotes()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_bookstore')) promises.push(getBookstoreItems()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_quizzes')) promises.push(getQuizzes()); else promises.push(Promise.resolve([]));
+          if (hasPermission('view_quiz_attempts')) promises.push(getQuizAttempts()); else promises.push(Promise.resolve([]));
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, employeesData] = await Promise.all(promises);
           
           setAcademicClasses(academicsData as AcademicClass[]);
           setCourses(coursesData as Course[]);
@@ -151,6 +153,7 @@ export default function AdminDashboardPage() {
           setFreeNotes(freeNotesData as FreeNote[]);
           setBookstoreItems(bookstoreData as BookstoreItem[]);
           setQuizzes(quizzesData as Quiz[]);
+          setQuizAttempts(quizAttemptsData as QuizAttempt[]);
           setEmployees(employeesData as EmployeeData[]);
 
           // Populate selectable items for manual access
@@ -629,6 +632,51 @@ export default function AdminDashboardPage() {
       </CardContent>
     </Card>
   );
+  
+  const renderQuizAttempts = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Quiz Attempts</CardTitle>
+        <CardDescription>View all submitted quiz results and user details.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Student</TableHead>
+              <TableHead>Quiz</TableHead>
+              <TableHead>Score</TableHead>
+              <TableHead>Submitted At</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {quizAttempts.map((attempt) => (
+              <TableRow key={attempt.id}>
+                <TableCell>
+                    <div className="font-medium">{attempt.userName}</div>
+                    <div className="text-sm text-muted-foreground">{attempt.userSchool}, {attempt.userPlace} ({attempt.userClass})</div>
+                </TableCell>
+                <TableCell>{attempt.quizTitle}</TableCell>
+                <TableCell>
+                    <Badge variant={attempt.percentage >= 50 ? 'default' : 'destructive'} className={cn(attempt.percentage >= 50 && "bg-green-600")}>
+                        {attempt.score} / {attempt.totalQuestions} ({attempt.percentage.toFixed(0)}%)
+                    </Badge>
+                </TableCell>
+                <TableCell>{format(attempt.submittedAt.toDate(), "PPP p")}</TableCell>
+              </TableRow>
+            ))}
+            {quizAttempts.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No quiz attempts have been submitted yet.
+                    </TableCell>
+                </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
 
 
   const renderPaymentRequests = () => (
@@ -878,6 +926,9 @@ export default function AdminDashboardPage() {
             {hasPermission('manage_quizzes') && <Button variant={activeTab === 'quizzes' ? 'default' : 'outline'} onClick={() => setActiveTab('quizzes')}>
                 <BrainCircuit className="mr-2 h-4 w-4" /> Quizzes
             </Button>}
+            {hasPermission('view_quiz_attempts') && <Button variant={activeTab === 'quiz-attempts' ? 'default' : 'outline'} onClick={() => setActiveTab('quiz-attempts')}>
+                <BarChart3 className="mr-2 h-4 w-4" /> Quiz Attempts
+            </Button>}
              {hasPermission('manage_payment_requests') && <Button variant={activeTab === 'requests' ? 'default' : 'outline'} onClick={() => setActiveTab('requests')} className="relative">
                 <ShieldAlert className="mr-2 h-4 w-4" /> Payment Requests
                  {paymentRequests.length > 0 && (
@@ -902,6 +953,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'free-notes' && hasPermission('manage_free_notes') && renderFreeNotesManagement()}
         {activeTab === 'bookstore' && hasPermission('manage_bookstore') && renderBookstoreManagement()}
         {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
+        {activeTab === 'quiz-attempts' && hasPermission('view_quiz_attempts') && renderQuizAttempts()}
         {activeTab === 'requests' && hasPermission('manage_payment_requests') && renderPaymentRequests()}
         {activeTab === 'access' && hasPermission('manage_manual_access') && renderManualAccessGrant()}
         {activeTab === 'purchases' && hasPermission('view_purchases') && renderPurchaseManagement()}

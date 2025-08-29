@@ -35,6 +35,7 @@ const allPermissions: { id: UserPermission, label: string }[] = [
     { id: 'manage_free_notes', label: 'Manage Free Notes' },
     { id: 'manage_bookstore', label: 'Manage Bookstore' },
     { id: 'manage_quizzes', label: 'Manage Quizzes' },
+    { id: 'view_quiz_attempts', label: 'View Quiz Attempts' },
     { id: 'manage_payment_requests', label: 'Manage Payment Requests' },
     { id: 'manage_manual_access', label: 'Manage Manual Access' },
     { id: 'view_purchases', label: 'View Purchases' },

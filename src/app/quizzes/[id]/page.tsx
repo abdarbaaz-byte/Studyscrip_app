@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, Timer, ListChecks, Info, User, School, MapPin, NotebookText } from "lucide-react";
+import { Loader2, Timer, ListChecks, Info, User, School, MapPin, NotebookText, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function QuizStartPage() {
@@ -30,6 +30,26 @@ export default function QuizStartPage() {
     async function loadQuiz() {
       if (!quizId) return;
       setLoading(true);
+
+      // Check for previous attempt first
+      const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
+      if (hasAttempted) {
+        toast({
+          title: "Quiz Already Attempted",
+          description: "Redirecting to your results...",
+        });
+        const savedData = JSON.parse(localStorage.getItem(`quiz-data-${quizId}`) || '{}');
+        const queryParams = new URLSearchParams({
+            answers: encodeURIComponent(savedData.answers || '{}'),
+            name: savedData.name || 'Anonymous',
+            school: savedData.school || '',
+            class: savedData.class || '',
+            place: savedData.place || ''
+        }).toString();
+        router.replace(`/quizzes/${quizId}/results?${queryParams}`);
+        return;
+      }
+
       const loadedQuiz = await getQuiz(quizId);
       if (loadedQuiz) {
         setQuiz(loadedQuiz);
@@ -49,12 +69,11 @@ export default function QuizStartPage() {
       return;
     }
 
-    const queryParams = new URLSearchParams({
-        name: userName,
-        school: userSchool,
-        class: userClass,
-        place: userPlace
-    }).toString();
+    // Save user data to local storage in case they need to be redirected back
+    const quizData = { name: userName, school: userSchool, class: userClass, place: userPlace };
+    localStorage.setItem(`quiz-data-${quizId}`, JSON.stringify(quizData));
+
+    const queryParams = new URLSearchParams(quizData).toString();
     
     router.push(`/quizzes/${quizId}/attempt?${queryParams}`);
   };
@@ -90,6 +109,14 @@ export default function QuizStartPage() {
                              <li className="flex items-start gap-3">
                                 <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                 <span>Each question has only one correct answer. Choose the best option.</span>
+                            </li>
+                             <li className="flex items-start gap-3">
+                                <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
+                                <span className="font-semibold">This quiz can only be attempted once.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
+                                <span className="font-semibold">Do not switch tabs or minimize the app, or your quiz will be submitted automatically.</span>
                             </li>
                              <li className="flex items-start gap-3">
                                 <NotebookText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />

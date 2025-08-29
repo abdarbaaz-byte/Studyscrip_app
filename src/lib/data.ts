@@ -654,6 +654,13 @@ export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'sub
     return docRef.id;
 }
 
+export async function getQuizAttempts(): Promise<QuizAttempt[]> {
+    const attemptsCol = collection(db, 'quizAttempts');
+    const q = query(attemptsCol, orderBy('submittedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+}
+
 
 // --- EMPLOYEE MANAGEMENT (RBAC) ---
 export type EmployeeData = {

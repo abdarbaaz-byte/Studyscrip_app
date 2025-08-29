@@ -37,6 +37,7 @@ function QuizAttemptContent() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSubmittedRef = useRef(false);
 
   // User details from query params
   const name = searchParams.get('name') || 'Anonymous';
@@ -64,10 +65,14 @@ function QuizAttemptContent() {
   }, [quizId, router, toast]);
 
   const handleSubmit = () => {
-    if (!quiz) return;
+    if (!quiz || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     
     // Stop the timer
     if (timerRef.current) clearInterval(timerRef.current);
+
+    // Set flag in local storage
+    localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
 
     // Pass user details along with answers to the results page
     const queryParams = new URLSearchParams({
@@ -104,6 +109,25 @@ function QuizAttemptContent() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') {
+            toast({
+                variant: 'destructive',
+                title: 'Quiz Submitted',
+                description: 'You moved to another tab. Your quiz has been submitted to prevent cheating.',
+            });
+            handleSubmit();
+        }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   
   const handleAnswerChange = (questionId: string, optionIndex: number) => {
