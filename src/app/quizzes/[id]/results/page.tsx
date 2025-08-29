@@ -8,11 +8,12 @@ import { db } from "@/lib/firebase";
 import { getQuiz, saveQuizAttempt, type Quiz, type Question, type QuizAttempt } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 type AnswersState = { [questionId: string]: number };
 
@@ -30,12 +31,12 @@ function QuizResultsContent() {
   const userClass = searchParams.get('class') || 'N/A';
   const place = searchParams.get('place') || 'N/A';
   
-
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<AnswersState>({});
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [hasSaved, setHasSaved] = useState(false);
+  const [canShowAnalysis, setCanShowAnalysis] = useState(false);
 
   useEffect(() => {
     if (!answersString) {
@@ -60,6 +61,12 @@ function QuizResultsContent() {
 
       if (loadedQuiz) {
         setQuiz(loadedQuiz);
+
+        const now = new Date();
+        const endTime = loadedQuiz.endTime?.toDate();
+        if (!endTime || now > endTime) {
+            setCanShowAnalysis(true);
+        }
 
         let currentScore = 0;
         loadedQuiz.questions.forEach(q => {
@@ -137,51 +144,60 @@ function QuizResultsContent() {
         </CardContent>
       </Card>
       
-      <div className="space-y-6">
-        <h2 className="font-headline text-2xl font-bold">Detailed Analysis</h2>
-        {quiz.questions.map((question, index) => {
-            const userAnswerIndex = answers[question.id];
-            const isCorrect = userAnswerIndex === question.correctAnswer;
-            
-            return (
-                <Card key={question.id} className={cn("border-l-4", isCorrect ? "border-green-500" : "border-red-500")}>
-                    <CardHeader>
-                        <CardTitle className="text-lg flex items-start gap-4">
-                           <span className="text-primary">{index + 1}.</span> 
-                           <span className="flex-1">{question.text}</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            {question.options.map((option, optIndex) => {
-                                const isUserAnswer = userAnswerIndex === optIndex;
-                                const isCorrectAnswer = question.correctAnswer === optIndex;
-                                return (
-                                    <div
-                                     key={optIndex}
-                                     className={cn(
-                                        "flex items-center gap-3 p-3 rounded-md border",
-                                        isCorrectAnswer ? "bg-green-100 border-green-300" : "",
-                                        isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
-                                     )}
-                                    >
-                                     {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
-                                     <span className="flex-1">{option}</span>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                        {question.explanation && (
-                            <div className="p-3 bg-secondary rounded-lg text-sm text-muted-foreground">
-                                <h4 className="font-semibold text-foreground mb-1">Explanation:</h4>
-                                <p>{question.explanation}</p>
+      {canShowAnalysis ? (
+        <div className="space-y-6">
+            <h2 className="font-headline text-2xl font-bold">Detailed Analysis</h2>
+            {quiz.questions.map((question, index) => {
+                const userAnswerIndex = answers[question.id];
+                const isCorrect = userAnswerIndex === question.correctAnswer;
+                
+                return (
+                    <Card key={question.id} className={cn("border-l-4", isCorrect ? "border-green-500" : "border-red-500")}>
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-start gap-4">
+                            <span className="text-primary">{index + 1}.</span> 
+                            <span className="flex-1">{question.text}</span>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                {question.options.map((option, optIndex) => {
+                                    const isUserAnswer = userAnswerIndex === optIndex;
+                                    const isCorrectAnswer = question.correctAnswer === optIndex;
+                                    return (
+                                        <div
+                                        key={optIndex}
+                                        className={cn(
+                                            "flex items-center gap-3 p-3 rounded-md border",
+                                            isCorrectAnswer ? "bg-green-100 border-green-300" : "",
+                                            isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
+                                        )}
+                                        >
+                                        {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
+                                        <span className="flex-1">{option}</span>
+                                        </div>
+                                    )
+                                })}
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
-            )
-        })}
-      </div>
+                            {question.explanation && (
+                                <div className="p-3 bg-secondary rounded-lg text-sm text-muted-foreground">
+                                    <h4 className="font-semibold text-foreground mb-1">Explanation:</h4>
+                                    <p>{question.explanation}</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )
+            })}
+        </div>
+      ) : (
+         <Card className="text-center p-8 bg-secondary">
+            <Clock className="h-12 w-12 mx-auto text-primary mb-4" />
+            <CardTitle className="text-2xl font-bold">Analysis Pending</CardTitle>
+            <CardDescription>Detailed results and explanations will be available after the quiz period ends.</CardDescription>
+            {quiz.endTime && <p className="font-bold text-lg mt-2">Available after: {format(quiz.endTime.toDate(), "PPP p")}</p>}
+        </Card>
+      )}
 
     </div>
   );

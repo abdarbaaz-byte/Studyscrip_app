@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Calendar as CalendarIcon } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   AlertDialog,
@@ -22,6 +22,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Timestamp } from "firebase/firestore";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
 
 interface AdminQuizFormProps {
   initialQuizzes: Quiz[];
@@ -32,8 +38,10 @@ interface AdminQuizFormProps {
 const emptyQuiz: Omit<Quiz, 'id'> = {
   title: "",
   description: "",
-  duration: 10, // Default duration
+  duration: 10,
   questions: [],
+  startTime: undefined,
+  endTime: undefined,
 };
 
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -124,6 +132,14 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                     <span>{quiz.questions.length} Questions</span>
                     <span>{quiz.duration ? `${quiz.duration} Minutes` : 'No time limit'}</span>
                 </div>
+                 <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>
+                        Starts: {quiz.startTime ? format(quiz.startTime.toDate(), "PPP p") : 'Always open'}
+                    </span>
+                     <span>
+                        Ends: {quiz.endTime ? format(quiz.endTime.toDate(), "PPP p") : 'No expiry'}
+                    </span>
+                </div>
                 {quiz.questions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No questions yet. Edit the quiz to add some.</p>}
               </div>
             </AccordionContent>
@@ -143,6 +159,15 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
   useEffect(() => {
     // Ensure duration is part of the form state, even for older quizzes
     const initialData = quiz ? { ...emptyQuiz, ...quiz } : emptyQuiz;
+    
+    // Convert Timestamps to Dates for the date picker
+    if (initialData.startTime && initialData.startTime instanceof Timestamp) {
+        initialData.startTime = initialData.startTime.toDate() as any;
+    }
+    if (initialData.endTime && initialData.endTime instanceof Timestamp) {
+        initialData.endTime = initialData.endTime.toDate() as any;
+    }
+
     setFormData(initialData);
   }, [quiz]);
 
@@ -199,6 +224,42 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
           <div className="space-y-2">
             <Label htmlFor="duration">Duration (in minutes)</Label>
             <Input id="duration" name="duration" type="number" value={formData.duration} onChange={handleChange} placeholder="e.g., 30" />
+          </div>
+           <div className="space-y-2">
+                <Label htmlFor="startTime">Start Time (Optional)</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            id="startTime"
+                            variant={"outline"}
+                            className={cn("w-full justify-start text-left font-normal", !formData.startTime && "text-muted-foreground")}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.startTime ? format(formData.startTime as any, "PPP p") : <span>Pick a date and time</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={formData.startTime as any} onSelect={(date) => setFormData(p => ({...p, startTime: date as any}))} initialFocus />
+                    </PopoverContent>
+                </Popover>
+          </div>
+           <div className="space-y-2">
+                <Label htmlFor="endTime">End Time (Optional)</Label>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            id="endTime"
+                            variant={"outline"}
+                            className={cn("w-full justify-start text-left font-normal", !formData.endTime && "text-muted-foreground")}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.endTime ? format(formData.endTime as any, "PPP p") : <span>Pick a date and time</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={formData.endTime as any} onSelect={(date) => setFormData(p => ({...p, endTime: date as any}))} initialFocus />
+                    </PopoverContent>
+                </Popover>
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="description">Description</Label>

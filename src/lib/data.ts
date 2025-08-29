@@ -26,6 +26,8 @@ export type Quiz = {
     description: string;
     duration?: number; // Duration in minutes
     questions: Question[];
+    startTime?: Timestamp; // Optional start time for the quiz
+    endTime?: Timestamp;   // Optional end time for the quiz
 };
 
 // This type will be used to store a user's attempt in Firestore
@@ -97,6 +99,8 @@ export type Purchase = {
 export type EnrichedPurchase = Omit<Purchase, 'itemId'> & {
     itemId: string;
     item: any; // Can be a Course or Subject object
+    userEmail: string;
+    itemName: string;
 };
 
 export type Payment = {
@@ -323,7 +327,7 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
             enrichedList.push({
                 ...purchase,
                 item: itemData,
-            });
+            } as EnrichedPurchase);
         }
     }
 
@@ -634,10 +638,20 @@ export async function getQuizzes(): Promise<Quiz[]> {
 
 export async function saveQuiz(quiz: Quiz): Promise<void> {
     const { id, ...data } = quiz;
+
+    // Convert Date objects to Timestamps before saving
+    const dataToSave: any = { ...data };
+    if (data.startTime) {
+        dataToSave.startTime = Timestamp.fromDate(data.startTime as unknown as Date);
+    }
+    if (data.endTime) {
+        dataToSave.endTime = Timestamp.fromDate(data.endTime as unknown as Date);
+    }
+
     if (id) {
-        await setDoc(doc(db, 'quizzes', id), data, { merge: true });
+        await setDoc(doc(db, 'quizzes', id), dataToSave, { merge: true });
     } else {
-        await addDoc(collection(db, 'quizzes'), data);
+        await addDoc(collection(db, 'quizzes'), dataToSave);
     }
 }
 
