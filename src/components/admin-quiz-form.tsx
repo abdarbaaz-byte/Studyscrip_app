@@ -153,16 +153,21 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
 
 // Sub-component for the form itself
 function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onSave: (quiz: Quiz) => void, onCancel: () => void, isSaving: boolean }) {
-  const [formData, setFormData] = useState<Omit<Quiz, 'id' | 'startTime' | 'endTime'>>(quiz || emptyQuiz);
+  const [formData, setFormData] = useState<Omit<Quiz, 'id' | 'startTime' | 'endTime'>>({
+      title: "",
+      description: "",
+      duration: 10,
+      questions: [],
+  });
   const [startTime, setStartTime] = useState<Date | undefined>();
   const [endTime, setEndTime] = useState<Date | undefined>();
 
   useEffect(() => {
     if (quiz) {
-        const { startTime: st, endTime: et, ...rest } = quiz;
+        const { id, startTime: st, endTime: et, ...rest } = quiz;
         setFormData(rest);
-        setStartTime(st instanceof Timestamp ? st.toDate() : st);
-        setEndTime(et instanceof Timestamp ? et.toDate() : et);
+        setStartTime(st ? (st as Timestamp).toDate() : undefined);
+        setEndTime(et ? (et as Timestamp).toDate() : undefined);
     } else {
         setFormData(emptyQuiz);
         setStartTime(undefined);
@@ -189,7 +194,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
     setter(newDate);
   };
   
-  addQuestion = () => {
+  const addQuestion = () => {
     const newQuestion: Question = {
         id: generateId('q'),
         text: '',
