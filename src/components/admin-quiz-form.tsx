@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,7 +25,7 @@ import { Timestamp } from "firebase/firestore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 
 interface AdminQuizFormProps {
@@ -159,31 +158,38 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
   const [endTime, setEndTime] = useState<Date | undefined>();
 
   useEffect(() => {
-    const initialData = quiz ? { ...emptyQuiz, ...quiz } : emptyQuiz;
-    
-    const { startTime: st, endTime: et, ...rest } = initialData;
-    setFormData(rest);
-
-    if (st && st instanceof Timestamp) {
-        setStartTime(st.toDate());
+    if (quiz) {
+        const { startTime: st, endTime: et, ...rest } = quiz;
+        setFormData(rest);
+        setStartTime(st instanceof Timestamp ? st.toDate() : st);
+        setEndTime(et instanceof Timestamp ? et.toDate() : et);
     } else {
-        setStartTime(st as Date | undefined);
+        setFormData(emptyQuiz);
+        setStartTime(undefined);
+        setEndTime(undefined);
     }
-    
-    if (et && et instanceof Timestamp) {
-        setEndTime(et.toDate());
-    } else {
-        setEndTime(et as Date | undefined);
-    }
-
   }, [quiz]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: name === 'duration' ? parseInt(value) || 0 : value }));
   };
+
+  const handleTimeChange = (date: Date | undefined, timeString: string, setter: (d: Date | undefined) => void) => {
+    if (!date) {
+        const newDate = new Date();
+        const [hours, minutes] = timeString.split(':').map(Number);
+        newDate.setHours(hours, minutes, 0, 0);
+        setter(newDate);
+        return;
+    }
+    const newDate = new Date(date);
+    const [hours, minutes] = timeString.split(':').map(Number);
+    newDate.setHours(hours, minutes, 0, 0);
+    setter(newDate);
+  };
   
-  const addQuestion = () => {
+  addQuestion = () => {
     const newQuestion: Question = {
         id: generateId('q'),
         text: '',
@@ -221,8 +227,8 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
     onSave({ 
         ...formData, 
         id: quiz?.id || '',
-        startTime: startTime ? Timestamp.fromDate(startTime) : undefined,
-        endTime: endTime ? Timestamp.fromDate(endTime) : undefined,
+        startTime: startTime,
+        endTime: endTime,
     });
   };
 
@@ -239,39 +245,55 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
           </div>
            <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time (Optional)</Label>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            id="startTime"
-                            variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !startTime && "text-muted-foreground")}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startTime ? format(startTime, "PPP p") : <span>Pick a date and time</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={startTime} onSelect={setStartTime} initialFocus />
-                    </PopoverContent>
-                </Popover>
+                <div className="flex gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                id="startTime"
+                                variant={"outline"}
+                                className={cn("flex-1 justify-start text-left font-normal", !startTime && "text-muted-foreground")}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startTime ? format(startTime, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={startTime} onSelect={setStartTime} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                    <Input 
+                        type="time" 
+                        value={startTime ? format(startTime, "HH:mm") : ""}
+                        onChange={(e) => handleTimeChange(startTime, e.target.value, setStartTime)}
+                        className="w-[120px]"
+                    />
+                </div>
           </div>
            <div className="space-y-2">
                 <Label htmlFor="endTime">End Time (Optional)</Label>
-                 <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            id="endTime"
-                            variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !endTime && "text-muted-foreground")}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endTime ? format(endTime, "PPP p") : <span>Pick a date and time</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={endTime} onSelect={setEndTime} initialFocus />
-                    </PopoverContent>
-                </Popover>
+                <div className="flex gap-2">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                id="endTime"
+                                variant={"outline"}
+                                className={cn("flex-1 justify-start text-left font-normal", !endTime && "text-muted-foreground")}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endTime ? format(endTime, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={endTime} onSelect={setEndTime} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                     <Input 
+                        type="time" 
+                        value={endTime ? format(endTime, "HH:mm") : ""}
+                        onChange={(e) => handleTimeChange(endTime, e.target.value, setEndTime)}
+                        className="w-[120px]"
+                    />
+                </div>
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="description">Description</Label>
