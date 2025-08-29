@@ -42,6 +42,19 @@ export default function Home() {
     { icon: Radio, text: "Live Classes", href: "/live-classes" },
     { icon: BrainCircuit, text: "Quiz", href: "/quizzes" },
   ];
+  
+  const BannerContent = () => (
+    <div className="aspect-[4/1] w-full relative overflow-hidden rounded-lg">
+      <Image
+        src={banner!.imageUrl}
+        alt="Promotional Banner"
+        fill
+        className="object-cover"
+        data-ai-hint="advertisement banner"
+      />
+    </div>
+  );
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -52,18 +65,14 @@ export default function Home() {
       ) : (
         <>
           {banner?.isActive && banner.imageUrl && (
-            <section className="mb-8">
-              <Link href={banner.linkUrl || '#'} target="_blank" rel="noopener noreferrer">
-                <div className="aspect-[4/1] w-full relative overflow-hidden rounded-lg">
-                  <Image
-                    src={banner.imageUrl}
-                    alt="Promotional Banner"
-                    fill
-                    className="object-cover"
-                    data-ai-hint="advertisement banner"
-                  />
-                </div>
-              </Link>
+            <section className="mb-12">
+               {banner.linkUrl ? (
+                 <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
+                   <BannerContent />
+                 </Link>
+               ) : (
+                 <BannerContent />
+               )}
             </section>
           )}
 
@@ -116,5 +125,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
