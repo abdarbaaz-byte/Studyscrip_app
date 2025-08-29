@@ -36,7 +36,7 @@ export default function Home() {
     { icon: MessageCircleQuestion, text: "Doubt", href: "/doubt-ai" },
     { icon: Store, text: "Bookstore", href: "/bookstore" },
     { icon: Radio, text: "Live Classes", href: "/live-classes" },
-    { icon: BrainCircuit, text: "Quiz", href: "/my-courses" },
+    { icon: BrainCircuit, text: "Quiz", href: "/quizzes" },
   ];
 
   return (

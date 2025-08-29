@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Quiz, Question } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,9 +136,9 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
 function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onSave: (quiz: Quiz) => void, onCancel: () => void, isSaving: boolean }) {
   const [formData, setFormData] = useState<Omit<Quiz, 'id'>>(quiz || emptyQuiz);
 
-  useState(() => {
+  useEffect(() => {
     setFormData(quiz || emptyQuiz);
-  });
+  }, [quiz]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

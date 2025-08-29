@@ -1,0 +1,166 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { type Quiz, type Question } from "@/lib/data";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+type AnswersState = { [questionId: string]: number };
+
+export default function QuizAttemptPage() {
+  const params = useParams();
+  const router = useRouter();
+  const quizId = params.id as string;
+
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<AnswersState>({});
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+
+  useEffect(() => {
+    async function loadQuiz() {
+      if (!quizId) return;
+      setLoading(true);
+      const quizDocRef = doc(db, 'quizzes', quizId);
+      const quizSnap = await getDoc(quizDocRef);
+      if (quizSnap.exists()) {
+        setQuiz({ id: quizSnap.id, ...quizSnap.data() } as Quiz);
+      } else {
+        // Handle quiz not found
+      }
+      setLoading(false);
+    }
+    loadQuiz();
+  }, [quizId]);
+  
+  const handleAnswerChange = (questionId: string, optionIndex: number) => {
+    setAnswers(prev => ({ ...prev, [questionId]: optionIndex }));
+  };
+
+  const handleNext = () => {
+    if (quiz && currentQuestionIndex < quiz.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  const handleSubmit = () => {
+    // For now, let's just log the result. We'll build the result page next.
+    if (!quiz) return;
+    let score = 0;
+    quiz.questions.forEach(q => {
+      if (answers[q.id] === q.correctAnswer) {
+        score++;
+      }
+    });
+
+    console.log(`You scored ${score} out of ${quiz.questions.length}`);
+     toast({
+        title: "Quiz Submitted!",
+        description: `You scored ${score} out of ${quiz.questions.length}. Analysis page coming soon!`,
+      });
+    setShowSubmitConfirm(false);
+    router.push('/quizzes'); // Go back to quiz list for now
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+  }
+
+  if (!quiz) {
+    return <div className="text-center py-16">Quiz not found.</div>;
+  }
+  
+  const currentQuestion = quiz.questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
+  const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
+
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline text-3xl">{quiz.title}</CardTitle>
+          <CardDescription>{quiz.description}</CardDescription>
+          <div className="pt-4">
+            <Progress value={progress} className="w-full" />
+            <p className="text-sm text-muted-foreground mt-2">Question {currentQuestionIndex + 1} of {quiz.questions.length}</p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="py-6">
+            <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
+            <RadioGroup 
+                value={answers[currentQuestion.id]?.toString()} 
+                onValueChange={(value) => handleAnswerChange(currentQuestion.id, parseInt(value))}
+                className="space-y-4"
+            >
+              {currentQuestion.options.map((option, index) => (
+                <div key={index} className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                  <RadioGroupItem value={index.toString()} id={`q${currentQuestionIndex}-opt${index}`} />
+                  <Label htmlFor={`q${currentQuestionIndex}-opt${index}`} className="text-base font-normal flex-1 cursor-pointer">
+                    {option}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+          
+          <div className="flex justify-between items-center mt-8">
+            <Button variant="outline" onClick={handlePrev} disabled={currentQuestionIndex === 0}>
+              Previous
+            </Button>
+            
+            {isLastQuestion ? (
+              <Button onClick={() => setShowSubmitConfirm(true)} className="bg-green-600 hover:bg-green-700">
+                Submit Quiz
+              </Button>
+            ) : (
+              <Button onClick={handleNext}>
+                Next
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Are you ready to submit?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      You have answered {Object.keys(answers).length} out of {quiz.questions.length} questions. You cannot change your answers after submitting.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <Button variant="ghost" onClick={() => setShowSubmitConfirm(false)}>Review Answers</Button>
+                  <AlertDialogAction onClick={handleSubmit}>Submit</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
