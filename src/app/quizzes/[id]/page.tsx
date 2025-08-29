@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -33,6 +32,27 @@ export default function QuizStartPage() {
       if (!quizId) return;
       setLoading(true);
 
+      // Check for previous attempt first
+      const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
+      if (hasAttempted) {
+          const savedData = JSON.parse(localStorage.getItem(`quiz-data-${quizId}`) || '{}');
+          if (savedData.answers) { // Ensure there is data to redirect with
+              toast({
+                  title: "Quiz Already Attempted",
+                  description: "Redirecting to your results...",
+              });
+              const queryParams = new URLSearchParams({
+                  answers: savedData.answers, // Already encoded
+                  name: savedData.name || 'Anonymous',
+                  school: savedData.school || '',
+                  class: savedData.class || '',
+                  place: savedData.place || ''
+              }).toString();
+              router.replace(`/quizzes/${quizId}/results?${queryParams}`);
+              return; // Stop further execution
+          }
+      }
+
       const loadedQuiz = await getQuiz(quizId);
       if (loadedQuiz) {
         setQuiz(loadedQuiz);
@@ -46,26 +66,7 @@ export default function QuizStartPage() {
         } else if (endTime && now > endTime) {
           setQuizStatus('expired');
         } else {
-            // Check for previous attempt only if the quiz is available
-            const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
-            if (hasAttempted) {
-                toast({
-                    title: "Quiz Already Attempted",
-                    description: "Redirecting to your results...",
-                });
-                 // Get stored data for results page redirection
-                const savedData = JSON.parse(localStorage.getItem(`quiz-data-${quizId}`) || '{}');
-                const queryParams = new URLSearchParams({
-                    answers: encodeURIComponent(savedData.answers || '{}'),
-                    name: savedData.name || 'Anonymous',
-                    school: savedData.school || '',
-                    class: savedData.class || '',
-                    place: savedData.place || ''
-                }).toString();
-                router.replace(`/quizzes/${quizId}/results?${queryParams}`);
-            } else {
-               setQuizStatus('available');
-            }
+           setQuizStatus('available');
         }
 
       } else {
@@ -85,8 +86,9 @@ export default function QuizStartPage() {
     }
 
     // Save user data to local storage in case they need to be redirected back
+    // Note: We don't save answers here, only personal details. Answers are saved on submit.
     const quizData = { name: userName, school: userSchool, class: userClass, place: userPlace };
-    localStorage.setItem(`quiz-data-${quizId}`, JSON.stringify(quizData));
+    localStorage.setItem(`quiz-start-data-${quizId}`, JSON.stringify(quizData));
 
     const queryParams = new URLSearchParams(quizData).toString();
     

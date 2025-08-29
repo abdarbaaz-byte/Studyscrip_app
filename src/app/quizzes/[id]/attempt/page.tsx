@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Timer, AlertCircle } from "lucide-react";
+import { Loader2, Timer, AlertTriangle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
@@ -71,12 +70,23 @@ function QuizAttemptContent() {
     // Stop the timer
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // Set flag in local storage
+    // Encode answers for URL
+    const encodedAnswers = encodeURIComponent(JSON.stringify(answers));
+
+    // Set flag and data in local storage
     localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
+    localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({
+        answers: encodedAnswers,
+        name,
+        school,
+        class: userClass,
+        place
+    }));
+
 
     // Pass user details along with answers to the results page
     const queryParams = new URLSearchParams({
-        answers: encodeURIComponent(JSON.stringify(answers)),
+        answers: encodedAnswers,
         name: name,
         school: school || '',
         class: userClass || '',
@@ -90,7 +100,7 @@ function QuizAttemptContent() {
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0) {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (timeLeft === 0) {
+      if (timeLeft === 0 && !hasSubmittedRef.current) {
         toast({
           title: "Time's Up!",
           description: "Your quiz has been automatically submitted.",
@@ -112,7 +122,7 @@ function QuizAttemptContent() {
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-        if (document.visibilityState === 'hidden') {
+        if (document.visibilityState === 'hidden' && !hasSubmittedRef.current) {
             toast({
                 variant: 'destructive',
                 title: 'Quiz Submitted',
@@ -142,7 +152,7 @@ function QuizAttemptContent() {
 
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
