@@ -28,6 +28,24 @@ export type Quiz = {
     questions: Question[];
 };
 
+// This type will be used to store a user's attempt in Firestore
+export type QuizAttempt = {
+  id?: string; // Firestore doc ID
+  quizId: string;
+  quizTitle: string;
+  userId: string | null; // For logged-in users
+  userName: string;
+  userSchool: string;
+  userClass: string;
+  userPlace: string;
+  answers: { [questionId: string]: number };
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  submittedAt: Timestamp;
+};
+
+
 // COURSES
 export async function getCourses(): Promise<Course[]> {
   const coursesCol = collection(db, 'courses');
@@ -598,6 +616,15 @@ export async function deleteBookstoreItem(id: string): Promise<void> {
 }
 
 // --- QUIZZES ---
+export async function getQuiz(id: string): Promise<Quiz | null> {
+    const quizDocRef = doc(db, 'quizzes', id);
+    const quizSnap = await getDoc(quizDocRef);
+    if (quizSnap.exists()) {
+        return { id: quizSnap.id, ...quizSnap.data() } as Quiz;
+    }
+    return null;
+}
+
 export async function getQuizzes(): Promise<Quiz[]> {
     const quizzesCol = collection(db, 'quizzes');
     const q = query(quizzesCol, orderBy('title'));
@@ -617,6 +644,16 @@ export async function saveQuiz(quiz: Quiz): Promise<void> {
 export async function deleteQuiz(id: string): Promise<void> {
     await deleteDoc(doc(db, 'quizzes', id));
 }
+
+export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'>): Promise<string> {
+    const attemptsCol = collection(db, 'quizAttempts');
+    const docRef = await addDoc(attemptsCol, {
+        ...attemptData,
+        submittedAt: serverTimestamp(),
+    });
+    return docRef.id;
+}
+
 
 // --- EMPLOYEE MANAGEMENT (RBAC) ---
 export type EmployeeData = {

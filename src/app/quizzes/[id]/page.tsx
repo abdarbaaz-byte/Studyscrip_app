@@ -1,115 +1,62 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { type Quiz } from "@/lib/data";
+import { getQuiz, type Quiz } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Timer, AlertCircle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Loader2, Timer, ListChecks, Info, User, School, MapPin, NotebookText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-type AnswersState = { [questionId: string]: number };
-
-export default function QuizAttemptPage() {
+export default function QuizStartPage() {
   const params = useParams();
   const router = useRouter();
   const quizId = params.id as string;
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<AnswersState>({});
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const { toast } = useToast();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // User details state
+  const [userName, setUserName] = useState('');
+  const [userSchool, setUserSchool] = useState('');
+  const [userClass, setUserClass] = useState('');
+  const [userPlace, setUserPlace] = useState('');
 
   useEffect(() => {
     async function loadQuiz() {
       if (!quizId) return;
       setLoading(true);
-      const quizDocRef = doc(db, 'quizzes', quizId);
-      const quizSnap = await getDoc(quizDocRef);
-      if (quizSnap.exists()) {
-        const loadedQuiz = { id: quizSnap.id, ...quizSnap.data() } as Quiz;
+      const loadedQuiz = await getQuiz(quizId);
+      if (loadedQuiz) {
         setQuiz(loadedQuiz);
-        if (loadedQuiz.duration) {
-          setTimeLeft(loadedQuiz.duration * 60);
-        }
       } else {
-        // Handle quiz not found
+        toast({ variant: 'destructive', title: 'Quiz not found' });
+        router.push('/quizzes');
       }
       setLoading(false);
     }
     loadQuiz();
-  }, [quizId]);
+  }, [quizId, router, toast]);
 
-  useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (timeLeft === 0) {
-        toast({
-          title: "Time's Up!",
-          description: "Your quiz has been automatically submitted.",
-        });
-        handleSubmit();
-      }
+  const handleStartQuiz = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userName || !userSchool || !userClass || !userPlace) {
+      toast({ variant: 'destructive', title: 'Please fill all details.' });
       return;
     }
 
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => (prev ? prev - 1 : 0));
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft]);
-
-  
-  const handleAnswerChange = (questionId: string, optionIndex: number) => {
-    setAnswers(prev => ({ ...prev, [questionId]: optionIndex }));
-  };
-
-  const handleNext = () => {
-    if (quiz && currentQuestionIndex < quiz.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!quiz) return;
+    const queryParams = new URLSearchParams({
+        name: userName,
+        school: userSchool,
+        class: userClass,
+        place: userPlace
+    }).toString();
     
-    // Stop the timer
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    // Convert answers to a query string
-    const answersQueryString = encodeURIComponent(JSON.stringify(answers));
-    
-    // Redirect to the results page
-    router.replace(`/quizzes/${quizId}/results?answers=${answersQueryString}`);
+    router.push(`/quizzes/${quizId}/attempt?${queryParams}`);
   };
 
   if (loading) {
@@ -117,89 +64,71 @@ export default function QuizAttemptPage() {
   }
 
   if (!quiz) {
-    return <div className="text-center py-16">Quiz not found.</div>;
+    return <div className="text-center py-16">Quiz not found or could not be loaded.</div>;
   }
-  
-  const currentQuestion = quiz.questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
-  const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="font-headline text-3xl">{quiz.title}</CardTitle>
-            {timeLeft !== null && (
-              <div className="flex items-center gap-2 font-mono text-xl font-bold bg-secondary px-4 py-2 rounded-lg">
-                <Timer className="h-6 w-6"/>
-                <span>{formatTime(timeLeft)}</span>
-              </div>
-            )}
-          </div>
-          <CardDescription>{quiz.description}</CardDescription>
-          <div className="pt-4">
-            <Progress value={progress} className="w-full" />
-            <p className="text-sm text-muted-foreground mt-2">Question {currentQuestionIndex + 1} of {quiz.questions.length}</p>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="py-6 min-h-[300px]">
-            <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
-            <RadioGroup 
-                value={answers[currentQuestion.id]?.toString()} 
-                onValueChange={(value) => handleAnswerChange(currentQuestion.id, parseInt(value))}
-                className="space-y-4"
-            >
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
-                  <RadioGroupItem value={index.toString()} id={`q${currentQuestionIndex}-opt${index}`} />
-                  <Label htmlFor={`q${currentQuestionIndex}-opt${index}`} className="text-base font-normal flex-1 cursor-pointer">
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-          
-          <div className="flex justify-between items-center mt-8">
-            <Button variant="outline" onClick={handlePrev} disabled={currentQuestionIndex === 0}>
-              Previous
-            </Button>
-            
-            {isLastQuestion ? (
-              <Button onClick={() => setShowSubmitConfirm(true)} className="bg-green-600 hover:bg-green-700">
-                Submit Quiz
-              </Button>
-            ) : (
-              <Button onClick={handleNext}>
-                Next
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-                  <AlertDialogTitle>Are you ready to submit?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      You have answered {Object.keys(answers).length} out of {quiz.questions.length} questions. You cannot change your answers after submitting.
-                  </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                  <Button variant="ghost" onClick={() => setShowSubmitConfirm(false)}>Review Answers</Button>
-                  <AlertDialogAction onClick={handleSubmit}>Submit</AlertDialogAction>
-              </AlertDialogFooter>
-          </AlertDialogContent>
-      </AlertDialog>
+        <div className="grid md:grid-cols-2 gap-8">
+            <div>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-3xl">{quiz.title}</CardTitle>
+                        <CardDescription>{quiz.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <h3 className="font-headline text-xl font-semibold">Instructions</h3>
+                        <ul className="space-y-3 text-muted-foreground">
+                            <li className="flex items-start gap-3">
+                                <ListChecks className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                <span>This quiz contains <strong>{quiz.questions.length} questions</strong>.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <Timer className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                <span>You will have <strong>{quiz.duration || 'unlimited'} minutes</strong> to complete the quiz.</span>
+                            </li>
+                             <li className="flex items-start gap-3">
+                                <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                <span>Each question has only one correct answer. Choose the best option.</span>
+                            </li>
+                             <li className="flex items-start gap-3">
+                                <NotebookText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                                <span>Once you submit the quiz, you will see a detailed analysis of your results.</span>
+                            </li>
+                        </ul>
+                    </CardContent>
+                 </Card>
+            </div>
+             <div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">Enter Your Details</CardTitle>
+                        <CardDescription>Please fill in your details to start the quiz.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleStartQuiz} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name" className="flex items-center gap-2"><User className="h-4 w-4"/> Name</Label>
+                                <Input id="name" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Your full name" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="school" className="flex items-center gap-2"><School className="h-4 w-4"/> School Name</Label>
+                                <Input id="school" value={userSchool} onChange={(e) => setUserSchool(e.target.value)} placeholder="Your school name" required />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="class" className="flex items-center gap-2"><NotebookText className="h-4 w-4"/> Class</Label>
+                                <Input id="class" value={userClass} onChange={(e) => setUserClass(e.target.value)} placeholder="e.g., 10th, 12th" required />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="place" className="flex items-center gap-2"><MapPin className="h-4 w-4"/> Place</Label>
+                                <Input id="place" value={userPlace} onChange={(e) => setUserPlace(e.target.value)} placeholder="Your city/village" required />
+                            </div>
+                            <Button type="submit" className="w-full" size="lg">Start Quiz</Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     </div>
   );
 }

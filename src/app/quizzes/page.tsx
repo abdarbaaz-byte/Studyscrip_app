@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, BrainCircuit, ArrowRight } from "lucide-react";
+import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks } from "lucide-react";
 import { getQuizzes, type Quiz } from "@/lib/data";
 
 export default function QuizzesPage() {
@@ -46,8 +46,15 @@ export default function QuizzesPage() {
                 <CardTitle className="font-headline text-2xl">{quiz.title}</CardTitle>
                 <CardDescription>{quiz.description}</CardDescription>
               </CardHeader>
-              <CardContent className="flex-grow">
-                 <p className="text-sm text-muted-foreground">{quiz.questions.length} Questions</p>
+              <CardContent className="flex-grow space-y-3">
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ListChecks className="h-4 w-4" />
+                    <span>{quiz.questions.length} Questions</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Timer className="h-4 w-4" />
+                    <span>{quiz.duration ? `${quiz.duration} Minutes` : 'No time limit'}</span>
+                 </div>
               </CardContent>
               <CardFooter>
                 <Button asChild className="w-full">

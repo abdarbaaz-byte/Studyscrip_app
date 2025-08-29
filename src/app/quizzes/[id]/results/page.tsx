@@ -3,14 +3,16 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { getDoc, doc } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { type Quiz, type Question } from "@/lib/data";
+import { getQuiz, saveQuizAttempt, type Quiz, type Question, type QuizAttempt } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 type AnswersState = { [questionId: string]: number };
 
@@ -18,36 +20,45 @@ function QuizResultsContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   const quizId = params.id as string;
   const answersString = searchParams.get('answers');
+  const name = searchParams.get('name') || 'Anonymous';
+  const school = searchParams.get('school') || 'N/A';
+  const userClass = searchParams.get('class') || 'N/A';
+  const place = searchParams.get('place') || 'N/A';
+  
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<AnswersState>({});
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [hasSaved, setHasSaved] = useState(false);
 
   useEffect(() => {
     if (!answersString) {
-      // Handle case where answers are missing, maybe redirect
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not load answers.' });
+      router.push(`/quizzes/${quizId}`);
       return;
     }
     try {
       setAnswers(JSON.parse(decodeURIComponent(answersString)));
     } catch (e) {
       console.error("Failed to parse answers", e);
+      router.push(`/quizzes/${quizId}`);
     }
-  }, [answersString]);
+  }, [answersString, quizId, router, toast]);
 
   useEffect(() => {
     async function loadQuizAndCalculateScore() {
       if (!quizId || Object.keys(answers).length === 0) return;
       setLoading(true);
 
-      const quizDocRef = doc(db, 'quizzes', quizId);
-      const quizSnap = await getDoc(quizDocRef);
+      const loadedQuiz = await getQuiz(quizId);
 
-      if (quizSnap.exists()) {
-        const loadedQuiz = { id: quizSnap.id, ...quizSnap.data() } as Quiz;
+      if (loadedQuiz) {
         setQuiz(loadedQuiz);
 
         let currentScore = 0;
@@ -57,16 +68,42 @@ function QuizResultsContent() {
           }
         });
         setScore(currentScore);
+
+        // Save the attempt to Firestore, but only once
+        if (!hasSaved) {
+            const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
+                quizId,
+                quizTitle: loadedQuiz.title,
+                userId: user?.uid || null,
+                userName: name,
+                userSchool: school,
+                userClass: userClass,
+                userPlace: place,
+                answers,
+                score: currentScore,
+                totalQuestions: loadedQuiz.questions.length,
+                percentage: (currentScore / loadedQuiz.questions.length) * 100,
+            };
+            try {
+                await saveQuizAttempt(attemptData);
+                setHasSaved(true); // Mark as saved to prevent re-saving
+            } catch (error) {
+                console.error("Failed to save quiz attempt:", error);
+                toast({ variant: 'destructive', title: 'Error saving results.' });
+            }
+        }
+
       } else {
-        // Handle quiz not found
+        toast({ variant: 'destructive', title: 'Quiz not found.' });
       }
       setLoading(false);
     }
 
-    if (Object.keys(answers).length > 0) {
+    if (Object.keys(answers).length > 0 && !hasSaved) {
       loadQuizAndCalculateScore();
     }
-  }, [quizId, answers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizId, answers, hasSaved]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -86,7 +123,7 @@ function QuizResultsContent() {
                 <GraduationCap className="h-16 w-16 text-primary" />
             </div>
             <CardTitle className="font-headline text-3xl">Quiz Results: {quiz.title}</CardTitle>
-            <CardDescription>Here's how you did!</CardDescription>
+            <CardDescription>Well done, {name}! Here's how you did.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
             <div className="text-5xl font-bold text-primary">
