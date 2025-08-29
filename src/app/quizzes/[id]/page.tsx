@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 type AnswersState = { [questionId: string]: number };
 
@@ -34,6 +35,7 @@ export default function QuizAttemptPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswersState>({});
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function loadQuiz() {
