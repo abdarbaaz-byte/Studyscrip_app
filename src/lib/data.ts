@@ -11,6 +11,21 @@ import { UserPermission } from '@/hooks/use-auth';
 // Re-export ContentItem for use in other modules
 export type { ContentItem } from './academics';
 
+// --- QUIZ ---
+export type Question = {
+    id: string;
+    text: string;
+    options: [string, string, string, string];
+    correctAnswer: number; // index 0-3
+};
+
+export type Quiz = {
+    id: string; // docId
+    title: string;
+    description: string;
+    questions: Question[];
+};
+
 // COURSES
 export async function getCourses(): Promise<Course[]> {
   const coursesCol = collection(db, 'courses');
@@ -256,8 +271,6 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
 
 export async function getUserPurchases(userId: string): Promise<EnrichedPurchase[]> {
     const purchasesCol = collection(db, 'purchases');
-    // Note: Removed orderBy to avoid needing a composite index. 
-    // Sorting can be done client-side if needed.
     const q = query(purchasesCol, where('userId', '==', userId));
     const purchaseSnapshot = await getDocs(q);
     
@@ -580,6 +593,27 @@ export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
 
 export async function deleteBookstoreItem(id: string): Promise<void> {
     await deleteDoc(doc(db, 'bookstore', id));
+}
+
+// --- QUIZZES ---
+export async function getQuizzes(): Promise<Quiz[]> {
+    const quizzesCol = collection(db, 'quizzes');
+    const q = query(quizzesCol, orderBy('title'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+}
+
+export async function saveQuiz(quiz: Quiz): Promise<void> {
+    const { id, ...data } = quiz;
+    if (id) {
+        await setDoc(doc(db, 'quizzes', id), data, { merge: true });
+    } else {
+        await addDoc(collection(db, 'quizzes'), data);
+    }
+}
+
+export async function deleteQuiz(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'quizzes', id));
 }
 
 // --- EMPLOYEE MANAGEMENT (RBAC) ---

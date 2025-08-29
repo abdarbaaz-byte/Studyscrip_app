@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -56,6 +56,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { AdminFreeNotesForm } from "@/components/admin-freenotes-form";
 import { AdminBookstoreForm } from "@/components/admin-bookstore-form";
+import { AdminQuizForm } from "@/components/admin-quiz-form";
+
 
 type FormattedPayment = Omit<Payment, 'paymentDate'> & { paymentDate: string };
 type SelectableItem = {
@@ -75,6 +77,7 @@ export default function AdminDashboardPage() {
   const [freeNotes, setFreeNotes] = useState<FreeNote[]>([]);
   const [bookstoreItems, setBookstoreItems] = useState<BookstoreItem[]>([]);
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [notificationTitle, setNotificationTitle] = useState("");
@@ -136,22 +139,24 @@ export default function AdminDashboardPage() {
           if (hasPermission('view_purchases')) promises.push(getAllPurchases()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_free_notes')) promises.push(getFreeNotes()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_bookstore')) promises.push(getBookstoreItems()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_quizzes')) promises.push(getQuizzes()); else promises.push(Promise.resolve([]));
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, employeesData] = await Promise.all(promises);
           
-          setAcademicClasses(academicsData);
-          setCourses(coursesData);
-          setPayments(paymentsData);
-          setPurchases(purchasesData);
-          setFreeNotes(freeNotesData);
-          setBookstoreItems(bookstoreData);
+          setAcademicClasses(academicsData as AcademicClass[]);
+          setCourses(coursesData as Course[]);
+          setPayments(paymentsData as Payment[]);
+          setPurchases(purchasesData as EnrichedPurchase[]);
+          setFreeNotes(freeNotesData as FreeNote[]);
+          setBookstoreItems(bookstoreData as BookstoreItem[]);
+          setQuizzes(quizzesData as Quiz[]);
           setEmployees(employeesData as EmployeeData[]);
 
           // Populate selectable items for manual access
           if (hasPermission('manage_manual_access')) {
-            const courseItems: SelectableItem[] = coursesData.map(c => ({ id: c.docId!, name: `(Course) ${c.title}`, type: 'course' }));
-            const subjectItems: SelectableItem[] = academicsData.flatMap(ac => 
+            const courseItems: SelectableItem[] = (coursesData as Course[]).map(c => ({ id: c.docId!, name: `(Course) ${c.title}`, type: 'course' }));
+            const subjectItems: SelectableItem[] = (academicsData as AcademicClass[]).flatMap(ac => 
                 ac.subjects.map(s => ({ id: s.id, name: `(${ac.name}) ${s.name}`, type: 'subject' }))
             );
             setSelectableItems([...courseItems, ...subjectItems]);
@@ -246,6 +251,28 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error("Failed to delete bookstore item:", error);
       toast({ variant: "destructive", title: "Failed to delete Bookstore Item" });
+    }
+  };
+  
+  const handleSaveQuiz = async (quiz: Quiz) => {
+    try {
+      await saveQuiz(quiz);
+      await loadAdminData();
+      toast({ title: "Quiz saved successfully!" });
+    } catch (error) {
+      console.error("Failed to save quiz:", error);
+      toast({ variant: "destructive", title: "Failed to save Quiz" });
+    }
+  };
+
+  const handleDeleteQuiz = async (quizId: string) => {
+    try {
+      await deleteQuiz(quizId);
+      await loadAdminData();
+      toast({ title: "Quiz deleted successfully." });
+    } catch (error) {
+      console.error("Failed to delete quiz:", error);
+      toast({ variant: "destructive", title: "Failed to delete Quiz" });
     }
   };
 
@@ -587,6 +614,22 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderQuizManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Quiz Management</CardTitle>
+        <CardDescription>Manage quizzes and their questions.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AdminQuizForm
+          initialQuizzes={quizzes}
+          onSave={handleSaveQuiz}
+          onDelete={handleDeleteQuiz}
+        />
+      </CardContent>
+    </Card>
+  );
+
 
   const renderPaymentRequests = () => (
     <Card>
@@ -832,6 +875,9 @@ export default function AdminDashboardPage() {
             {hasPermission('manage_bookstore') && <Button variant={activeTab === 'bookstore' ? 'default' : 'outline'} onClick={() => setActiveTab('bookstore')}>
                 <BookOpen className="mr-2 h-4 w-4" /> Bookstore
             </Button>}
+            {hasPermission('manage_quizzes') && <Button variant={activeTab === 'quizzes' ? 'default' : 'outline'} onClick={() => setActiveTab('quizzes')}>
+                <BrainCircuit className="mr-2 h-4 w-4" /> Quizzes
+            </Button>}
              {hasPermission('manage_payment_requests') && <Button variant={activeTab === 'requests' ? 'default' : 'outline'} onClick={() => setActiveTab('requests')} className="relative">
                 <ShieldAlert className="mr-2 h-4 w-4" /> Payment Requests
                  {paymentRequests.length > 0 && (
@@ -855,6 +901,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'courses' && hasPermission('manage_courses') && renderCourseManagement()}
         {activeTab === 'free-notes' && hasPermission('manage_free_notes') && renderFreeNotesManagement()}
         {activeTab === 'bookstore' && hasPermission('manage_bookstore') && renderBookstoreManagement()}
+        {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
         {activeTab === 'requests' && hasPermission('manage_payment_requests') && renderPaymentRequests()}
         {activeTab === 'access' && hasPermission('manage_manual_access') && renderManualAccessGrant()}
         {activeTab === 'purchases' && hasPermission('view_purchases') && renderPurchaseManagement()}
