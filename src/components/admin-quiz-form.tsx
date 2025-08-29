@@ -134,10 +134,10 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                 </div>
                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
-                        Starts: {quiz.startTime ? format(quiz.startTime.toDate(), "PPP p") : 'Always open'}
+                        Starts: {quiz.startTime ? format((quiz.startTime as any).toDate(), "PPP p") : 'Always open'}
                     </span>
                      <span>
-                        Ends: {quiz.endTime ? format(quiz.endTime.toDate(), "PPP p") : 'No expiry'}
+                        Ends: {quiz.endTime ? format((quiz.endTime as any).toDate(), "PPP p") : 'No expiry'}
                     </span>
                 </div>
                 {quiz.questions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No questions yet. Edit the quiz to add some.</p>}
@@ -154,21 +154,28 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
 
 // Sub-component for the form itself
 function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onSave: (quiz: Quiz) => void, onCancel: () => void, isSaving: boolean }) {
-  const [formData, setFormData] = useState<Omit<Quiz, 'id'>>(quiz || emptyQuiz);
+  const [formData, setFormData] = useState<Omit<Quiz, 'id' | 'startTime' | 'endTime'>>(quiz || emptyQuiz);
+  const [startTime, setStartTime] = useState<Date | undefined>();
+  const [endTime, setEndTime] = useState<Date | undefined>();
 
   useEffect(() => {
-    // Ensure duration is part of the form state, even for older quizzes
     const initialData = quiz ? { ...emptyQuiz, ...quiz } : emptyQuiz;
     
-    // Convert Timestamps to Dates for the date picker
-    if (initialData.startTime && initialData.startTime instanceof Timestamp) {
-        initialData.startTime = initialData.startTime.toDate() as any;
+    const { startTime: st, endTime: et, ...rest } = initialData;
+    setFormData(rest);
+
+    if (st && st instanceof Timestamp) {
+        setStartTime(st.toDate());
+    } else {
+        setStartTime(st as Date | undefined);
     }
-    if (initialData.endTime && initialData.endTime instanceof Timestamp) {
-        initialData.endTime = initialData.endTime.toDate() as any;
+    
+    if (et && et instanceof Timestamp) {
+        setEndTime(et.toDate());
+    } else {
+        setEndTime(et as Date | undefined);
     }
 
-    setFormData(initialData);
   }, [quiz]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -211,7 +218,12 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, id: quiz?.id || '' });
+    onSave({ 
+        ...formData, 
+        id: quiz?.id || '',
+        startTime: startTime ? Timestamp.fromDate(startTime) : undefined,
+        endTime: endTime ? Timestamp.fromDate(endTime) : undefined,
+    });
   };
 
   return (
@@ -232,14 +244,14 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                         <Button
                             id="startTime"
                             variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !formData.startTime && "text-muted-foreground")}
+                            className={cn("w-full justify-start text-left font-normal", !startTime && "text-muted-foreground")}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.startTime ? format(formData.startTime as any, "PPP p") : <span>Pick a date and time</span>}
+                            {startTime ? format(startTime, "PPP p") : <span>Pick a date and time</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={formData.startTime as any} onSelect={(date) => setFormData(p => ({...p, startTime: date as any}))} initialFocus />
+                        <Calendar mode="single" selected={startTime} onSelect={setStartTime} initialFocus />
                     </PopoverContent>
                 </Popover>
           </div>
@@ -250,14 +262,14 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                         <Button
                             id="endTime"
                             variant={"outline"}
-                            className={cn("w-full justify-start text-left font-normal", !formData.endTime && "text-muted-foreground")}
+                            className={cn("w-full justify-start text-left font-normal", !endTime && "text-muted-foreground")}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.endTime ? format(formData.endTime as any, "PPP p") : <span>Pick a date and time</span>}
+                            {endTime ? format(endTime, "PPP p") : <span>Pick a date and time</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={formData.endTime as any} onSelect={(date) => setFormData(p => ({...p, endTime: date as any}))} initialFocus />
+                        <Calendar mode="single" selected={endTime} onSelect={setEndTime} initialFocus />
                     </PopoverContent>
                 </Popover>
           </div>
