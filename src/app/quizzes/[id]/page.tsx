@@ -70,22 +70,13 @@ export default function QuizAttemptPage() {
   };
 
   const handleSubmit = () => {
-    // For now, let's just log the result. We'll build the result page next.
     if (!quiz) return;
-    let score = 0;
-    quiz.questions.forEach(q => {
-      if (answers[q.id] === q.correctAnswer) {
-        score++;
-      }
-    });
-
-    console.log(`You scored ${score} out of ${quiz.questions.length}`);
-     toast({
-        title: "Quiz Submitted!",
-        description: `You scored ${score} out of ${quiz.questions.length}. Analysis page coming soon!`,
-      });
-    setShowSubmitConfirm(false);
-    router.push('/quizzes'); // Go back to quiz list for now
+    
+    // Convert answers to a query string
+    const answersQueryString = encodeURIComponent(JSON.stringify(answers));
+    
+    // Redirect to the results page
+    router.push(`/quizzes/${quiz.id}/results?answers=${answersQueryString}`);
   };
 
   if (loading) {

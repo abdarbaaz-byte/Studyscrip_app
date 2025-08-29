@@ -17,6 +17,7 @@ export type Question = {
     text: string;
     options: [string, string, string, string];
     correctAnswer: number; // index 0-3
+    explanation: string;
 };
 
 export type Quiz = {

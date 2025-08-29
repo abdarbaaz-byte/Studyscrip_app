@@ -150,7 +150,8 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
         id: generateId('q'),
         text: '',
         options: ['', '', '', ''],
-        correctAnswer: 0
+        correctAnswer: 0,
+        explanation: ''
     };
     setFormData(prev => ({...prev, questions: [...prev.questions, newQuestion]}));
   };
@@ -159,9 +160,9 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
     setFormData(prev => ({ ...prev, questions: prev.questions.filter((_, i) => i !== index)}));
   };
   
-  const handleQuestionChange = (qIndex: number, text: string) => {
+  const handleQuestionChange = (qIndex: number, field: 'text' | 'explanation', value: string) => {
     const newQuestions = [...formData.questions];
-    newQuestions[qIndex].text = text;
+    newQuestions[qIndex][field] = value;
     setFormData(prev => ({...prev, questions: newQuestions}));
   };
   
@@ -208,7 +209,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                </Button>
                <div className="space-y-2">
                  <Label htmlFor={`q-text-${qIndex}`}>Question {qIndex + 1}</Label>
-                 <Textarea id={`q-text-${qIndex}`} value={q.text} onChange={e => handleQuestionChange(qIndex, e.target.value)} required />
+                 <Textarea id={`q-text-${qIndex}`} value={q.text} onChange={e => handleQuestionChange(qIndex, 'text', e.target.value)} required />
                </div>
                <div className="space-y-3">
                  <Label>Options & Correct Answer</Label>
@@ -226,6 +227,10 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                         </div>
                     ))}
                  </RadioGroup>
+               </div>
+                <div className="space-y-2">
+                 <Label htmlFor={`q-explanation-${qIndex}`}>Explanation (Optional)</Label>
+                 <Textarea id={`q-explanation-${qIndex}`} value={q.explanation} onChange={e => handleQuestionChange(qIndex, 'explanation', e.target.value)} placeholder="Explain why this is the correct answer."/>
                </div>
             </div>
           ))}
