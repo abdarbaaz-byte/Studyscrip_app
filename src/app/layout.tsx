@@ -38,23 +38,9 @@ export default function RootLayout({
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
     
-    // Custom Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js').then(function(registration) {
-          console.log('PWA service worker registered successfully');
-          // Now register the FCM service worker
-          navigator.serviceWorker.register('/firebase-messaging-sw.js')
-            .then(function(firebaseRegistration) {
-              console.log('Firebase service worker registered successfully');
-            }).catch(function(err) {
-              console.log('Firebase service worker registration failed: ', err);
-            });
-        }).catch(function(err) {
-          console.log('PWA service worker registration failed: ', err);
-        });
-      });
-    }
+    // next-pwa handles service worker registration automatically.
+    // The custom logic has been moved into public/sw.js.
+    // No custom registration is needed here anymore.
 
     return () => {
        if (isAndroid) {

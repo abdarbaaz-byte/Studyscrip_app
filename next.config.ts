@@ -6,7 +6,7 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  // swSrc is removed to let next-pwa generate a default service worker
+  sw: 'sw.js', // Ensure this points to the correct service worker file
 });
 
 
