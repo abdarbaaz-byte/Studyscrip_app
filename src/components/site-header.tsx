@@ -26,6 +26,7 @@ export function SiteHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   const unreadCount = notifications.filter(n => !readNotificationIds.includes(n.id)).length;
   const sortedNotifications = [...notifications].sort((a, b) => 
@@ -99,6 +100,10 @@ export function SiteHeader() {
     { href: "/privacy", label: "Privacy Policy" },
     { href: "/disclaimer", label: "Disclaimer" },
   ];
+  
+  const handleLinkClick = () => {
+    setIsSheetOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -137,7 +142,7 @@ export function SiteHeader() {
           </nav>
         </div>
         
-        <Sheet>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -155,7 +160,7 @@ export function SiteHeader() {
                 Main navigation links for StudyScript.
               </SheetDescription>
             </SheetHeader>
-            <Link href="/" className="mr-6 flex items-center space-x-2 pl-6">
+            <Link href="/" className="mr-6 flex items-center space-x-2 pl-6" onClick={handleLinkClick}>
               
               <span className="font-bold font-headline">StudyScript</span>
             </Link>
@@ -166,6 +171,7 @@ export function SiteHeader() {
                     key={link.href}
                     href={link.href}
                     className="text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
                   >
                     {link.label}
                   </Link>
@@ -174,6 +180,7 @@ export function SiteHeader() {
                   <Link
                     href="/admin/dashboard"
                     className="text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
                   >
                     Dashboard
                   </Link>
