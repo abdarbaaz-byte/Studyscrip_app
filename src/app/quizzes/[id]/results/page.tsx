@@ -36,7 +36,6 @@ function QuizResultsContent() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [canShowAnalysis, setCanShowAnalysis] = useState(false);
-  const hasSubmittedRef = useRef(false);
 
   useEffect(() => {
     if (!answersString) {
@@ -75,32 +74,7 @@ function QuizResultsContent() {
           }
         });
         setScore(currentScore);
-
-        // Save the attempt to Firestore, but only once
-        if (!hasSubmittedRef.current) {
-            hasSubmittedRef.current = true; // Mark as saving immediately
-            const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
-                quizId,
-                quizTitle: loadedQuiz.title,
-                userId: user?.uid || null,
-                userName: name,
-                userSchool: school,
-                userClass: userClass,
-                userPlace: place,
-                answers,
-                score: currentScore,
-                totalQuestions: loadedQuiz.questions.length,
-                percentage: (currentScore / loadedQuiz.questions.length) * 100,
-            };
-            try {
-                await saveQuizAttempt(attemptData);
-            } catch (error) {
-                console.error("Failed to save quiz attempt:", error);
-                toast({ variant: 'destructive', title: 'Error saving results.' });
-                hasSubmittedRef.current = false; // Allow retry if saving failed
-            }
-        }
-
+        
       } else {
         toast({ variant: 'destructive', title: 'Quiz not found.' });
       }
@@ -110,8 +84,8 @@ function QuizResultsContent() {
     if (Object.keys(answers).length > 0) {
       loadQuizAndCalculateScore();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quizId, answers]);
+  
+  }, [quizId, answers, toast]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;

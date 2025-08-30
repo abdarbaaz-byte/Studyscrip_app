@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { getQuiz, type Quiz } from "@/lib/data";
+import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -63,17 +63,46 @@ function QuizAttemptContent() {
     loadQuiz();
   }, [quizId, router, toast]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!quiz || hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
     
     // Stop the timer
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // Encode answers for URL
-    const encodedAnswers = encodeURIComponent(JSON.stringify(answers));
+    let currentScore = 0;
+    quiz.questions.forEach(q => {
+        if (answers[q.id] === q.correctAnswer) {
+            currentScore++;
+        }
+    });
 
-    // Set flag and data in local storage
+    // 1. Save the attempt to Firestore
+    const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
+      quizId,
+      quizTitle: quiz.title,
+      userId: null, // Assuming anonymous users for now
+      userName: name,
+      userSchool: school || 'N/A',
+      userClass: userClass || 'N/A',
+      userPlace: place || 'N/A',
+      answers,
+      score: currentScore,
+      totalQuestions: quiz.questions.length,
+      percentage: (currentScore / quiz.questions.length) * 100,
+    };
+    
+    try {
+        await saveQuizAttempt(attemptData);
+    } catch(error) {
+        console.error("Failed to save quiz attempt:", error);
+        toast({ variant: "destructive", title: "Error saving results. Please try again."})
+        hasSubmittedRef.current = false; // Allow retry if saving fails
+        return;
+    }
+
+    // 2. Set localStorage flags
+    const encodedAnswers = encodeURIComponent(JSON.stringify(answers));
     localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
     localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({
         answers: encodedAnswers,
@@ -84,7 +113,7 @@ function QuizAttemptContent() {
     }));
 
 
-    // Pass user details along with answers to the results page
+    // 3. Redirect to results page
     const queryParams = new URLSearchParams({
         answers: encodedAnswers,
         name: name,
@@ -93,7 +122,6 @@ function QuizAttemptContent() {
         place: place || ''
     }).toString();
     
-    // Redirect to the results page
     router.replace(`/quizzes/${quizId}/results?${queryParams}`);
   };
 
@@ -152,7 +180,7 @@ function QuizAttemptContent() {
 
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentQuestionIndex(prev => prev - 1);
     }
   };
 
