@@ -42,7 +42,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
            <Link href="/" className="flex justify-center mb-4">
-            <Logo className="h-10 w-10 text-primary" />
+            <Logo className="h-10 w-10" width={40} height={40}/>
           </Link>
           <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
           <CardDescription>Start your learning journey with us today.</CardDescription>
