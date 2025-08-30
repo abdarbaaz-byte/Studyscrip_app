@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Radio, Send, CheckCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { saveLiveClassSurvey } from "@/lib/data";
+import { Input } from "@/components/ui/input";
 
 export default function LiveClassesPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -24,6 +25,8 @@ export default function LiveClassesPage() {
     
     const formData = new FormData(event.currentTarget);
     const surveyData = {
+        userName: formData.get('user_name') as string,
+        userMobile: formData.get('user_mobile') as string,
         subjectInterest: formData.get('subject_interest') as string,
         otherTopics: formData.get('other_topics') as string,
         preferredTime: formData.get('preferred_time') as string,
@@ -84,6 +87,17 @@ export default function LiveClassesPage() {
             <CardContent className="p-8">
               <form onSubmit={handleSubmit} className="space-y-8">
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="space-y-2">
+                        <Label htmlFor="user_name">Full Name</Label>
+                        <Input id="user_name" name="user_name" placeholder="Your full name" required />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="user_mobile">Mobile Number</Label>
+                        <Input id="user_mobile" name="user_mobile" type="tel" placeholder="Your mobile number" required />
+                    </div>
+                </div>
+
                 <div className="space-y-4">
                     <Label className="text-lg font-semibold">Which subjects are you most interested in for live classes?</Label>
                     <RadioGroup name="subject_interest" defaultValue="math" required>

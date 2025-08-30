@@ -756,7 +756,7 @@ export default function AdminDashboardPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
+              <TableHead>User Details</TableHead>
               <TableHead>Subject Interest</TableHead>
               <TableHead>Preferred Time</TableHead>
               <TableHead>Other Topics</TableHead>
@@ -766,7 +766,11 @@ export default function AdminDashboardPage() {
           <TableBody>
             {liveSurveys.map((survey) => (
               <TableRow key={survey.id}>
-                <TableCell className="font-medium">{survey.userEmail || 'Anonymous'}</TableCell>
+                <TableCell>
+                    <div className="font-medium">{survey.userName}</div>
+                    <div className="text-sm text-muted-foreground">{survey.userMobile}</div>
+                    <div className="text-xs text-muted-foreground">{survey.userEmail || 'No Email'}</div>
+                </TableCell>
                 <TableCell className="capitalize">{survey.subjectInterest.replace(/_/g, ' ')}</TableCell>
                 <TableCell className="capitalize">{survey.preferredTime.replace(/_/g, ' ')}</TableCell>
                 <TableCell className="text-muted-foreground">{survey.otherTopics || 'N/A'}</TableCell>

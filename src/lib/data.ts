@@ -692,6 +692,8 @@ export type LiveClassSurvey = {
     id?: string;
     userId: string | null;
     userEmail: string | null;
+    userName: string;
+    userMobile: string;
     subjectInterest: string;
     otherTopics: string;
     preferredTime: string;
