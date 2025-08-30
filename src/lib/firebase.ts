@@ -2,7 +2,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging, isSupported, getToken } from "firebase/messaging";
 
@@ -25,6 +25,24 @@ const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : get
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+
+// Enable offline persistence
+if (typeof window !== 'undefined') {
+  try {
+    enableIndexedDbPersistence(db)
+      .then(() => console.log("Firestore offline persistence enabled."))
+      .catch((err) => {
+        if (err.code == 'failed-precondition') {
+          console.warn("Firestore offline persistence could not be enabled: Multiple tabs open?");
+        } else if (err.code == 'unimplemented') {
+          console.warn("Firestore offline persistence is not supported in this browser.");
+        }
+      });
+  } catch (error) {
+    console.error("Error enabling Firestore persistence:", error);
+  }
+}
+
 
 // Initialize Firebase Cloud Messaging and get a reference to the service
 const getMessagingInstance = async () => {
