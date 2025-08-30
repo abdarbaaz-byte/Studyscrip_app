@@ -26,7 +26,6 @@ export function SiteHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [permissionRequestedThisSession, setPermissionRequestedThisSession] = useState(false);
   
   const unreadCount = notifications.filter(n => !readNotificationIds.includes(n.id)).length;
   const sortedNotifications = [...notifications].sort((a, b) => 
@@ -69,31 +68,21 @@ export function SiteHeader() {
     }
 
     const permissionStatus = Notification.permission;
+    setIsPopoverOpen(true); // Open the popover regardless of permission status
 
-    if (permissionStatus === 'granted') {
-        setIsPopoverOpen(true);
-    } else if (permissionStatus === 'denied') {
+    if (permissionStatus === 'denied') {
         toast({
             variant: "destructive",
             title: "Notifications Blocked",
             description: "Please enable notifications for this site in your browser settings."
         });
-    } else { // permissionStatus is 'default'
-        // Only ask for permission if we haven't asked in this session
-        if (!permissionRequestedThisSession) {
-            setPermissionRequestedThisSession(true); // Mark as requested for this session
-            const permissionGranted = await requestNotificationPermission();
-            if (permissionGranted) {
-                toast({ title: "Notifications Enabled!", description: "You will now receive updates." });
-                setIsPopoverOpen(true); // Open popover after getting permission
-                getFCMToken(); // Ensure token is registered after permission
-            } else {
-                toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
-            }
+    } else if (permissionStatus === 'default') { // permissionStatus is 'default'
+        const permissionGranted = await requestNotificationPermission();
+        if (permissionGranted) {
+            toast({ title: "Notifications Enabled!", description: "You will now receive updates." });
+            await getFCMToken(); // Ensure token is registered immediately after permission is granted
         } else {
-             // If already requested this session and they ignored the prompt,
-             // just open the popover with in-app notifications.
-             setIsPopoverOpen(true);
+            toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
         }
     }
   };
