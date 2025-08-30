@@ -1,17 +1,14 @@
 
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { getQuiz, saveQuizAttempt, type Quiz, type Question, type QuizAttempt } from "@/lib/data";
+import { getQuiz, type Quiz } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -21,35 +18,32 @@ function QuizResultsContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const quizId = params.id as string;
+  const quizType = searchParams.get('type') || 'practice';
   const answersString = searchParams.get('answers');
-  const name = searchParams.get('name') || 'Anonymous';
-  const school = searchParams.get('school') || 'N/A';
-  const userClass = searchParams.get('class') || 'N/A';
-  const place = searchParams.get('place') || 'N/A';
+  const name = searchParams.get('name') || 'Student';
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<AnswersState>({});
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [canShowAnalysis, setCanShowAnalysis] = useState(false);
+  const [canShowAnalysis, setCanShowAnalysis] = useState(quizType === 'practice');
 
   useEffect(() => {
     if (!answersString) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not load answers.' });
-      router.push(`/quizzes/${quizId}`);
+      router.push(`/quizzes/${quizId}?type=${quizType}`);
       return;
     }
     try {
       setAnswers(JSON.parse(decodeURIComponent(answersString)));
     } catch (e) {
       console.error("Failed to parse answers", e);
-      router.push(`/quizzes/${quizId}`);
+      router.push(`/quizzes/${quizId}?type=${quizType}`);
     }
-  }, [answersString, quizId, router, toast]);
+  }, [answersString, quizId, router, toast, quizType]);
 
   useEffect(() => {
     async function loadQuizAndCalculateScore() {
@@ -61,10 +55,13 @@ function QuizResultsContent() {
       if (loadedQuiz) {
         setQuiz(loadedQuiz);
 
-        const now = new Date();
-        const endTime = loadedQuiz.endTime?.toDate();
-        if (!endTime || now > endTime) {
-            setCanShowAnalysis(true);
+        // For live quizzes, check if the end time has passed
+        if (quizType === 'live') {
+            const now = new Date();
+            const endTime = loadedQuiz.endTime?.toDate();
+            if (!endTime || now > endTime) {
+                setCanShowAnalysis(true);
+            }
         }
 
         let currentScore = 0;
@@ -85,7 +82,7 @@ function QuizResultsContent() {
       loadQuizAndCalculateScore();
     }
   
-  }, [quizId, answers, toast]);
+  }, [quizId, answers, toast, quizType]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -96,6 +93,7 @@ function QuizResultsContent() {
   }
 
   const scorePercentage = (score / quiz.questions.length) * 100;
+  const isPractice = quizType === 'practice';
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -115,7 +113,16 @@ function QuizResultsContent() {
                  <Progress value={scorePercentage} className="h-4" />
             </div>
             <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Correct</p>
-            <Button onClick={() => router.push('/quizzes')}>Take Another Quiz</Button>
+             <div className="flex gap-4">
+                {isPractice && (
+                    <Button onClick={() => router.push(`/quizzes/${quizId}?type=practice`)}>
+                        Attempt Again
+                    </Button>
+                )}
+                <Button variant="outline" onClick={() => router.push('/quizzes')}>
+                    {isPractice ? 'More Quizzes' : 'Back to Quizzes'}
+                </Button>
+            </div>
         </CardContent>
       </Card>
       

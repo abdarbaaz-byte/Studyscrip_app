@@ -39,7 +39,8 @@ function QuizAttemptContent() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const hasSubmittedRef = useRef(false);
 
-  // User details from query params
+  // User details & quiz type from query params
+  const quizType = searchParams.get('type') || 'practice';
   const name = searchParams.get('name') || 'Anonymous';
   const school = searchParams.get('school');
   const userClass = searchParams.get('class');
@@ -70,55 +71,55 @@ function QuizAttemptContent() {
     if (!quiz || hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
     
-    // Stop the timer
     if (timerRef.current) clearInterval(timerRef.current);
 
-    let currentScore = 0;
-    quiz.questions.forEach(q => {
-        if (answers[q.id] === q.correctAnswer) {
-            currentScore++;
-        }
-    });
+    if (quizType === 'live') {
+        let currentScore = 0;
+        quiz.questions.forEach(q => {
+            if (answers[q.id] === q.correctAnswer) {
+                currentScore++;
+            }
+        });
 
-    // 1. Save the attempt to Firestore
-    const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
-      quizId,
-      quizTitle: quiz.title,
-      userId: userId,
-      userEmail: userEmail,
-      userName: name,
-      userSchool: school || 'N/A',
-      userClass: userClass || 'N/A',
-      userPlace: place || 'N/A',
-      answers,
-      score: currentScore,
-      totalQuestions: quiz.questions.length,
-      percentage: (currentScore / quiz.questions.length) * 100,
-    };
-    
-    try {
-        await saveQuizAttempt(attemptData);
-    } catch(error) {
-        console.error("Failed to save quiz attempt:", error);
-        toast({ variant: "destructive", title: "Error saving results. Please try again."})
-        hasSubmittedRef.current = false; // Allow retry if saving fails
-        return;
+        const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
+          quizId,
+          quizTitle: quiz.title,
+          userId: userId,
+          userEmail: userEmail,
+          userName: name,
+          userSchool: school || 'N/A',
+          userClass: userClass || 'N/A',
+          userPlace: place || 'N/A',
+          answers,
+          score: currentScore,
+          totalQuestions: quiz.questions.length,
+          percentage: (currentScore / quiz.questions.length) * 100,
+        };
+        
+        try {
+            await saveQuizAttempt(attemptData);
+        } catch(error) {
+            console.error("Failed to save quiz attempt:", error);
+            toast({ variant: "destructive", title: "Error saving results. Please try again."})
+            hasSubmittedRef.current = false; // Allow retry if saving fails
+            return;
+        }
+
+        // Set localStorage flags for live quizzes to prevent re-attempts
+        const encodedAnswers = encodeURIComponent(JSON.stringify(answers));
+        localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
+        localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({
+            answers: encodedAnswers,
+            name,
+            school,
+            class: userClass,
+            place
+        }));
     }
 
-    // 2. Set localStorage flags
     const encodedAnswers = encodeURIComponent(JSON.stringify(answers));
-    localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
-    localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({
-        answers: encodedAnswers,
-        name,
-        school,
-        class: userClass,
-        place
-    }));
-
-
-    // 3. Redirect to results page
     const queryParams = new URLSearchParams({
+        type: quizType,
         answers: encodedAnswers,
         name: name,
         school: school || '',
@@ -289,5 +290,3 @@ export default function QuizAttemptPage() {
         </Suspense>
     )
 }
-
-    

@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getQuiz, type Quiz } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,10 +13,12 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 
-export default function QuizStartPage() {
+function QuizStartPageContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const quizId = params.id as string;
+  const quizType = searchParams.get('type') || 'practice'; // Default to practice
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -35,25 +37,28 @@ export default function QuizStartPage() {
       if (!quizId) return;
       setLoading(true);
 
-      // Check for previous attempt first
-      const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
-      if (hasAttempted) {
-          const savedData = JSON.parse(localStorage.getItem(`quiz-data-${quizId}`) || '{}');
-          if (savedData.answers) { // Ensure there is data to redirect with
-              toast({
-                  title: "Quiz Already Attempted",
-                  description: "Redirecting to your results...",
-              });
-              const queryParams = new URLSearchParams({
-                  answers: savedData.answers, // Already encoded
-                  name: savedData.name || 'Anonymous',
-                  school: savedData.school || '',
-                  class: savedData.class || '',
-                  place: savedData.place || ''
-              }).toString();
-              router.replace(`/quizzes/${quizId}/results?${queryParams}`);
-              return; // Stop further execution
-          }
+      // Check for previous attempt ONLY for live quizzes
+      if (quizType === 'live') {
+        const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
+        if (hasAttempted) {
+            const savedData = JSON.parse(localStorage.getItem(`quiz-data-${quizId}`) || '{}');
+            if (savedData.answers) { 
+                toast({
+                    title: "Quiz Already Attempted",
+                    description: "Redirecting to your results...",
+                });
+                const queryParams = new URLSearchParams({
+                    type: 'live',
+                    answers: savedData.answers, 
+                    name: savedData.name || 'Anonymous',
+                    school: savedData.school || '',
+                    class: savedData.class || '',
+                    place: savedData.place || ''
+                }).toString();
+                router.replace(`/quizzes/${quizId}/results?${queryParams}`);
+                return;
+            }
+        }
       }
 
       const loadedQuiz = await getQuiz(quizId);
@@ -79,7 +84,7 @@ export default function QuizStartPage() {
       setLoading(false);
     }
     loadQuiz();
-  }, [quizId, router, toast]);
+  }, [quizId, router, toast, quizType]);
 
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,19 +94,26 @@ export default function QuizStartPage() {
         return;
     }
     
-    if (!userName || !userSchool || !userClass || !userPlace) {
-      toast({ variant: 'destructive', title: 'Please fill all details.' });
-      return;
-    }
+    let quizData: any = { type: quizType };
 
-    const quizData = { 
-        name: userName, 
-        school: userSchool, 
-        class: userClass, 
-        place: userPlace,
-        userId: user.uid,
-        userEmail: user.email || ''
-    };
+    if (quizType === 'live') {
+        if (!userName || !userSchool || !userClass || !userPlace) {
+            toast({ variant: 'destructive', title: 'Please fill all details for live quiz.' });
+            return;
+        }
+        quizData = { 
+            ...quizData,
+            name: userName, 
+            school: userSchool, 
+            class: userClass, 
+            place: userPlace,
+            userId: user.uid,
+            userEmail: user.email || ''
+        };
+    } else {
+        // For practice quiz, use user's email or a default name
+        quizData.name = user.email?.split('@')[0] || 'Student';
+    }
     
     const queryParams = new URLSearchParams(quizData).toString();
     
@@ -139,6 +151,8 @@ export default function QuizStartPage() {
     return null;
   }
 
+  const isLiveQuizFormRequired = quizType === 'live' && quizStatus === 'available';
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="grid md:grid-cols-2 gap-8">
@@ -159,21 +173,21 @@ export default function QuizStartPage() {
                                 <Timer className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                 <span>You will have <strong>{quiz.duration || 'unlimited'} minutes</strong> to complete the quiz.</span>
                             </li>
-                            <li className="flex items-start gap-3">
+                             <li className="flex items-start gap-3">
                                 <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                                <span>Each question has only one correct answer. Choose the best option.</span>
+                                <span className={cn(quizType === 'practice' && "font-semibold text-green-600")}>
+                                    {quizType === 'practice' ? 'You can attempt this quiz multiple times.' : 'Each question has only one correct answer.'}
+                                </span>
                             </li>
                              <li className="flex items-start gap-3">
-                                <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
-                                <span className="font-semibold">This quiz can only be attempted once.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
                                 <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
                                 <span className="font-semibold">Do not switch tabs or minimize the app, or your quiz will be submitted automatically.</span>
                             </li>
                              <li className="flex items-start gap-3">
                                 <NotebookText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                                <span>Results will be available after the quiz period ends.</span>
+                                <span className={cn(quizType === 'live' && "font-semibold")}>
+                                  {quizType === 'live' ? 'Results will be available after the quiz period ends.' : 'Results are shown immediately after submission.'}
+                                </span>
                             </li>
                         </ul>
                     </CardContent>
@@ -181,10 +195,11 @@ export default function QuizStartPage() {
             </div>
              <div>
                 {quizStatus === 'available' ? (
+                    isLiveQuizFormRequired ? (
                      <Card>
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">Enter Your Details</CardTitle>
-                            <CardDescription>Please fill in your details to start the quiz.</CardDescription>
+                            <CardDescription>Please fill in your details to start the live quiz.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleStartQuiz} className="space-y-4">
@@ -204,10 +219,23 @@ export default function QuizStartPage() {
                                     <Label htmlFor="place" className="flex items-center gap-2"><MapPin className="h-4 w-4"/> Place</Label>
                                     <Input id="place" value={userPlace} onChange={(e) => setUserPlace(e.target.value)} placeholder="Your city/village" required />
                                 </div>
-                                <Button type="submit" className="w-full" size="lg">Start Quiz</Button>
+                                <Button type="submit" className="w-full" size="lg">Start Live Quiz</Button>
                             </form>
                         </CardContent>
                     </Card>
+                    ) : (
+                         <Card>
+                            <CardHeader>
+                                <CardTitle className="font-headline text-2xl">Ready to Practice?</CardTitle>
+                                <CardDescription>Click below to start your practice session.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleStartQuiz}>
+                                    <Button type="submit" className="w-full" size="lg">Start Practice Quiz</Button>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    )
                 ) : (
                     renderQuizStatusMessage()
                 )}
@@ -217,4 +245,10 @@ export default function QuizStartPage() {
   );
 }
 
-    
+export default function QuizStartPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
+            <QuizStartPageContent />
+        </Suspense>
+    )
+}
