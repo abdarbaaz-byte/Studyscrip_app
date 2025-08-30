@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Logo, WhatsAppIcon } from "@/components/icons";
+import { WhatsAppIcon } from "@/components/icons";
 import { Menu, Bell, Circle, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
@@ -116,7 +116,7 @@ export function SiteHeader() {
       <div className="container flex h-16 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Logo className="h-6 w-6" width={24} height={24} />
+            
             <span className="hidden font-bold sm:inline-block font-headline">
               StudyScript
             </span>
@@ -167,7 +167,7 @@ export function SiteHeader() {
               </SheetDescription>
             </SheetHeader>
             <Link href="/" className="mr-6 flex items-center space-x-2 pl-6">
-              <Logo className="h-6 w-6" width={24} height={24} />
+              
               <span className="font-bold font-headline">StudyScript</span>
             </Link>
             <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
