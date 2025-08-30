@@ -12,6 +12,7 @@ import { Loader2, Timer, ListChecks, Info, User, School, MapPin, NotebookText, A
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
 function QuizStartPageContent() {
   const params = useParams();
