@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -80,9 +79,6 @@ export default function DoubtAiPage() {
         <div className="container mx-auto px-4 py-8 flex flex-col min-h-[calc(100vh-8rem)]">
             <Card className="w-full max-w-4xl mx-auto flex-1 flex flex-col shadow-2xl">
                 <CardHeader className="text-center">
-                     <div className="flex justify-center mb-4">
-                        <BrainCircuit className="h-16 w-16 text-primary" />
-                    </div>
                     <CardTitle className="font-headline text-3xl md:text-4xl">AI Doubt Solver</CardTitle>
                     <CardDescription className="text-md md:text-lg text-muted-foreground pt-2">
                         Ask any question related to your studies, and I'll do my best to help!
