@@ -77,8 +77,8 @@ export default function DoubtAiPage() {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8 flex justify-center">
-            <Card className="w-full max-w-3xl h-[70vh] flex flex-col shadow-2xl">
+        <div className="container mx-auto px-4 py-8 flex flex-col min-h-[calc(100vh-8rem)]">
+            <Card className="w-full max-w-4xl mx-auto flex-1 flex flex-col shadow-2xl">
                 <CardHeader className="text-center">
                      <div className="flex justify-center mb-4">
                         <BrainCircuit className="h-16 w-16 text-primary" />
