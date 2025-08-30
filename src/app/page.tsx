@@ -57,7 +57,7 @@ export default function Home() {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4">
       {loading ? (
         <div className="flex justify-center py-16">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -65,7 +65,7 @@ export default function Home() {
       ) : (
         <>
           {banner?.isActive && banner.imageUrl && (
-            <section className="mb-8">
+            <section className="mb-8 pt-4">
                {banner.linkUrl ? (
                  <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
                    <BannerContent />
@@ -76,7 +76,7 @@ export default function Home() {
             </section>
           )}
 
-          <section id="academics" className="pb-16">
+          <section id="academics" className="pt-8 pb-16">
             <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
               Choose Your Class
             </h2>
