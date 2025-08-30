@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -7,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/icons";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -27,9 +25,6 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-           <Link href="/" className="flex justify-center mb-4">
-            <Logo className="h-10 w-10" width={40} height={40}/>
-          </Link>
           <CardTitle className="font-headline text-2xl">Forgot Password?</CardTitle>
           <CardDescription>No worries, we'll send you reset instructions.</CardDescription>
         </CardHeader>

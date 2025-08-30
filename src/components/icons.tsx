@@ -1,4 +1,3 @@
-
 import type { SVGProps } from "react";
 import Image from "next/image";
 
