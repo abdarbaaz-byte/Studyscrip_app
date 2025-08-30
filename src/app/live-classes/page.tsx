@@ -8,22 +8,46 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Radio, Send, CheckCircle } from "lucide-react";
+import { Radio, Send, CheckCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { saveLiveClassSurvey } from "@/lib/data";
 
 export default function LiveClassesPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // In a real app, you would send this data to your backend.
-    // For this prototype, we'll just show a success message.
-    console.log("Survey submitted:", new FormData(event.currentTarget));
-    toast({
-      title: "Thank You!",
-      description: "Your feedback has been submitted successfully.",
-    });
-    setSubmitted(true);
+    setIsSubmitting(true);
+    
+    const formData = new FormData(event.currentTarget);
+    const surveyData = {
+        subjectInterest: formData.get('subject_interest') as string,
+        otherTopics: formData.get('other_topics') as string,
+        preferredTime: formData.get('preferred_time') as string,
+        userId: user?.uid || null,
+        userEmail: user?.email || null,
+    };
+
+    try {
+      await saveLiveClassSurvey(surveyData);
+      toast({
+        title: "Thank You!",
+        description: "Your feedback has been submitted successfully.",
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Failed to submit survey:", error);
+       toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: "Could not save your feedback. Please try again.",
+      });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   if (submitted) {
@@ -62,7 +86,7 @@ export default function LiveClassesPage() {
                 
                 <div className="space-y-4">
                     <Label className="text-lg font-semibold">Which subjects are you most interested in for live classes?</Label>
-                    <RadioGroup name="subject_interest" defaultValue="math">
+                    <RadioGroup name="subject_interest" defaultValue="math" required>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="math" id="math" />
                             <Label htmlFor="math">Mathematics</Label>
@@ -98,7 +122,7 @@ export default function LiveClassesPage() {
 
                 <div className="space-y-4">
                     <Label className="text-lg font-semibold">What is the best time for you to attend live classes?</Label>
-                    <RadioGroup name="preferred_time" defaultValue="evening">
+                    <RadioGroup name="preferred_time" defaultValue="evening" required>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="morning" id="morning" />
                             <Label htmlFor="morning">Morning (8 AM - 12 PM)</Label>
@@ -118,9 +142,9 @@ export default function LiveClassesPage() {
                     </RadioGroup>
                 </div>
 
-                <Button type="submit" size="lg" className="w-full">
-                    <Send className="mr-2 h-5 w-5" />
-                    Submit Survey
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-5 w-5" />}
+                    {isSubmitting ? 'Submitting...' : 'Submit Survey'}
                 </Button>
 
               </form>

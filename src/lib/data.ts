@@ -687,6 +687,32 @@ export async function deleteQuizAttempt(id: string): Promise<void> {
     await deleteDoc(doc(db, 'quizAttempts', id));
 }
 
+// --- LIVE CLASS SURVEYS ---
+export type LiveClassSurvey = {
+    id?: string;
+    userId: string | null;
+    userEmail: string | null;
+    subjectInterest: string;
+    otherTopics: string;
+    preferredTime: string;
+    submittedAt: Timestamp;
+};
+
+export async function saveLiveClassSurvey(data: Omit<LiveClassSurvey, 'id' | 'submittedAt'>): Promise<void> {
+    const surveysCol = collection(db, 'liveClassSurveys');
+    await addDoc(surveysCol, {
+        ...data,
+        submittedAt: serverTimestamp(),
+    });
+}
+
+export async function getLiveClassSurveys(): Promise<LiveClassSurvey[]> {
+    const surveysCol = collection(db, 'liveClassSurveys');
+    const q = query(surveysCol, orderBy('submittedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LiveClassSurvey));
+}
+
 
 // --- EMPLOYEE MANAGEMENT (RBAC) ---
 export type EmployeeData = {
