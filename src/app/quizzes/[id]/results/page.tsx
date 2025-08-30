@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -35,8 +35,8 @@ function QuizResultsContent() {
   const [answers, setAnswers] = useState<AnswersState>({});
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [hasSaved, setHasSaved] = useState(false);
   const [canShowAnalysis, setCanShowAnalysis] = useState(false);
+  const hasSubmittedRef = useRef(false);
 
   useEffect(() => {
     if (!answersString) {
@@ -77,7 +77,8 @@ function QuizResultsContent() {
         setScore(currentScore);
 
         // Save the attempt to Firestore, but only once
-        if (!hasSaved) {
+        if (!hasSubmittedRef.current) {
+            hasSubmittedRef.current = true; // Mark as saving immediately
             const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
                 quizId,
                 quizTitle: loadedQuiz.title,
@@ -93,10 +94,10 @@ function QuizResultsContent() {
             };
             try {
                 await saveQuizAttempt(attemptData);
-                setHasSaved(true); // Mark as saved to prevent re-saving
             } catch (error) {
                 console.error("Failed to save quiz attempt:", error);
                 toast({ variant: 'destructive', title: 'Error saving results.' });
+                hasSubmittedRef.current = false; // Allow retry if saving failed
             }
         }
 
@@ -106,11 +107,11 @@ function QuizResultsContent() {
       setLoading(false);
     }
 
-    if (Object.keys(answers).length > 0 && !hasSaved) {
+    if (Object.keys(answers).length > 0) {
       loadQuizAndCalculateScore();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quizId, answers, hasSaved]);
+  }, [quizId, answers]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
