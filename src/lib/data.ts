@@ -649,13 +649,20 @@ export async function getQuizzes(): Promise<Quiz[]> {
 export async function saveQuiz(quiz: Quiz): Promise<void> {
     const { id, ...data } = quiz;
 
-    // Convert Date objects to Timestamps before saving, if they are not already timestamps
-    const dataToSave: any = { ...data };
-    if (data.startTime && !(data.startTime instanceof Timestamp)) {
-        dataToSave.startTime = Timestamp.fromDate(data.startTime as unknown as Date);
+    // Create a mutable copy to work with
+    const dataToSave: { [key: string]: any } = { ...data };
+
+    // Convert Date objects to Timestamps and handle undefined values
+    if (data.startTime) {
+        dataToSave.startTime = data.startTime instanceof Timestamp ? data.startTime : Timestamp.fromDate(data.startTime as any);
+    } else {
+        delete dataToSave.startTime; // Remove if undefined or null
     }
-    if (data.endTime && !(data.endTime instanceof Timestamp)) {
-        dataToSave.endTime = Timestamp.fromDate(data.endTime as unknown as Date);
+
+    if (data.endTime) {
+        dataToSave.endTime = data.endTime instanceof Timestamp ? data.endTime : Timestamp.fromDate(data.endTime as any);
+    } else {
+        delete dataToSave.endTime; // Remove if undefined or null
     }
 
     if (id) {
@@ -793,5 +800,3 @@ export async function saveBannerSettings(settings: BannerSettings): Promise<void
     const settingsDocRef = doc(db, 'settings', 'homeBanner');
     await setDoc(settingsDocRef, settings, { merge: true });
 }
-
-    
