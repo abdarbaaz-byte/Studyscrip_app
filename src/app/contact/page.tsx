@@ -28,7 +28,7 @@ export default function ContactPage() {
                     </p>
                      <div className="flex items-center justify-center gap-4">
                         <Button asChild>
-                            <a href="mailto:studyscript@gmail.com"><Mail className="mr-2 h-4 w-4" /> Contact by Email</a>
+                            <a href="mailto:studyscript001@gmail.com"><Mail className="mr-2 h-4 w-4" /> Contact by Email</a>
                         </Button>
                     </div>
                 </div>
@@ -41,7 +41,7 @@ export default function ContactPage() {
                     </p>
                     <div className="flex items-center justify-center gap-4">
                         <Button asChild>
-                           <a href="mailto:studyscript@gmail.com"><Mail className="mr-2 h-4 w-4" /> ईमेल से संपर्क करें</a>
+                           <a href="mailto:studyscript001@gmail.com"><Mail className="mr-2 h-4 w-4" /> ईमेल से संपर्क करें</a>
                         </Button>
                     </div>
                 </div>
