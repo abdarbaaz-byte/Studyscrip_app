@@ -76,7 +76,7 @@ export default function Home() {
             </section>
           )}
 
-          <section id="academics" className="pt-4 pb-16">
+          <section id="academics" className="pt-4 pb-8">
             <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
               Choose Your Class
             </h2>
