@@ -2,7 +2,7 @@
 
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import type { Course, CourseContent } from './courses';
+import type { Course } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
 import { getAcademicData, type AcademicClass, type Subject } from './academics';
@@ -62,7 +62,10 @@ export async function getCourse(docId: string): Promise<Course | null> {
   const courseSnap = await getDoc(courseDocRef);
 
   if (courseSnap.exists()) {
-    return { docId: courseSnap.id, ...courseSnap.data() } as Course;
+    const data = courseSnap.data();
+    // Ensure nested content array is properly serialized for Next.js server components
+    const content = data.content ? JSON.parse(JSON.stringify(data.content)) : [];
+    return { docId: courseSnap.id, ...data, content } as Course;
   } else {
     return null;
   }
