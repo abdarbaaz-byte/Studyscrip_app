@@ -65,7 +65,7 @@ export default function Home() {
       ) : (
         <>
           {banner?.isActive && banner.imageUrl && (
-            <section className="mb-12">
+            <section className="mb-8">
                {banner.linkUrl ? (
                  <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
                    <BannerContent />
@@ -103,7 +103,7 @@ export default function Home() {
                   <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
                     <item.icon className="w-10 h-10" />
                   </div>
-                  <h3 className="font-headline text-lg font-semibold">{item.text}</h3>
+                  <h3 className="font-headline text-sm sm:text-lg font-semibold">{item.text}</h3>
                 </Link>
               ))}
             </div>
