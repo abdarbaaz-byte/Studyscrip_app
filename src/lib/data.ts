@@ -625,7 +625,13 @@ export async function getQuiz(id: string): Promise<Quiz | null> {
     const quizDocRef = doc(db, 'quizzes', id);
     const quizSnap = await getDoc(quizDocRef);
     if (quizSnap.exists()) {
-        return { id: quizSnap.id, ...quizSnap.data() } as Quiz;
+        const data = quizSnap.data();
+        // Manually convert Timestamps to Dates for client-side usage if needed
+        return { 
+            id: quizSnap.id, 
+            ...data,
+            // No need to convert here, let components handle it if they need Date objects
+        } as Quiz;
     }
     return null;
 }
@@ -674,6 +680,11 @@ export async function getQuizAttempts(): Promise<QuizAttempt[]> {
     const q = query(attemptsCol, orderBy('submittedAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+}
+
+export async function deleteQuizAttempt(id: string): Promise<void> {
+    if (!id) return;
+    await deleteDoc(doc(db, 'quizAttempts', id));
 }
 
 
@@ -751,5 +762,3 @@ export async function saveBannerSettings(settings: BannerSettings): Promise<void
     const settingsDocRef = doc(db, 'settings', 'homeBanner');
     await setDoc(settingsDocRef, settings, { merge: true });
 }
-
-    

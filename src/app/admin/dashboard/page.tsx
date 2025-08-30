@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -112,6 +112,9 @@ export default function AdminDashboardPage() {
   // State for Banner Settings
   const [bannerSettings, setBannerSettings] = useState<BannerSettings>({ isActive: false, imageUrl: '', linkUrl: '' });
   const [isSavingBanner, setIsSavingBanner] = useState(false);
+
+  // State for deleting quiz attempts
+  const [attemptToDelete, setAttemptToDelete] = useState<QuizAttempt | null>(null);
 
 
   useEffect(() => {
@@ -481,6 +484,24 @@ export default function AdminDashboardPage() {
     setIsSavingBanner(false);
   };
 
+  const handleDeleteAttemptClick = (attempt: QuizAttempt) => {
+    setAttemptToDelete(attempt);
+  };
+
+  const confirmDeleteAttempt = async () => {
+    if (attemptToDelete && attemptToDelete.id) {
+        try {
+            await deleteQuizAttempt(attemptToDelete.id);
+            setQuizAttempts(quizAttempts.filter((a) => a.id !== attemptToDelete.id));
+            toast({ title: "Quiz attempt deleted successfully." });
+        } catch (error) {
+            console.error("Failed to delete quiz attempt:", error);
+            toast({ variant: "destructive", title: "Failed to delete quiz attempt." });
+        }
+      setAttemptToDelete(null);
+    }
+  };
+
 
   if (loading || authLoading) {
       return (
@@ -668,6 +689,7 @@ export default function AdminDashboardPage() {
               <TableHead>Quiz</TableHead>
               <TableHead>Score</TableHead>
               <TableHead>Submitted At</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -684,11 +706,33 @@ export default function AdminDashboardPage() {
                     </Badge>
                 </TableCell>
                 <TableCell>{format(attempt.submittedAt.toDate(), "PPP p")}</TableCell>
+                <TableCell className="text-right">
+                   <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAttemptClick(attempt)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="sr-only">Delete Attempt</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Quiz Attempt?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the attempt by "{attemptToDelete?.userName}" for the quiz "{attemptToDelete?.quizTitle}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setAttemptToDelete(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteAttempt}>Continue</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
               </TableRow>
             ))}
             {quizAttempts.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                         No quiz attempts have been submitted yet.
                     </TableCell>
                 </TableRow>
@@ -1262,5 +1306,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
