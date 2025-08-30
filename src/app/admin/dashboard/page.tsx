@@ -701,6 +701,7 @@ export default function AdminDashboardPage() {
                 <TableCell>
                     <div className="font-medium">{attempt.userName}</div>
                     <div className="text-sm text-muted-foreground">{attempt.userSchool}, {attempt.userPlace} ({attempt.userClass})</div>
+                    {attempt.userEmail && <div className="text-xs text-muted-foreground">{attempt.userEmail}</div>}
                 </TableCell>
                 <TableCell>{attempt.quizTitle}</TableCell>
                 <TableCell>
@@ -1357,3 +1358,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    

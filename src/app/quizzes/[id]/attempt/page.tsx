@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
@@ -43,6 +44,8 @@ function QuizAttemptContent() {
   const school = searchParams.get('school');
   const userClass = searchParams.get('class');
   const place = searchParams.get('place');
+  const userId = searchParams.get('userId');
+  const userEmail = searchParams.get('userEmail');
 
   useEffect(() => {
     async function loadQuiz() {
@@ -81,7 +84,8 @@ function QuizAttemptContent() {
     const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
       quizId,
       quizTitle: quiz.title,
-      userId: null, // Assuming anonymous users for now
+      userId: userId,
+      userEmail: userEmail,
       userName: name,
       userSchool: school || 'N/A',
       userClass: userClass || 'N/A',
@@ -285,3 +289,5 @@ export default function QuizAttemptPage() {
         </Suspense>
     )
 }
+
+    

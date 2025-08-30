@@ -1,5 +1,4 @@
 
-
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import type { Course } from './courses';
@@ -36,7 +35,8 @@ export type QuizAttempt = {
   id?: string; // Firestore doc ID
   quizId: string;
   quizTitle: string;
-  userId: string | null; // For logged-in users
+  userId: string | null;
+  userEmail: string | null;
   userName: string;
   userSchool: string;
   userClass: string;
@@ -793,3 +793,5 @@ export async function saveBannerSettings(settings: BannerSettings): Promise<void
     const settingsDocRef = doc(db, 'settings', 'homeBanner');
     await setDoc(settingsDocRef, settings, { merge: true });
 }
+
+    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,16 +11,18 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Timer, ListChecks, Info, User, School, MapPin, NotebookText, AlertTriangle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function QuizStartPage() {
   const params = useParams();
   const router = useRouter();
   const quizId = params.id as string;
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [quizStatus, setQuizStatus] = useState<'available' | 'expired' | 'upcoming'>('available');
-  const { toast } = useToast();
   
   // User details state
   const [userName, setUserName] = useState('');
@@ -80,16 +83,26 @@ export default function QuizStartPage() {
 
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Please Log In', description: 'You must be logged in to start a quiz.' });
+        router.push('/login');
+        return;
+    }
+    
     if (!userName || !userSchool || !userClass || !userPlace) {
       toast({ variant: 'destructive', title: 'Please fill all details.' });
       return;
     }
 
-    // Save user data to local storage in case they need to be redirected back
-    // Note: We don't save answers here, only personal details. Answers are saved on submit.
-    const quizData = { name: userName, school: userSchool, class: userClass, place: userPlace };
-    localStorage.setItem(`quiz-start-data-${quizId}`, JSON.stringify(quizData));
-
+    const quizData = { 
+        name: userName, 
+        school: userSchool, 
+        class: userClass, 
+        place: userPlace,
+        userId: user.uid,
+        userEmail: user.email || ''
+    };
+    
     const queryParams = new URLSearchParams(quizData).toString();
     
     router.push(`/quizzes/${quizId}/attempt?${queryParams}`);
@@ -203,3 +216,5 @@ export default function QuizStartPage() {
     </div>
   );
 }
+
+    
