@@ -20,11 +20,23 @@ export function FcmTokenManager() {
         if (Notification.permission === 'granted') {
             getFCMToken(); // This function now handles getting and saving the token.
         }
-
-        // Set up the foreground message listener for the logged-in user.
-        onForegroundMessage();
     }
   }, [user]);
+
+  // This effect sets up the foreground message listener once and only once.
+  useEffect(() => {
+    // Check if the app is running in a browser environment
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // Set up the foreground message listener.
+      // This returns an unsubscribe function that gets called on cleanup.
+      const unsubscribe = onForegroundMessage();
+      return () => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      };
+    }
+  }, []);
 
   return null; // This component does not render anything.
 }

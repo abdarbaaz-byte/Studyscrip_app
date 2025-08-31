@@ -4,8 +4,8 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence, doc, setDoc } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getMessaging, isSupported, getToken, onMessage } from "firebase/messaging";
-import { useToast } from "@/hooks/use-toast";
+import { getMessaging, isSupported, getToken, onMessage, Unsubscribe } from "firebase/messaging";
+import { toast } from "@/hooks/use-toast";
 
 // Your web app's Firebase configuration - This is automatically generated
 const firebaseConfig = {
@@ -53,11 +53,14 @@ const getMessagingInstance = async () => {
 
 
 // Function to save the FCM token to Firestore
-const saveFCMToken = async (token: string, userId: string) => {
+const saveFCMToken = async (token: string) => {
     try {
+        const user = auth.currentUser;
+        if (!user) return; // Only save if user is logged in
+
         const tokenDocRef = doc(db, 'fcmTokens', token);
-        await setDoc(tokenDocRef, { userId, createdAt: new Date() });
-        console.log('FCM token saved to Firestore for user:', userId);
+        await setDoc(tokenDocRef, { userId: user.uid, createdAt: new Date() });
+        console.log('FCM token saved to Firestore for user:', user.uid);
     } catch (error) {
         console.error('Error saving FCM token to Firestore:', error);
     }
@@ -107,7 +110,7 @@ export const getFCMToken = async () => {
         if (currentToken) {
             console.log('FCM Token:', currentToken);
             // Save the token to Firestore
-            await saveFCMToken(currentToken, user.uid);
+            await saveFCMToken(currentToken);
         } else {
             console.log('No registration token available. Request permission to generate one.');
         }
@@ -116,23 +119,26 @@ export const getFCMToken = async () => {
     }
 };
 
-// Function to handle foreground messages
-export const onForegroundMessage = () => {
-    const { toast } = useToast();
-    
-    const setupListener = async () => {
-        const messaging = await getMessagingInstance();
-        if (messaging) {
-            onMessage(messaging, (payload) => {
-                console.log('Foreground message received. ', payload);
-                toast({
-                    title: payload.notification?.title,
-                    description: payload.notification?.body,
-                });
-            });
-        }
-    };
-    setupListener();
+// Function to handle foreground messages. It returns an unsubscribe function.
+export const onForegroundMessage = (): Unsubscribe | undefined => {
+  let unsubscribe: Unsubscribe | undefined;
+
+  const setupListener = async () => {
+    const messaging = await getMessagingInstance();
+    if (messaging) {
+      unsubscribe = onMessage(messaging, (payload) => {
+        console.log('Foreground message received. ', payload);
+        toast({
+          title: payload.notification?.title,
+          description: payload.notification?.body,
+        });
+      });
+    }
+  };
+
+  setupListener();
+
+  return unsubscribe;
 };
 
 
