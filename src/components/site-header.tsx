@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { WhatsAppIcon, Logo } from "@/components/icons";
+import { WhatsAppIcon } from "@/components/icons";
 import { Menu, Bell, Circle, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
@@ -110,7 +110,6 @@ export function SiteHeader() {
       <div className="container flex h-16 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Logo width={32} height={32} />
             <span className="hidden font-bold sm:inline-block font-headline">
               StudyScript
             </span>
@@ -155,13 +154,12 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="left" className="pr-0">
              <SheetHeader>
-              <SheetTitle className="sr-only">StudyScript</SheetTitle>
+              <SheetTitle>StudyScript</SheetTitle>
               <SheetDescription className="sr-only">
                 Main navigation links for StudyScript.
               </SheetDescription>
             </SheetHeader>
             <Link href="/" className="mr-6 flex items-center space-x-2 pl-6" onClick={handleLinkClick}>
-              <Logo width={32} height={32} />
               <span className="font-bold font-headline">StudyScript</span>
             </Link>
             <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
