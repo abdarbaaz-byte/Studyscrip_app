@@ -11,6 +11,7 @@ import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { getAcademicData, AcademicClass } from "@/lib/academics";
 import { useEffect, useState } from "react";
+import { getGoogleDriveImageUrl } from "@/lib/utils";
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -46,7 +47,7 @@ export default function Home() {
   const BannerContent = () => (
     <div className="aspect-[4/1] w-full relative overflow-hidden rounded-lg">
       <Image
-        src={banner!.imageUrl}
+        src={getGoogleDriveImageUrl(banner!.imageUrl)}
         alt="Promotional Banner"
         fill
         className="object-cover"
