@@ -2,9 +2,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence, doc, setDoc } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getMessaging, isSupported, getToken } from "firebase/messaging";
+import { getMessaging, isSupported, getToken, onMessage } from "firebase/messaging";
+import { useToast } from "@/hooks/use-toast";
 
 // Your web app's Firebase configuration - This is automatically generated
 const firebaseConfig = {
@@ -50,6 +51,19 @@ const getMessagingInstance = async () => {
     return typeof window !== 'undefined' && supported ? getMessaging(app) : null;
 };
 
+
+// Function to save the FCM token to Firestore
+const saveFCMToken = async (token: string, userId: string) => {
+    try {
+        const tokenDocRef = doc(db, 'fcmTokens', token);
+        await setDoc(tokenDocRef, { userId, createdAt: new Date() });
+        console.log('FCM token saved to Firestore for user:', userId);
+    } catch (error) {
+        console.error('Error saving FCM token to Firestore:', error);
+    }
+};
+
+
 // Function to request permission
 export const requestNotificationPermission = async () => {
     try {
@@ -83,10 +97,17 @@ export const getFCMToken = async () => {
             console.error("Messaging not supported, cannot get token.");
             return;
         }
+        const user = auth.currentUser;
+        if (!user) {
+            console.log("User not logged in, skipping token retrieval.");
+            return;
+        }
+        
         const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
         if (currentToken) {
             console.log('FCM Token:', currentToken);
-            // Here you would send the token to your server
+            // Save the token to Firestore
+            await saveFCMToken(currentToken, user.uid);
         } else {
             console.log('No registration token available. Request permission to generate one.');
         }
@@ -94,5 +115,25 @@ export const getFCMToken = async () => {
         console.error('An error occurred while retrieving token. ', error);
     }
 };
+
+// Function to handle foreground messages
+export const onForegroundMessage = () => {
+    const { toast } = useToast();
+    
+    const setupListener = async () => {
+        const messaging = await getMessagingInstance();
+        if (messaging) {
+            onMessage(messaging, (payload) => {
+                console.log('Foreground message received. ', payload);
+                toast({
+                    title: payload.notification?.title,
+                    description: payload.notification?.body,
+                });
+            });
+        }
+    };
+    setupListener();
+};
+
 
 export { app, auth, db, storage };

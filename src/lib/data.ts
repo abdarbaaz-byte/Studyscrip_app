@@ -509,18 +509,15 @@ export function listenToChat(chatId: string, callback: (chat: Chat | null) => vo
 
 // --- NOTIFICATIONS ---
 
+// This function now just adds the notification content to Firestore.
+// The actual sending is handled by a Firebase Function that triggers on this creation.
 export async function sendNotification(title: string, description: string) {
     const notificationsCol = collection(db, 'notifications');
     await addDoc(notificationsCol, {
         title,
         description,
         timestamp: new Date().toISOString(),
-        // readBy is not needed here as we track reads per-user now
     });
-
-    // In a real app, you'd trigger a Firebase Function here
-    // to send the actual push notification to all devices.
-    // For this prototype, clients will listen to this collection.
 }
 
 export function listenToNotifications(callback: (notifications: Notification[]) => void) {
