@@ -48,25 +48,6 @@ function QuizAttemptContent() {
   const userId = searchParams.get('userId');
   const userEmail = searchParams.get('userEmail');
 
-  useEffect(() => {
-    async function loadQuiz() {
-      if (!quizId) return;
-      setLoading(true);
-      const loadedQuiz = await getQuiz(quizId);
-      if (loadedQuiz) {
-        setQuiz(loadedQuiz);
-        if (loadedQuiz.duration) {
-          setTimeLeft(loadedQuiz.duration * 60);
-        }
-      } else {
-        toast({ variant: 'destructive', title: 'Quiz not found' });
-        router.push('/quizzes');
-      }
-      setLoading(false);
-    }
-    loadQuiz();
-  }, [quizId, router, toast]);
-
   const handleSubmit = async () => {
     if (!quiz || hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
@@ -131,6 +112,37 @@ function QuizAttemptContent() {
   };
 
   useEffect(() => {
+    async function loadQuiz() {
+      if (!quizId) return;
+      setLoading(true);
+      const loadedQuiz = await getQuiz(quizId);
+      if (loadedQuiz) {
+        setQuiz(loadedQuiz);
+        if (loadedQuiz.duration) {
+          setTimeLeft(loadedQuiz.duration * 60);
+        }
+      } else {
+        toast({ variant: 'destructive', title: 'Quiz not found' });
+        router.push('/quizzes');
+      }
+      setLoading(false);
+    }
+    loadQuiz();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizId, router, toast]);
+
+  useEffect(() => {
+    // This function will be called when the component is about to unmount
+    return () => {
+      if (!hasSubmittedRef.current) {
+        handleSubmit();
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz, answers]); // Depend on quiz and answers to have the latest state on submit
+
+
+  useEffect(() => {
     if (timeLeft === null || timeLeft <= 0) {
       if (timerRef.current) clearInterval(timerRef.current);
       if (timeLeft === 0 && !hasSubmittedRef.current) {
@@ -170,7 +182,7 @@ function QuizAttemptContent() {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [quiz, answers]);
 
   
   const handleAnswerChange = (questionId: string, optionIndex: number) => {
