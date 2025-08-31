@@ -1,59 +1,22 @@
+
 {
   "name": "StudyScript",
   "short_name": "StudyScript",
+  "description": "An e-learning platform for academic and professional courses.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#5062B5",
-  "description": "Your modern partner in digital learning.",
   "icons": [
     {
-      "src": "/icon/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "8th Class",
-      "short_name": "Class 8",
-      "description": "View subjects for 8th Class",
-      "url": "/class/class-8",
-      "icons": [
-        {
-          "src": "/icon/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "10th Class",
-      "short_name": "Class 10",
-      "description": "View subjects for 10th Class",
-      "url": "/class/class-10",
-      "icons": [
-        {
-          "src": "/icon/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "12th Class",
-      "short_name": "Class 12",
-      "description": "View subjects for 12th Class",
-      "url": "/class/class-12",
-      "icons": [
-        {
-          "src": "/icon/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
     }
   ]
 }
