@@ -1,8 +1,7 @@
-
 {
-  "name": "StudyScript",
+  "name": "StudyScript - Your Learning Partner",
   "short_name": "StudyScript",
-  "description": "An e-learning platform for academic and professional courses.",
+  "description": "A modern e-learning platform for academic and professional courses.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -17,6 +16,22 @@
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Courses",
+      "short_name": "Courses",
+      "description": "View your purchased courses and subjects",
+      "url": "/my-courses",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Quizzes",
+      "short_name": "Quizzes",
+      "description": "Attempt live and practice quizzes",
+      "url": "/quizzes",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
