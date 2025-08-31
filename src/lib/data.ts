@@ -509,8 +509,6 @@ export function listenToChat(chatId: string, callback: (chat: Chat | null) => vo
 
 // --- NOTIFICATIONS ---
 
-// This function now just adds the notification content to Firestore.
-// The actual sending is handled by a Firebase Function that triggers on this creation.
 export async function sendNotification(title: string, description: string) {
     const notificationsCol = collection(db, 'notifications');
     await addDoc(notificationsCol, {
