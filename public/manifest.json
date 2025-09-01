@@ -1,26 +1,15 @@
 {
-  "theme_color": "#5062B5",
-  "background_color": "#ffffff",
-  "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
   "name": "StudyScript",
   "short_name": "StudyScript",
-  "description": "Your modern partner in digital learning.",
+  "description": "A modern e-learning platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#5062B5",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-256x256.png",
-      "sizes": "256x256",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
       "type": "image/png"
     },
     {
@@ -31,24 +20,24 @@
   ],
   "shortcuts": [
     {
-      "name": "My Courses",
-      "url": "/my-courses",
-      "description": "View your purchased courses."
+      "name": "Quiz",
+      "url": "/quizzes",
+      "description": "Test your knowledge with quizzes"
     },
     {
-      "name": "Class 8th",
-      "url": "/class/class-1755422670885-nmppp",
-      "description": "Go to Class 8th subjects"
+      "name": "8th Class",
+      "url": "/class/class-8",
+      "description": "Go to 8th Class subjects"
     },
     {
-      "name": "Class 10th",
+      "name": "10th Class",
       "url": "/class/class-10",
-      "description": "Go to Class 10th subjects"
+      "description": "Go to 10th Class subjects"
     },
     {
-      "name": "Class 12th",
-      "url": "/class/class-1755422669110-9cr0p",
-      "description": "Go to Class 12th subjects"
+      "name": "12th Class",
+      "url": "/class/class-12",
+      "description": "Go to 12th Class subjects"
     }
   ]
 }
