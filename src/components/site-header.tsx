@@ -14,7 +14,6 @@ import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
-import { requestNotificationPermission, getFCMToken } from "@/lib/firebase"; 
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -25,7 +24,6 @@ export function SiteHeader() {
   const isAuthPage = ["/login", "/signup", "/forgot-password"].includes(pathname);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   const unreadCount = notifications.filter(n => !readNotificationIds.includes(n.id)).length;
@@ -58,38 +56,6 @@ export function SiteHeader() {
   const handleMarkAsRead = (id: string) => {
     if (user) {
       markNotificationAsRead(user.uid, id);
-    }
-  };
-
-  const handleBellClick = async () => {
-    setIsPopoverOpen(true); // Open the popover immediately
-    
-    // Check if Notification API is supported
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !user) {
-        if (!user) {
-            toast({ variant: "destructive", title: "Login Required", description: "Please log in to enable notifications." });
-        } else {
-            toast({ variant: "destructive", title: "Notifications not supported on this browser."});
-        }
-        return;
-    }
-
-    const permissionStatus = Notification.permission;
-    
-    if (permissionStatus === 'denied') {
-        toast({
-            variant: "destructive",
-            title: "Notifications Blocked",
-            description: "Please enable notifications for this site in your browser settings."
-        });
-    } else if (permissionStatus === 'default') { // permissionStatus is 'default'
-        const permissionGranted = await requestNotificationPermission();
-        if (permissionGranted) {
-            toast({ title: "Notifications Enabled!", description: "You will now receive updates." });
-            await getFCMToken(); // Ensure token is registered immediately after permission is granted
-        } else {
-            toast({ variant: "destructive", title: "Permission Denied", description: "You won't receive push notifications."});
-        }
     }
   };
   
@@ -205,9 +171,9 @@ export function SiteHeader() {
               </Button>
            </a>
 
-           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative" onClick={handleBellClick}>
+              <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs text-white">

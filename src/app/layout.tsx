@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ChatWidget } from "@/components/chat-widget";
 import { AuthProvider } from "@/hooks/use-auth";
 import { InstallPwaButton } from "@/components/install-pwa-button";
-import { FcmTokenManager } from "@/components/fcm-token-manager";
+import { OneSignalProvider } from "@/components/onesignal-provider";
 import "./globals.css";
 
 export default function RootLayout({
@@ -38,10 +38,6 @@ export default function RootLayout({
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
     
-    // next-pwa handles service worker registration automatically.
-    // The custom logic has been moved into public/sw.js.
-    // No custom registration is needed here anymore.
-
     return () => {
        if (isAndroid) {
          document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -63,15 +59,16 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-body antialiased" suppressHydrationWarning>
         <AuthProvider>
-          <div className="relative flex min-h-screen flex-col">
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-          </div>
-          <ChatWidget />
-          <Toaster />
-          <InstallPwaButton />
-          <FcmTokenManager />
+          <OneSignalProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <SiteHeader />
+              <main className="flex-1">{children}</main>
+              <SiteFooter />
+            </div>
+            <ChatWidget />
+            <Toaster />
+            <InstallPwaButton />
+          </OneSignalProvider>
         </AuthProvider>
       </body>
     </html>
