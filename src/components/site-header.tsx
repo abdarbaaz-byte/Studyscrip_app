@@ -125,7 +125,7 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="left" className="pr-0">
              <SheetHeader>
-              <SheetTitle>StudyScript</SheetTitle>
+              <SheetTitle></SheetTitle>
               <SheetDescription className="sr-only">
                 Main navigation links for StudyScript.
               </SheetDescription>
