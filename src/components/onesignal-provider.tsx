@@ -37,9 +37,8 @@ export function OneSignalProvider({ children }: { children: ReactNode }) {
       OneSignal.login(user.uid);
     } else {
       // If user logs out, remove their ID from OneSignal.
-      if (OneSignal.User.isLoggedIn()) {
-        OneSignal.logout();
-      }
+      // It's safe to call logout even if the user is not logged in.
+      OneSignal.logout();
     }
   }, [user]);
 
