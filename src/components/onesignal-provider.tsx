@@ -7,27 +7,17 @@ import { useAuth } from '@/hooks/use-auth';
 
 export function OneSignalProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const ONE_SIGNAL_APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
 
   useEffect(() => {
-    async function initializeOneSignal() {
-      if (!ONE_SIGNAL_APP_ID) {
-        console.error("OneSignal App ID is not configured. Push notifications will be disabled.");
-        return;
-      }
-      
-      // The `init` call in react-onesignal is idempotent, so it's safe to call multiple times.
-      // However, we can add a check to prevent re-initialization if not needed.
-      if (!OneSignal.isInitialized) {
-        await OneSignal.init({ 
-          appId: ONE_SIGNAL_APP_ID,
-          allowLocalhostAsSecureOrigin: true, // Important for local development
-        });
-      }
+    // Initialize OneSignal as soon as the component mounts on the client-side.
+    if (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) {
+      OneSignal.init({ 
+        appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+      });
+    } else {
+      console.error("OneSignal App ID is not configured. Push notifications will be disabled.");
     }
-
-    initializeOneSignal();
-  }, [ONE_SIGNAL_APP_ID]);
+  }, []); // Empty dependency array ensures this runs only once on mount.
   
   useEffect(() => {
     // This effect runs when the user's login state changes.
