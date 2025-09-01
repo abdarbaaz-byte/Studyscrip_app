@@ -1,15 +1,26 @@
 {
-  "name": "StudyScript - Your Learning Partner",
-  "short_name": "StudyScript",
-  "description": "A modern e-learning platform for academic and professional courses.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
   "theme_color": "#5062B5",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "name": "StudyScript",
+  "short_name": "StudyScript",
+  "description": "Your modern partner in digital learning.",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
       "type": "image/png"
     },
     {
@@ -21,17 +32,23 @@
   "shortcuts": [
     {
       "name": "My Courses",
-      "short_name": "Courses",
-      "description": "View your purchased courses and subjects",
       "url": "/my-courses",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "description": "View your purchased courses."
     },
     {
-      "name": "Quizzes",
-      "short_name": "Quizzes",
-      "description": "Attempt live and practice quizzes",
-      "url": "/quizzes",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "name": "Class 8th",
+      "url": "/class/class-8",
+      "description": "Go to Class 8th subjects"
+    },
+    {
+      "name": "Class 10th",
+      "url": "/class/class-10",
+      "description": "Go to Class 10th subjects"
+    },
+    {
+      "name": "Class 12th",
+      "url": "/class/class-12",
+      "description": "Go to Class 12th subjects"
     }
   ]
 }

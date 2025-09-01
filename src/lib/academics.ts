@@ -31,6 +31,12 @@ export type AcademicClass = {
 
 export const initialClasses: AcademicClass[] = [
   {
+    id: 'class-8',
+    name: '8th Class',
+    description: 'All subjects for 8th standard curriculum.',
+    subjects: [],
+  },
+  {
     id: 'class-9',
     name: '9th Class',
     description: 'All subjects for 9th standard curriculum.',
@@ -88,6 +94,12 @@ export const initialClasses: AcademicClass[] = [
         ],
       },
     ],
+  },
+  {
+    id: 'class-12',
+    name: '12th Class',
+    description: 'All subjects for 12th standard board exams.',
+    subjects: [],
   },
 ];
 
