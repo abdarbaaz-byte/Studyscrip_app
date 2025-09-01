@@ -35,7 +35,6 @@ const nextConfig: NextConfig = {
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
     NEXT_PUBLIC_UPI_ID: process.env.NEXT_PUBLIC_UPI_ID,
-    NEXT_PUBLIC_ONESIGNAL_APP_ID: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
   },
   webpack: (config, { isServer }) => {
     // This is to ensure that the pdf.worker.js file is copied to the public directory
