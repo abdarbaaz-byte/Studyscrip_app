@@ -62,15 +62,20 @@ export function SiteHeader() {
   };
 
   const handleBellClick = async () => {
+    setIsPopoverOpen(true); // Open the popover immediately
+    
     // Check if Notification API is supported
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-        toast({ variant: "destructive", title: "Notifications not supported on this browser."});
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !user) {
+        if (!user) {
+            toast({ variant: "destructive", title: "Login Required", description: "Please log in to enable notifications." });
+        } else {
+            toast({ variant: "destructive", title: "Notifications not supported on this browser."});
+        }
         return;
     }
 
     const permissionStatus = Notification.permission;
-    setIsPopoverOpen(true); // Open the popover regardless of permission status
-
+    
     if (permissionStatus === 'denied') {
         toast({
             variant: "destructive",
