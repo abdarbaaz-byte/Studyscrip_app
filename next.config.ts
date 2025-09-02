@@ -29,4 +29,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  sw: 'sw.js', // Use our custom service worker
+  disable: process.env.NODE_ENV === 'development',
+});
+
+
+export default withPWA(nextConfig);
