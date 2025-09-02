@@ -1,15 +1,6 @@
 
 import type {NextConfig} from 'next';
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  sw: 'sw.js',
-});
-
-
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
@@ -30,12 +21,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  env: {
-    NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
-    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
-    NEXT_PUBLIC_UPI_ID: process.env.NEXT_PUBLIC_UPI_ID,
-  },
   webpack: (config, { isServer }) => {
     // This is to ensure that the pdf.worker.js file is copied to the public directory
     // so that react-pdf can find it.
@@ -44,4 +29,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+export default nextConfig;

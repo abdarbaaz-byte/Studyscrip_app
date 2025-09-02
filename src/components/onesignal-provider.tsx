@@ -9,26 +9,41 @@ export function OneSignalProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Initialize OneSignal as soon as the component mounts on the client-side.
-    if (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) {
-      OneSignal.init({ 
+    async function initializeOneSignal() {
+      if (typeof window === 'undefined') return;
+
+      if (!process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) {
+        console.error("OneSignal App ID is not configured. Push notifications will be disabled.");
+        return;
+      }
+      
+      // OneSignal.init must be called only once
+      if (OneSignal.isInitialized()) {
+        return;
+      }
+      
+      await OneSignal.init({
         appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
+        allowLocalhostAsSecureOrigin: true, // Important for local testing
+        safari_web_id: "web.onesignal.auto.123456-7890-abcd-efgh-ijklmnopqrst", // Generic Safari Web ID
       });
-    } else {
-      console.error("OneSignal App ID is not configured. Push notifications will be disabled.");
+
+      // Prompt for notification permission
+      OneSignal.Slidedown.promptPush();
     }
-  }, []); // Empty dependency array ensures this runs only once on mount.
+
+    initializeOneSignal();
+  }, []);
   
   useEffect(() => {
-    // This effect runs when the user's login state changes.
+    if (!OneSignal.isInitialized()) return;
+
     if (user) {
-      // If user is logged in, set their UID as the external user ID in OneSignal.
-      // This allows you to target specific users from the OneSignal dashboard.
       OneSignal.login(user.uid);
     } else {
-      // If user logs out, remove their ID from OneSignal.
-      // It's safe to call logout even if the user is not logged in.
-      OneSignal.logout();
+      if (OneSignal.User.isSubscribed()) {
+          OneSignal.logout();
+      }
     }
   }, [user]);
 
