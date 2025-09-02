@@ -19,15 +19,13 @@ export function OneSignalProvider({ children }: { children: ReactNode }) {
       }
       
       try {
-        // We re-add allowLocalhostAsSecureOrigin to prevent errors on the local dev server.
         await OneSignal.init({
           appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-          allowLocalhostAsSecureOrigin: true,
+          allowLocalhostAsSecureOrigin: true, // This line fixes the error on localhost
           safari_web_id: "web.onesignal.auto.123456-7890-abcd-efgh-ijklmnopqrst",
         });
         setIsOneSignalInitialized(true);
         
-        // Prompt for notification permission
         OneSignal.Slidedown.promptPush();
       } catch (error) {
         console.error("OneSignal initialization failed:", error);
@@ -43,7 +41,6 @@ export function OneSignalProvider({ children }: { children: ReactNode }) {
     if (user) {
       OneSignal.login(user.uid);
     } else {
-      // Check if a user session exists in OneSignal before logging out
       if (OneSignal.User.isSubscribed()) {
           OneSignal.logout();
       }
