@@ -19,6 +19,7 @@ export function OneSignalProvider({ children }: { children: ReactNode }) {
       }
       
       try {
+        // We re-add allowLocalhostAsSecureOrigin to prevent errors on the local dev server.
         await OneSignal.init({
           appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
           allowLocalhostAsSecureOrigin: true,
