@@ -21,11 +21,12 @@ export function OneSignalProvider({ children }: { children: ReactNode }) {
       try {
         await OneSignal.init({
           appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID,
-          allowLocalhostAsSecureOrigin: true, // This line fixes the error on localhost
+          allowLocalhostAsSecureOrigin: true,
           safari_web_id: "web.onesignal.auto.123456-7890-abcd-efgh-ijklmnopqrst",
         });
         setIsOneSignalInitialized(true);
         
+        // Use the recommended Slidedown prompt
         OneSignal.Slidedown.promptPush();
       } catch (error) {
         console.error("OneSignal initialization failed:", error);
