@@ -95,7 +95,7 @@ export default function DoubtAiPage() {
                                         </Avatar>
                                     )}
                                     <div className={`max-w-[80%] rounded-lg px-4 py-3 ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
-                                       <p className="text-sm whitespace-pre-wrap">{msg.content[0].text}</p>
+                                       <p className="text-sm">{msg.content[0].text}</p>
                                     </div>
                                     {msg.role === 'user' && (
                                         <Avatar className="h-9 w-9 border">
