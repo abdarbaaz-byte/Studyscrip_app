@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -82,6 +82,8 @@ export default function AdminDashboardPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [liveSurveys, setLiveSurveys] = useState<LiveClassSurvey[]>([]);
+  const [pendingReviews, setPendingReviews] = useState<Review[]>([]);
+  const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [notificationTitle, setNotificationTitle] = useState("");
@@ -154,9 +156,10 @@ export default function AdminDashboardPage() {
           if (hasPermission('view_quiz_attempts')) promises.push(getQuizAttempts()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_live_class_surveys')) promises.push(getLiveClassSurveys()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_site_settings')) promises.push(getBannerSettings()); else promises.push(Promise.resolve(null));
+          if (hasPermission('manage_reviews')) promises.push(getReviews('pending')); else promises.push(Promise.resolve([]));
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, surveysData, bannerData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, employeesData] = await Promise.all(promises);
           
           setAcademicClasses(academicsData as AcademicClass[]);
           setCourses(coursesData as Course[]);
@@ -167,6 +170,7 @@ export default function AdminDashboardPage() {
           setQuizzes(quizzesData as Quiz[]);
           setQuizAttempts(quizAttemptsData as QuizAttempt[]);
           setLiveSurveys(surveysData as LiveClassSurvey[]);
+          setPendingReviews(reviewsData as Review[]);
           setEmployees(employeesData as EmployeeData[]);
           if(bannerData) setBannerSettings(bannerData as BannerSettings);
 
@@ -504,6 +508,36 @@ export default function AdminDashboardPage() {
       setAttemptToDelete(null);
     }
   };
+  
+  const handleApproveReview = async (reviewId: string) => {
+    try {
+        await approveReview(reviewId);
+        toast({ title: "Review Approved!", description: "The review will now appear on the homepage."});
+        loadAdminData();
+    } catch (error) {
+        console.error("Failed to approve review:", error);
+        toast({ variant: "destructive", title: "Failed to approve review" });
+    }
+  };
+
+  const handleDeleteReviewClick = (review: Review) => {
+    setReviewToDelete(review);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (reviewToDelete) {
+        try {
+            await deleteReview(reviewToDelete.id);
+            toast({ title: "Review Deleted", description: "The review has been permanently removed."});
+            setReviewToDelete(null);
+            loadAdminData();
+        } catch (error) {
+            console.error("Failed to delete review:", error);
+            toast({ variant: "destructive", title: "Failed to delete review" });
+        }
+    }
+  };
+
 
 
   if (loading || authLoading) {
@@ -782,6 +816,67 @@ export default function AdminDashboardPage() {
                 <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                         No survey responses have been submitted yet.
+                    </TableCell>
+                </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
+  const renderReviewManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Review Management</CardTitle>
+        <CardDescription>Approve or delete pending student reviews.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[15%]">Name</TableHead>
+              <TableHead className="w-[55%]">Comment</TableHead>
+              <TableHead className="w-[15%]">Submitted At</TableHead>
+              <TableHead className="text-right w-[15%]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pendingReviews.map((review) => (
+              <TableRow key={review.id}>
+                <TableCell className="font-medium">{review.name}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{review.comment}</TableCell>
+                <TableCell>{format(review.submittedAt.toDate(), "PPP")}</TableCell>
+                <TableCell className="text-right space-x-2">
+                   <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleApproveReview(review.id)}>
+                        <CheckCircle className="mr-2 h-4 w-4" /> Approve
+                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button size="sm" variant="destructive" onClick={() => handleDeleteReviewClick(review)}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Delete this review?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the review by <span className="font-bold">{reviewToDelete?.name}</span>. This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setReviewToDelete(null)}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={confirmDeleteReview}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </TableCell>
+              </TableRow>
+            ))}
+             {pendingReviews.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No pending reviews.
                     </TableCell>
                 </TableRow>
             )}
@@ -1089,6 +1184,9 @@ export default function AdminDashboardPage() {
             {hasPermission('view_live_class_surveys') && <Button variant={activeTab === 'live-surveys' ? 'default' : 'outline'} onClick={() => setActiveTab('live-surveys')}>
                 <Radio className="mr-2 h-4 w-4" /> Live Surveys
             </Button>}
+             {hasPermission('manage_reviews') && <Button variant={activeTab === 'reviews' ? 'default' : 'outline'} onClick={() => setActiveTab('reviews')}>
+                <MessageSquareQuote className="mr-2 h-4 w-4" /> Reviews
+            </Button>}
              {hasPermission('manage_payment_requests') && <Button variant={activeTab === 'requests' ? 'default' : 'outline'} onClick={() => setActiveTab('requests')} className="relative">
                 <ShieldAlert className="mr-2 h-4 w-4" /> Payment Requests
                  {paymentRequests.length > 0 && (
@@ -1118,6 +1216,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
         {activeTab === 'quiz-attempts' && hasPermission('view_quiz_attempts') && renderQuizAttempts()}
         {activeTab === 'live-surveys' && hasPermission('view_live_class_surveys') && renderLiveSurveys()}
+        {activeTab === 'reviews' && hasPermission('manage_reviews') && renderReviewManagement()}
         {activeTab === 'requests' && hasPermission('manage_payment_requests') && renderPaymentRequests()}
         {activeTab === 'access' && hasPermission('manage_manual_access') && renderManualAccessGrant()}
         {activeTab === 'purchases' && hasPermission('view_purchases') && renderPurchaseManagement()}
@@ -1358,5 +1457,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    

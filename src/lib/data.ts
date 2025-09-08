@@ -48,6 +48,15 @@ export type QuizAttempt = {
   submittedAt: Timestamp;
 };
 
+// --- REVIEWS ---
+export type Review = {
+    id: string; // Firestore doc ID
+    name: string;
+    comment: string;
+    status: 'pending' | 'approved';
+    submittedAt: Timestamp;
+};
+
 
 // COURSES
 export async function getCourses(): Promise<Course[]> {
@@ -794,4 +803,36 @@ export async function getBannerSettings(): Promise<BannerSettings | null> {
 export async function saveBannerSettings(settings: BannerSettings): Promise<void> {
     const settingsDocRef = doc(db, 'settings', 'homeBanner');
     await setDoc(settingsDocRef, settings, { merge: true });
+}
+
+// --- STUDENT REVIEWS ---
+export async function getReviews(status: 'approved' | 'pending' | 'all' = 'approved'): Promise<Review[]> {
+    let q;
+    const reviewsCol = collection(db, 'reviews');
+    if (status === 'all') {
+        q = query(reviewsCol, orderBy('submittedAt', 'desc'));
+    } else {
+        q = query(reviewsCol, where('status', '==', status), orderBy('submittedAt', 'desc'));
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+}
+
+export async function submitReview(reviewData: { name: string; comment: string; }): Promise<void> {
+    const reviewsCol = collection(db, 'reviews');
+    await addDoc(reviewsCol, {
+        ...reviewData,
+        status: 'pending',
+        submittedAt: serverTimestamp(),
+    });
+}
+
+export async function approveReview(id: string): Promise<void> {
+    const reviewDocRef = doc(db, 'reviews', id);
+    await updateDoc(reviewDocRef, { status: 'approved' });
+}
+
+export async function deleteReview(id: string): Promise<void> {
+    const reviewDocRef = doc(db, 'reviews', id);
+    await deleteDoc(reviewDocRef);
 }

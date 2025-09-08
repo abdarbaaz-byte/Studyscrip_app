@@ -5,8 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
-import { getCourses, getBannerSettings, type BannerSettings } from "@/lib/data";
-import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuestion, Store, Radio, BrainCircuit } from "lucide-react";
+import { getCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview } from "@/lib/data";
+import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuestion, Store, Radio, BrainCircuit, Star, Send } from "lucide-react";
 import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { getAcademicData, AcademicClass } from "@/lib/academics";
@@ -17,16 +17,27 @@ import { useAuth } from "@/hooks/use-auth";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [banner, setBanner] = useState<BannerSettings | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const { user } = useAuth();
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+  const { toast } = useToast();
+
+  // State for review form
+  const [reviewName, setReviewName] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
   // State for carousel indicators
   const [api, setApi] = useState<CarouselApi>()
@@ -50,14 +61,16 @@ export default function Home() {
   useEffect(() => {
     async function loadData() {
         setLoading(true);
-        const [courseData, academicsData, bannerData] = await Promise.all([
+        const [courseData, academicsData, bannerData, reviewsData] = await Promise.all([
             getCourses(),
             getAcademicData(),
             getBannerSettings(),
+            getReviews('approved'),
         ]);
         setCourses(courseData);
         setAcademicClasses(academicsData);
         setBanner(bannerData);
+        setReviews(reviewsData);
         setLoading(false);
     }
     loadData();
@@ -71,6 +84,25 @@ export default function Home() {
   const handleTourFinish = () => {
     localStorage.removeItem('isNewUser');
     setIsTourOpen(false);
+  };
+  
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewName || !reviewComment) {
+      toast({ variant: 'destructive', title: 'Please fill out all fields.' });
+      return;
+    }
+    setIsSubmittingReview(true);
+    try {
+      await submitReview({ name: reviewName, comment: reviewComment });
+      toast({ title: 'Review Submitted!', description: 'Thank you! Your review will appear after approval.' });
+      setReviewName('');
+      setReviewComment('');
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your review. Please try again.' });
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
 
@@ -193,6 +225,68 @@ export default function Home() {
               </div>
             )}
             {courses.length === 0 && <p className="text-center text-muted-foreground mt-8">No professional courses found.</p>}
+          </section>
+
+           <section id="reviews" className="pt-8 pb-16">
+            <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
+              What Our Students Say
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              {reviews.map((review) => (
+                <Card key={review.id}>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      {Array(5).fill(0).map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground italic">"{review.comment}"</p>
+                  </CardContent>
+                   <CardHeader>
+                    <p className="font-bold text-right">- {review.name}</p>
+                  </CardHeader>
+                </Card>
+              ))}
+               {reviews.length === 0 && <p className="text-center text-muted-foreground md:col-span-3">No reviews yet. Be the first to share your experience!</p>}
+            </div>
+
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="font-headline text-2xl">Share Your Experience</CardTitle>
+                <CardDescription>We'd love to hear your feedback!</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleReviewSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="review-name">Your Name</Label>
+                    <Input 
+                      id="review-name" 
+                      placeholder="Enter your name" 
+                      value={reviewName}
+                      onChange={(e) => setReviewName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="review-comment">Your Comment</Label>
+                    <Textarea 
+                      id="review-comment" 
+                      placeholder="Tell us what you think..." 
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      maxLength={200}
+                      required
+                      rows={4}
+                    />
+                     <p className="text-xs text-muted-foreground text-right">{reviewComment.length}/200</p>
+                  </div>
+                   <Button type="submit" disabled={isSubmittingReview}>
+                    {isSubmittingReview ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    Submit Review
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           </section>
         </>
       )}
