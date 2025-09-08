@@ -14,8 +14,9 @@ import { useEffect, useState, useRef } from "react";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { UserTour } from "@/components/user-tour";
 import { useAuth } from "@/hooks/use-auth";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { cn } from "@/lib/utils";
 
 
 export default function Home() {
@@ -26,6 +27,24 @@ export default function Home() {
   const [isTourOpen, setIsTourOpen] = useState(false);
   const { user } = useAuth();
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+  
+  // State for carousel indicators
+  const [api, setApi] = useState<CarouselApi>()
+  const [current, setCurrent] = useState(0)
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    if (!api) {
+      return
+    }
+
+    setCount(api.scrollSnapList().length)
+    setCurrent(api.selectedScrollSnap() + 1)
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1)
+    })
+  }, [api])
 
 
   useEffect(() => {
@@ -136,6 +155,7 @@ export default function Home() {
               Courses
             </h2>
              <Carousel
+              setApi={setApi}
               plugins={[plugin.current]}
               className="w-full"
               onMouseEnter={plugin.current.stop}
@@ -157,6 +177,21 @@ export default function Home() {
               <CarouselPrevious />
               <CarouselNext />
             </Carousel>
+             {courses.length > 0 && (
+              <div className="py-4 text-center text-sm text-muted-foreground flex justify-center gap-2">
+                {Array.from({ length: count }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => api?.scrollTo(i)}
+                    className={cn(
+                      "h-2 w-2 rounded-full transition-all",
+                      i === current - 1 ? "w-4 bg-primary" : "bg-primary/50"
+                    )}
+                    aria-label={`Go to slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
             {courses.length === 0 && <p className="text-center text-muted-foreground mt-8">No professional courses found.</p>}
           </section>
         </>
