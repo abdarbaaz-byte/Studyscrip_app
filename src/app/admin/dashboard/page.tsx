@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -844,7 +844,10 @@ export default function AdminDashboardPage() {
           <TableBody>
             {pendingReviews.map((review) => (
               <TableRow key={review.id}>
-                <TableCell className="font-medium">{review.name}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{review.name}</div>
+                  <div className="text-sm text-muted-foreground">Class: {review.className}</div>
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">{review.comment}</TableCell>
                 <TableCell>{format(review.submittedAt.toDate(), "PPP")}</TableCell>
                 <TableCell className="text-right space-x-2">

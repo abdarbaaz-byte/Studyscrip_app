@@ -36,6 +36,7 @@ export default function Home() {
 
   // State for review form
   const [reviewName, setReviewName] = useState('');
+  const [reviewClass, setReviewClass] = useState('');
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
@@ -88,15 +89,16 @@ export default function Home() {
   
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewName || !reviewComment) {
+    if (!reviewName || !reviewClass || !reviewComment) {
       toast({ variant: 'destructive', title: 'Please fill out all fields.' });
       return;
     }
     setIsSubmittingReview(true);
     try {
-      await submitReview({ name: reviewName, comment: reviewComment });
+      await submitReview({ name: reviewName, className: reviewClass, comment: reviewComment });
       toast({ title: 'Review Submitted!', description: 'Thank you! Your review will appear after approval.' });
       setReviewName('');
+      setReviewClass('');
       setReviewComment('');
     } catch (error) {
       toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your review. Please try again.' });
@@ -243,7 +245,7 @@ export default function Home() {
                     <p className="text-muted-foreground italic">"{review.comment}"</p>
                   </CardContent>
                    <CardHeader>
-                    <p className="font-bold text-right">- {review.name}</p>
+                    <p className="font-bold text-right">- {review.name} ({review.className})</p>
                   </CardHeader>
                 </Card>
               ))}
@@ -257,15 +259,27 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleReviewSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="review-name">Your Name</Label>
-                    <Input 
-                      id="review-name" 
-                      placeholder="Enter your name" 
-                      value={reviewName}
-                      onChange={(e) => setReviewName(e.target.value)}
-                      required
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="review-name">Your Name</Label>
+                      <Input 
+                        id="review-name" 
+                        placeholder="Enter your name" 
+                        value={reviewName}
+                        onChange={(e) => setReviewName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="review-class">Your Class</Label>
+                      <Input 
+                        id="review-class" 
+                        placeholder="e.g., 10th" 
+                        value={reviewClass}
+                        onChange={(e) => setReviewClass(e.target.value)}
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="review-comment">Your Comment</Label>

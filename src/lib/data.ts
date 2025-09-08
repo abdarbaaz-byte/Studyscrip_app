@@ -52,6 +52,7 @@ export type QuizAttempt = {
 export type Review = {
     id: string; // Firestore doc ID
     name: string;
+    className: string;
     comment: string;
     status: 'pending' | 'approved';
     submittedAt: Timestamp;
@@ -820,7 +821,7 @@ export async function getReviews(status: 'approved' | 'pending' | 'all' = 'appro
     return allReviews.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
 }
 
-export async function submitReview(reviewData: { name: string; comment: string; }): Promise<void> {
+export async function submitReview(reviewData: { name: string; className: string; comment: string; }): Promise<void> {
     const reviewsCol = collection(db, 'reviews');
     await addDoc(reviewsCol, {
         ...reviewData,
