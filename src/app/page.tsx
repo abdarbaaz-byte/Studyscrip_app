@@ -262,7 +262,7 @@ export default function Home() {
                   {reviews.map((review) => (
                     <CarouselItem key={review.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                       <div className="p-1 h-full">
-                        <Card className="flex flex-col justify-between h-full">
+                        <Card className="flex flex-col justify-between h-full bg-gradient-to-br from-primary/10 to-secondary/10">
                           <CardHeader className="text-center">
                             <p className="font-bold">{review.name}</p>
                             <p className="text-sm text-muted-foreground">({review.className})</p>
