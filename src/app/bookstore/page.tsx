@@ -38,8 +38,8 @@ export default function BookstorePage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {items.map((item) => (
             <Card key={item.id} className="flex flex-col overflow-hidden group">
-              <CardHeader className="p-0 relative">
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="block aspect-[3/4]">
+              <CardHeader className="p-0 relative flex-grow">
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="block aspect-[3/4] h-full">
                   <Image
                     src={getGoogleDriveImageUrl(item.thumbnailUrl) || `https://placehold.co/600x800.png/E2E8F0/A0AEC0?text=${item.title.split(' ').join('+')}`}
                     alt={item.title}
@@ -49,8 +49,8 @@ export default function BookstorePage() {
                   />
                 </a>
               </CardHeader>
-              <CardContent className="p-4 flex flex-col flex-grow">
-                <CardTitle className="font-headline text-base flex-grow">{item.title}</CardTitle>
+              <CardContent className="p-4 flex flex-col">
+                <CardTitle className="font-headline text-base h-10 flex items-center">{item.title}</CardTitle>
                 <Button asChild className="w-full mt-3">
                   <a href={item.url} target="_blank" rel="noopener noreferrer" download>
                     <Download className="mr-2 h-4 w-4" /> Download
