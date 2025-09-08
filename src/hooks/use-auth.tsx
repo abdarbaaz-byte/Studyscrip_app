@@ -168,6 +168,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       toast({ title: "Account created successfully!" });
+      
+      // Set flag for new user tour
+      localStorage.setItem('isNewUser', 'true');
+
       router.push("/login");
       return true;
     } catch (error: any) {

@@ -12,12 +12,16 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { getAcademicData, AcademicClass } from "@/lib/academics";
 import { useEffect, useState } from "react";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
+import { UserTour } from "@/components/user-tour";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [banner, setBanner] = useState<BannerSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function loadData() {
@@ -33,7 +37,18 @@ export default function Home() {
         setLoading(false);
     }
     loadData();
+
+    // Check for new user tour
+    if (localStorage.getItem('isNewUser') === 'true') {
+        setIsTourOpen(true);
+    }
   }, []);
+  
+  const handleTourFinish = () => {
+    localStorage.removeItem('isNewUser');
+    setIsTourOpen(false);
+  };
+
 
   const featureItems = [
     { icon: LayoutGrid, text: "My Courses", href: "/my-courses" },
@@ -59,6 +74,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4">
+      {user && <UserTour open={isTourOpen} onOpenChange={setIsTourOpen} onFinish={handleTourFinish} />}
       {loading ? (
         <div className="flex justify-center py-16">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
