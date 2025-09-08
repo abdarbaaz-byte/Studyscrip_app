@@ -172,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set flag for new user tour
       localStorage.setItem('isNewUser', 'true');
 
-      router.push("/login");
+      router.push("/");
       return true;
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign-up failed", description: error.message });
