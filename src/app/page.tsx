@@ -10,10 +10,13 @@ import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuest
 import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { getAcademicData, AcademicClass } from "@/lib/academics";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { UserTour } from "@/components/user-tour";
 import { useAuth } from "@/hooks/use-auth";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -22,6 +25,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const { user } = useAuth();
+  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+
 
   useEffect(() => {
     async function loadData() {
@@ -130,12 +135,29 @@ export default function Home() {
             <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
               Courses
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {courses.map((course) => (
-                <CourseCard key={course.docId} course={course} />
-              ))}
-            </div>
-            {courses.length === 0 && <p className="text-center text-muted-foreground">No professional courses found.</p>}
+             <Carousel
+              plugins={[plugin.current]}
+              className="w-full"
+              onMouseEnter={plugin.current.stop}
+              onMouseLeave={plugin.current.reset}
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+            >
+              <CarouselContent>
+                {courses.map((course) => (
+                  <CarouselItem key={course.docId} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                    <div className="p-1">
+                      <CourseCard course={course} />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+            {courses.length === 0 && <p className="text-center text-muted-foreground mt-8">No professional courses found.</p>}
           </section>
         </>
       )}
