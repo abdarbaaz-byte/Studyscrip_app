@@ -1,7 +1,5 @@
 
-"use client";
-
-import { useEffect } from "react";
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,6 +8,19 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import { OneSignalProvider } from "@/components/onesignal-provider";
 import "./globals.css";
+import { ClientSideLayout } from "@/components/client-side-layout";
+
+
+export const metadata: Metadata = {
+  title: "StudyScript - Your Learning Partner",
+  description: "An e-learning platform for academic and professional courses.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
+  },
+  themeColor: "#5062B5",
+};
 
 export default function RootLayout({
   children,
@@ -17,57 +28,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
-  useEffect(() => {
-    // This effect runs only on the client side
-    const isAndroid = /android/i.test(navigator.userAgent);
-    const htmlElement = document.documentElement;
-
-    if (isAndroid) {
-      htmlElement.classList.add('android-screenshot-secure');
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        htmlElement.classList.add('secure-view-enabled');
-      } else {
-        htmlElement.classList.remove('secure-view-enabled');
-      }
-    };
-    
-    if (isAndroid) {
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-    }
-    
-    return () => {
-       if (isAndroid) {
-         document.removeEventListener('visibilitychange', handleVisibilityChange);
-       }
-    };
-  }, []);
-
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/icons/icon-192x192.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" />
-        <meta name="theme-color" content="#5062B5" />
       </head>
-      <body className="min-h-screen font-body antialiased" suppressHydrationWarning>
+      <body className="min-h-screen font-body antialiased">
         <AuthProvider>
           <OneSignalProvider>
-            <div className="relative flex min-h-screen flex-col">
-              <SiteHeader />
-              <main className="flex-1">{children}</main>
-              <SiteFooter />
-            </div>
-            <ChatWidget />
-            <Toaster />
-            <InstallPwaButton />
+            <ClientSideLayout>
+                <div className="relative flex min-h-screen flex-col">
+                  <SiteHeader />
+                  <main className="flex-1">{children}</main>
+                  <SiteFooter />
+                </div>
+                <ChatWidget />
+                <Toaster />
+                <InstallPwaButton />
+            </ClientSideLayout>
           </OneSignalProvider>
         </AuthProvider>
       </body>
