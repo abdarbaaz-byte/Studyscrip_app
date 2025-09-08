@@ -31,32 +31,46 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const { user } = useAuth();
-  const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
   const { toast } = useToast();
 
+  const coursesAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+  const reviewsAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+
+
   // State for review form
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewName, setReviewName] = useState('');
   const [reviewClass, setReviewClass] = useState('');
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
-  // State for carousel indicators
-  const [api, setApi] = useState<CarouselApi>()
-  const [current, setCurrent] = useState(0)
-  const [count, setCount] = useState(0)
+  // State for courses carousel indicators
+  const [coursesApi, setCoursesApi] = useState<CarouselApi>()
+  const [coursesCurrent, setCoursesCurrent] = useState(0)
+  const [coursesCount, setCoursesCount] = useState(0)
+
+   // State for reviews carousel indicators
+  const [reviewsApi, setReviewsApi] = useState<CarouselApi>()
+  const [reviewsCurrent, setReviewsCurrent] = useState(0)
+  const [reviewsCount, setReviewsCount] = useState(0)
 
   useEffect(() => {
-    if (!api) {
-      return
-    }
-
-    setCount(api.scrollSnapList().length)
-    setCurrent(api.selectedScrollSnap() + 1)
-
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1)
+    if (!coursesApi) return
+    setCoursesCount(coursesApi.scrollSnapList().length)
+    setCoursesCurrent(coursesApi.selectedScrollSnap() + 1)
+    coursesApi.on("select", () => {
+      setCoursesCurrent(coursesApi.selectedScrollSnap() + 1)
     })
-  }, [api])
+  }, [coursesApi])
+
+  useEffect(() => {
+    if (!reviewsApi) return
+    setReviewsCount(reviewsApi.scrollSnapList().length)
+    setReviewsCurrent(reviewsApi.selectedScrollSnap() + 1)
+    reviewsApi.on("select", () => {
+      setReviewsCurrent(reviewsApi.selectedScrollSnap() + 1)
+    })
+  }, [reviewsApi])
 
 
   useEffect(() => {
@@ -100,6 +114,7 @@ export default function Home() {
       setReviewName('');
       setReviewClass('');
       setReviewComment('');
+      setShowReviewForm(false);
     } catch (error) {
       toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not submit your review. Please try again.' });
     } finally {
@@ -189,11 +204,11 @@ export default function Home() {
               Courses
             </h2>
              <Carousel
-              setApi={setApi}
-              plugins={[plugin.current]}
+              setApi={setCoursesApi}
+              plugins={[coursesAutoplay.current]}
               className="w-full"
-              onMouseEnter={plugin.current.stop}
-              onMouseLeave={plugin.current.reset}
+              onMouseEnter={coursesAutoplay.current.stop}
+              onMouseLeave={coursesAutoplay.current.reset}
               opts={{
                 align: "start",
                 loop: true,
@@ -213,13 +228,13 @@ export default function Home() {
             </Carousel>
              {courses.length > 0 && (
               <div className="py-4 text-center text-sm text-muted-foreground flex justify-center gap-2">
-                {Array.from({ length: count }).map((_, i) => (
+                {Array.from({ length: coursesCount }).map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => api?.scrollTo(i)}
+                    onClick={() => coursesApi?.scrollTo(i)}
                     className={cn(
                       "h-2 w-2 rounded-full transition-all",
-                      i === current - 1 ? "w-4 bg-primary" : "bg-primary/50"
+                      i === coursesCurrent - 1 ? "w-4 bg-primary" : "bg-primary/50"
                     )}
                     aria-label={`Go to slide ${i + 1}`}
                   />
@@ -233,74 +248,101 @@ export default function Home() {
             <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
               What Our Students Say
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              {reviews.map((review) => (
-                <Card key={review.id}>
+            
+            {reviews.length > 0 ? (
+               <Carousel
+                setApi={setReviewsApi}
+                plugins={[reviewsAutoplay.current]}
+                className="w-full max-w-4xl mx-auto"
+                onMouseEnter={reviewsAutoplay.current.stop}
+                onMouseLeave={reviewsAutoplay.current.reset}
+                opts={{ align: "start", loop: true, }}
+              >
+                <CarouselContent className="-ml-4">
+                  {reviews.map((review) => (
+                    <CarouselItem key={review.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                      <div className="p-1 h-full">
+                        <Card className="flex flex-col justify-between h-full">
+                          <CardHeader className="text-center">
+                            <p className="font-bold">{review.name}</p>
+                            <p className="text-sm text-muted-foreground">({review.className})</p>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex items-center gap-1 justify-center mb-4">
+                              {Array(5).fill(0).map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
+                            </div>
+                            <p className="text-muted-foreground italic text-center">"{review.comment}"</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex" />
+                <CarouselNext className="hidden sm:flex" />
+              </Carousel>
+            ) : (
+              <p className="text-center text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+            )}
+
+            <div className="text-center mt-12">
+              {!showReviewForm ? (
+                <Button onClick={() => setShowReviewForm(true)}>Add Your Review</Button>
+              ) : (
+                <Card className="max-w-2xl mx-auto text-left">
                   <CardHeader>
-                    <div className="flex items-center gap-2">
-                      {Array(5).fill(0).map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
-                    </div>
+                    <CardTitle className="font-headline text-2xl">Share Your Experience</CardTitle>
+                    <CardDescription>We'd love to hear your feedback!</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground italic">"{review.comment}"</p>
+                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="review-name">Your Name</Label>
+                          <Input 
+                            id="review-name" 
+                            placeholder="Enter your name" 
+                            value={reviewName}
+                            onChange={(e) => setReviewName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="review-class">Your Class</Label>
+                          <Input 
+                            id="review-class" 
+                            placeholder="e.g., 10th" 
+                            value={reviewClass}
+                            onChange={(e) => setReviewClass(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="review-comment">Your Comment</Label>
+                        <Textarea 
+                          id="review-comment" 
+                          placeholder="Tell us what you think..." 
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          maxLength={200}
+                          required
+                          rows={4}
+                        />
+                         <p className="text-xs text-muted-foreground text-right">{reviewComment.length}/200</p>
+                      </div>
+                       <div className="flex gap-2">
+                          <Button type="submit" disabled={isSubmittingReview}>
+                            {isSubmittingReview ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                            Submit Review
+                          </Button>
+                           <Button type="button" variant="ghost" onClick={() => setShowReviewForm(false)}>Cancel</Button>
+                       </div>
+                    </form>
                   </CardContent>
-                   <CardHeader>
-                    <p className="font-bold text-right">- {review.name} ({review.className})</p>
-                  </CardHeader>
                 </Card>
-              ))}
-               {reviews.length === 0 && <p className="text-center text-muted-foreground md:col-span-3">No reviews yet. Be the first to share your experience!</p>}
+              )}
             </div>
-
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="font-headline text-2xl">Share Your Experience</CardTitle>
-                <CardDescription>We'd love to hear your feedback!</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleReviewSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="review-name">Your Name</Label>
-                      <Input 
-                        id="review-name" 
-                        placeholder="Enter your name" 
-                        value={reviewName}
-                        onChange={(e) => setReviewName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="review-class">Your Class</Label>
-                      <Input 
-                        id="review-class" 
-                        placeholder="e.g., 10th" 
-                        value={reviewClass}
-                        onChange={(e) => setReviewClass(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="review-comment">Your Comment</Label>
-                    <Textarea 
-                      id="review-comment" 
-                      placeholder="Tell us what you think..." 
-                      value={reviewComment}
-                      onChange={(e) => setReviewComment(e.target.value)}
-                      maxLength={200}
-                      required
-                      rows={4}
-                    />
-                     <p className="text-xs text-muted-foreground text-right">{reviewComment.length}/200</p>
-                  </div>
-                   <Button type="submit" disabled={isSubmittingReview}>
-                    {isSubmittingReview ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                    Submit Review
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
           </section>
         </>
       )}
