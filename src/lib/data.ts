@@ -807,15 +807,17 @@ export async function saveBannerSettings(settings: BannerSettings): Promise<void
 
 // --- STUDENT REVIEWS ---
 export async function getReviews(status: 'approved' | 'pending' | 'all' = 'approved'): Promise<Review[]> {
-    let q;
     const reviewsCol = collection(db, 'reviews');
-    if (status === 'all') {
-        q = query(reviewsCol, orderBy('submittedAt', 'desc'));
-    } else {
-        q = query(reviewsCol, where('status', '==', status), orderBy('submittedAt', 'desc'));
+    // Fetch all reviews first
+    const snapshot = await getDocs(reviewsCol);
+    let allReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+
+    // Then filter and sort in code
+    if (status !== 'all') {
+        allReviews = allReviews.filter(review => review.status === status);
     }
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+
+    return allReviews.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
 }
 
 export async function submitReview(reviewData: { name: string; comment: string; }): Promise<void> {
