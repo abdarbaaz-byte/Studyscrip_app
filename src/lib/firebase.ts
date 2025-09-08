@@ -18,8 +18,16 @@ const firebaseConfig = {
   measurementId: "G-7WJ302P118"
 };
 
+function createFirebaseApp(config: object): FirebaseApp {
+    try {
+        return getApp();
+    } catch {
+        return initializeApp(config);
+    }
+}
+
 // Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app: FirebaseApp = createFirebaseApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
