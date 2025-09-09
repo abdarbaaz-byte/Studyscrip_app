@@ -1,5 +1,5 @@
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,13 +12,15 @@ import { ClientSideLayout } from "@/components/client-side-layout";
 
 
 export const metadata: Metadata = {
-  title: "StudyScript - Your Learning Partner",
-  description: "An e-learning platform for academic and professional courses.",
+  title: "StudyScript - E-Learning for Academic & Professional Courses",
+  description: "Join StudyScript, a modern e-learning platform for academic classes (9th, 10th) and professional courses in web development, data science, and more. Start learning today!",
   manifest: "/manifest.json",
-  icons: {
-    icon: "/icons/icon-192x192.png",
-    apple: "/icons/icon-192x192.png",
-  },
+  keywords: ["e-learning", "online courses", "academic classes", "9th class", "10th class", "professional courses", "online education", "StudyScript"],
+  authors: [{ name: "StudyScript" }],
+  robots: "index, follow",
+};
+
+export const viewport: Viewport = {
   themeColor: "#5062B5",
 };
 

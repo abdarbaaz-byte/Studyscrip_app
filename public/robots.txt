@@ -1,0 +1,9 @@
+# Allow all friendly crawlers to access the site
+User-agent: *
+Allow: /
+
+# Disallow access to the admin dashboard
+Disallow: /admin/
+
+# Location of sitemap
+Sitemap: https://your-domain.com/sitemap.xml
