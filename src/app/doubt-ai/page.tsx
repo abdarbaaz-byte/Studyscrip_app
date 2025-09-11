@@ -16,6 +16,17 @@ interface Message {
     content: {text: string}[];
 }
 
+// Simple component to render markdown-like text
+function MarkdownRenderer({ text }: { text: string }) {
+  const html = text
+    // Bold: **text**
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // Italic: *text* (if needed in future)
+    // .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
 export default function DoubtAiPage() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -96,7 +107,9 @@ export default function DoubtAiPage() {
                                         </Avatar>
                                     )}
                                     <div className={`max-w-[80%] rounded-lg px-4 py-3 ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
-                                       <p className="text-sm whitespace-pre-wrap">{msg.content[0].text}</p>
+                                       <div className="text-sm whitespace-pre-wrap">
+                                            <MarkdownRenderer text={msg.content[0].text} />
+                                       </div>
                                     </div>
                                     {msg.role === 'user' && (
                                         <Avatar className="h-9 w-9 border">
