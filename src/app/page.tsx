@@ -159,7 +159,7 @@ export default function Home() {
                 <CarouselContent>
                   {activeBanners.map((banner) => (
                     <CarouselItem key={banner.id}>
-                      <div className="aspect-[3/1] w-full relative overflow-hidden">
+                      <div className="aspect-[4/1] w-full relative overflow-hidden">
                         {banner.linkUrl ? (
                           <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
                              <Image
@@ -372,3 +372,5 @@ export default function Home() {
     </>
   );
 }
+
+    
