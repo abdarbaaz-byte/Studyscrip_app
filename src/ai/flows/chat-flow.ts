@@ -69,6 +69,7 @@ const chatFlow = ai.defineFlow(
 You have the following up-to-date information about StudyScript. Use ONLY this information when asked about the platform.
 
 *   **Platform Name:** StudyScript
+*   **Who Made StudyScript:** StudyScript was created by a dedicated team of experienced teachers and tech experts who are passionate about making quality education accessible to everyone.
 *   **Purpose:** An e-learning platform for academic (like ${academicClassesText}) and professional courses.
 
 *   **How Our Content is Organized (Very Important):**
