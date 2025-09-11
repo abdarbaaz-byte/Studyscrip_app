@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, BannerItem } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
   const [selectableItems, setSelectableItems] = useState<SelectableItem[]>([]);
 
   // State for Banner Settings
-  const [bannerSettings, setBannerSettings] = useState<BannerSettings>({ isActive: false, imageUrl: '', linkUrl: '' });
+  const [bannerSettings, setBannerSettings] = useState<BannerSettings>({ banners: [] });
   const [isSavingBanner, setIsSavingBanner] = useState(false);
 
   // State for deleting quiz attempts
@@ -489,6 +489,28 @@ export default function AdminDashboardPage() {
       toast({ variant: "destructive", title: "Failed to save settings" });
     }
     setIsSavingBanner(false);
+  };
+
+  const handleAddBanner = () => {
+    const newBanner: BannerItem = {
+      id: `banner-${Date.now()}`,
+      imageUrl: '',
+      linkUrl: '',
+      isActive: true,
+    };
+    setBannerSettings(prev => ({ banners: [...prev.banners, newBanner] }));
+  };
+
+  const handleUpdateBanner = (id: string, field: keyof Omit<BannerItem, 'id'>, value: string | boolean) => {
+    setBannerSettings(prev => ({
+      banners: prev.banners.map(b => b.id === id ? { ...b, [field]: value } : b)
+    }));
+  };
+  
+  const handleDeleteBanner = (id: string) => {
+    setBannerSettings(prev => ({
+      banners: prev.banners.filter(b => b.id !== id)
+    }));
   };
 
   const handleDeleteAttemptClick = (attempt: QuizAttempt) => {
@@ -1122,37 +1144,64 @@ export default function AdminDashboardPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Site Settings</CardTitle>
-        <CardDescription>Manage global site settings like the homepage banner.</CardDescription>
+        <CardDescription>Manage global site settings like the homepage banners.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSaveBanner} className="space-y-6">
-          <h3 className="text-lg font-medium">Homepage Banner</h3>
-          <div className="space-y-2">
-            <Label htmlFor="banner-image-url">Banner Image URL</Label>
-            <Input
-              id="banner-image-url"
-              placeholder="https://example.com/banner.jpg"
-              value={bannerSettings.imageUrl}
-              onChange={(e) => setBannerSettings(prev => ({...prev, imageUrl: e.target.value}))}
-            />
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-medium">Homepage Banners</h3>
+            <Button type="button" variant="outline" size="sm" onClick={handleAddBanner}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
+            </Button>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="banner-link-url">Banner Link URL (when clicked)</Label>
-            <Input
-              id="banner-link-url"
-              placeholder="/courses/your-course-id"
-              value={bannerSettings.linkUrl}
-              onChange={(e) => setBannerSettings(prev => ({...prev, linkUrl: e.target.value}))}
-            />
+
+          <div className="space-y-4">
+            {bannerSettings.banners.map((banner, index) => (
+              <div key={banner.id} className="p-4 border rounded-lg relative bg-secondary/50">
+                 <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-7 w-7 text-destructive" 
+                    onClick={() => handleDeleteBanner(banner.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                 </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`banner-image-url-${index}`}>Banner Image URL</Label>
+                    <Input
+                      id={`banner-image-url-${index}`}
+                      placeholder="https://example.com/banner.jpg"
+                      value={banner.imageUrl}
+                      onChange={(e) => handleUpdateBanner(banner.id, 'imageUrl', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`banner-link-url-${index}`}>Banner Link URL</Label>
+                    <Input
+                      id={`banner-link-url-${index}`}
+                      placeholder="/courses/your-course-id"
+                      value={banner.linkUrl}
+                      onChange={(e) => handleUpdateBanner(banner.id, 'linkUrl', e.target.value)}
+                    />
+                  </div>
+                </div>
+                 <div className="flex items-center space-x-2 mt-4">
+                    <Switch 
+                        id={`banner-active-${index}`}
+                        checked={banner.isActive}
+                        onCheckedChange={(checked) => handleUpdateBanner(banner.id, 'isActive', checked)}
+                    />
+                    <Label htmlFor={`banner-active-${index}`}>Show this banner</Label>
+                </div>
+              </div>
+            ))}
+            {bannerSettings.banners.length === 0 && (
+                <p className="text-center text-muted-foreground py-4">No banners configured. Add one to get started.</p>
+            )}
           </div>
-           <div className="flex items-center space-x-2">
-            <Switch 
-                id="banner-active"
-                checked={bannerSettings.isActive}
-                onCheckedChange={(checked) => setBannerSettings(prev => ({...prev, isActive: checked}))}
-            />
-            <Label htmlFor="banner-active">Show Banner on Homepage</Label>
-          </div>
+          
           <Button type="submit" disabled={isSavingBanner}>
             {isSavingBanner ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Save Banner Settings
@@ -1460,3 +1509,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    

@@ -26,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
-  const [banner, setBanner] = useState<BannerSettings | null>(null);
+  const [bannerSettings, setBannerSettings] = useState<BannerSettings | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTourOpen, setIsTourOpen] = useState(false);
@@ -35,6 +35,7 @@ export default function Home() {
 
   const coursesAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
   const reviewsAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+  const bannerAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
 
 
   // State for review form
@@ -84,7 +85,7 @@ export default function Home() {
         ]);
         setCourses(courseData);
         setAcademicClasses(academicsData);
-        setBanner(bannerData);
+        setBannerSettings(bannerData);
         setReviews(reviewsData);
         setLoading(false);
     }
@@ -132,18 +133,7 @@ export default function Home() {
     { icon: BrainCircuit, text: "Quiz", href: "/quizzes" },
   ];
   
-  const BannerContent = () => (
-    <div className="aspect-[4/1] w-full relative overflow-hidden rounded-lg">
-      <Image
-        src={getGoogleDriveImageUrl(banner!.imageUrl)}
-        alt="Promotional Banner"
-        fill
-        className="object-cover"
-        data-ai-hint="advertisement banner"
-      />
-    </div>
-  );
-
+  const activeBanners = bannerSettings?.banners.filter(b => b.isActive) || [];
 
   return (
     <div className="container mx-auto px-4">
@@ -154,15 +144,52 @@ export default function Home() {
         </div>
       ) : (
         <>
-          {banner?.isActive && banner.imageUrl && (
-            <section className="mb-4">
-               {banner.linkUrl ? (
-                 <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
-                   <BannerContent />
-                 </Link>
-               ) : (
-                 <BannerContent />
-               )}
+          {activeBanners.length > 0 && (
+            <section className="mb-4 pt-4">
+              <Carousel
+                plugins={[bannerAutoplay.current]}
+                className="w-full"
+                onMouseEnter={bannerAutoplay.current.stop}
+                onMouseLeave={bannerAutoplay.current.reset}
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+              >
+                <CarouselContent>
+                  {activeBanners.map((banner) => (
+                    <CarouselItem key={banner.id}>
+                      <div className="aspect-[3/1] w-full relative overflow-hidden rounded-lg">
+                        {banner.linkUrl ? (
+                          <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
+                             <Image
+                              src={getGoogleDriveImageUrl(banner.imageUrl)}
+                              alt="Promotional Banner"
+                              fill
+                              className="object-cover"
+                              data-ai-hint="advertisement banner"
+                            />
+                          </Link>
+                        ) : (
+                           <Image
+                              src={getGoogleDriveImageUrl(banner.imageUrl)}
+                              alt="Promotional Banner"
+                              fill
+                              className="object-cover"
+                              data-ai-hint="advertisement banner"
+                            />
+                        )}
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {activeBanners.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                  </>
+                )}
+              </Carousel>
             </section>
           )}
 
@@ -349,3 +376,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

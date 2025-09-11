@@ -786,19 +786,27 @@ export async function findUserByEmail(email: string): Promise<{uid: string, emai
 
 
 // --- SITE SETTINGS ---
-export type BannerSettings = {
-    isActive: boolean;
-    imageUrl: string;
-    linkUrl: string;
+export type BannerItem = {
+  id: string;
+  imageUrl: string;
+  linkUrl: string;
+  isActive: boolean;
 };
 
-export async function getBannerSettings(): Promise<BannerSettings | null> {
+export type BannerSettings = {
+  banners: BannerItem[];
+};
+
+export async function getBannerSettings(): Promise<BannerSettings> {
     const settingsDocRef = doc(db, 'settings', 'homeBanner');
     const docSnap = await getDoc(settingsDocRef);
     if (docSnap.exists()) {
-        return docSnap.data() as BannerSettings;
+        // Ensure it returns the full object with an array, even if empty
+        const data = docSnap.data();
+        return { banners: data.banners || [] };
     }
-    return null;
+    // Return a default structure if the document doesn't exist
+    return { banners: [] };
 }
 
 export async function saveBannerSettings(settings: BannerSettings): Promise<void> {
@@ -839,3 +847,5 @@ export async function deleteReview(id: string): Promise<void> {
     const reviewDocRef = doc(db, 'reviews', id);
     await deleteDoc(reviewDocRef);
 }
+
+    
