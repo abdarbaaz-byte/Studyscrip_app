@@ -164,31 +164,50 @@ function QuizStartPageContent() {
                         <CardDescription>{quiz.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <h3 className="font-headline text-xl font-semibold">Instructions</h3>
+                        <h3 className="font-headline text-xl font-semibold">Instructions / निर्देश</h3>
                         <ul className="space-y-3 text-muted-foreground">
                             <li className="flex items-start gap-3">
                                 <ListChecks className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                                <span>This quiz contains <strong>{quiz.questions.length} questions</strong>.</span>
+                                <div>
+                                    <span>This quiz contains <strong>{quiz.questions.length} questions</strong>.</span>
+                                    <p className="text-xs">इस क्विज़ में <strong>{quiz.questions.length} प्रश्न</strong> हैं।</p>
+                                </div>
                             </li>
                             <li className="flex items-start gap-3">
                                 <Timer className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                                <span>You will have <strong>{quiz.duration || 'unlimited'} minutes</strong> to complete the quiz.</span>
+                                 <div>
+                                    <span>You will have <strong>{quiz.duration || 'unlimited'} minutes</strong> to complete the quiz.</span>
+                                    <p className="text-xs">आपको क्विज़ पूरा करने के लिए <strong>{quiz.duration || 'अनलिमिटेड'} मिनट</strong> मिलेंगे।</p>
+                                </div>
                             </li>
                              <li className="flex items-start gap-3">
                                 <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                                <span className={cn(quizType === 'practice' && "font-semibold text-green-600")}>
-                                    {quizType === 'practice' ? 'You can attempt this quiz multiple times.' : 'Each question has only one correct answer.'}
-                                </span>
+                                <div>
+                                    <span className={cn(quizType === 'practice' && "font-semibold text-green-600")}>
+                                        {quizType === 'practice' ? 'You can attempt this quiz multiple times.' : 'Each question has only one correct answer.'}
+                                    </span>
+                                     <p className="text-xs">
+                                        {quizType === 'practice' ? 'आप इस क्विज़ को कई बार हल कर सकते हैं।' : 'हर प्रश्न का केवल एक ही सही उत्तर है।'}
+                                    </p>
+                                </div>
                             </li>
                              <li className="flex items-start gap-3">
                                 <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
-                                <span className="font-semibold">Do not switch tabs or minimize the app, or your quiz will be submitted automatically.</span>
+                                <div>
+                                    <span className="font-semibold">Do not switch tabs or minimize the app, or your quiz will be submitted automatically.</span>
+                                    <p className="text-xs font-semibold">ऐप का टैब न बदलें और न ही ऐप को मिनिमाइज़ करें, वरना आपका क्विज़ अपने आप सबमिट हो जाएगा।</p>
+                                </div>
                             </li>
                              <li className="flex items-start gap-3">
                                 <NotebookText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                                <span className={cn(quizType === 'live' && "font-semibold")}>
-                                  {quizType === 'live' ? 'Results will be available after the quiz period ends.' : 'Results are shown immediately after submission.'}
-                                </span>
+                                <div>
+                                    <span className={cn(quizType === 'live' && "font-semibold")}>
+                                      {quizType === 'live' ? 'Results will be available after the quiz period ends.' : 'Results are shown immediately after submission.'}
+                                    </span>
+                                    <p className="text-xs">
+                                        {quizType === 'live' ? 'परिणाम क्विज़ अवधि समाप्त होने के बाद उपलब्ध होंगे।' : 'परिणाम सबमिट करने के तुरंत बाद दिखाए जाते हैं।'}
+                                    </p>
+                                </div>
                             </li>
                         </ul>
                     </CardContent>
