@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -57,6 +57,27 @@ export function SiteHeader() {
     if (user) {
       markNotificationAsRead(user.uid, id);
     }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'StudyScript',
+      text: 'Check out StudyScript for amazing courses!',
+      url: window.location.origin,
+    };
+    if (navigator.share && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      toast({
+        title: "Sharing not supported",
+        description: "Your browser does not support the Web Share API.",
+      });
+    }
+    setIsSheetOpen(false); // Close sheet after attempting to share
   };
   
   if (isAuthPage) {
@@ -155,6 +176,14 @@ export function SiteHeader() {
                     Dashboard
                   </Link>
                  )}
+                  <Button
+                    variant="ghost"
+                    className="text-foreground/70 transition-colors hover:text-foreground justify-start p-0"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share App
+                  </Button>
               </div>
             </div>
           </SheetContent>
