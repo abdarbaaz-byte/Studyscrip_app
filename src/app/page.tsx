@@ -183,12 +183,6 @@ export default function Home() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                {activeBanners.length > 1 && (
-                  <>
-                    <CarouselPrevious className="left-2" />
-                    <CarouselNext className="right-2" />
-                  </>
-                )}
               </Carousel>
             </section>
           )}
