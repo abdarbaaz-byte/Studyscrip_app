@@ -1,107 +1,96 @@
 
 "use client";
 
-import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, BookOpen, MessageCircleQuestion, LayoutGrid, CheckCircle } from 'lucide-react';
-import { Progress } from './ui/progress';
+import { useEffect } from 'react';
+import { driver } from 'driver.js';
+import 'driver.js/dist/driver.css';
+import { useAuth } from '@/hooks/use-auth';
 
 interface UserTourProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  active: boolean;
   onFinish: () => void;
 }
 
-const tourSteps = [
-  {
-    icon: BookOpen,
-    title: 'Start Your Learning Journey',
-    description: "Welcome to StudyScript! Here you'll find all the subjects for your class. Just click on a class to see the available subjects and chapters.",
-  },
-  {
-    icon: MessageCircleQuestion,
-    title: 'AI Doubt Solver',
-    description: "Have a question? Our AI Doubt Solver is here to help you 24/7 with any academic or platform-related query. You can find it in the main menu.",
-  },
-  {
-    icon: LayoutGrid,
-    title: 'Access Your Content',
-    description: "All your purchased courses and subjects will appear in the 'My Courses' section. It's your personal library for everything you've unlocked.",
-  },
-  {
-    icon: CheckCircle,
-    title: "You're All Set!",
-    description: "You are ready to explore and learn. We wish you all the best on your learning journey. Happy learning!",
-  }
-];
+export function UserTour({ active, onFinish }: UserTourProps) {
+  const { user } = useAuth();
 
-export function UserTour({ open, onOpenChange, onFinish }: UserTourProps) {
-  const [currentStep, setCurrentStep] = useState(0);
-
-  const handleNext = () => {
-    if (currentStep < tourSteps.length - 1) {
-      setCurrentStep(prev => prev + 1);
+  useEffect(() => {
+    if (!active) {
+      return;
     }
-  };
 
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
+    const steps = [
+      {
+        element: '#tour-my-courses',
+        popover: {
+          title: 'My Courses',
+          description: "All your purchased courses and subjects will appear here. It's your personal library for everything you've unlocked.",
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
+        element: '#tour-doubt-ai',
+        popover: {
+          title: 'AI Doubt Solver',
+          description: "Have a question? Our AI Doubt Solver is here to help you 24/7 with any academic or platform-related query.",
+        },
+      },
+       {
+        element: '#tour-notifications',
+        popover: {
+          title: 'Notifications',
+          description: 'Stay updated with important announcements and new course alerts right here.',
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
+        element: '#tour-whatsapp',
+        popover: {
+          title: 'Join our WhatsApp Channel',
+          description: 'Join our WhatsApp channel to get the latest updates directly on your phone.',
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
+        element: '#tour-chat-widget',
+        popover: {
+          title: 'Live Chat Support',
+          description: 'Need help from a person? Use this chat widget to talk directly with our support team.',
+          side: 'top',
+          align: 'end',
+        },
+      },
+    ];
+
+    // If user is logged in, show the My Courses button in header as well
+    if (user) {
+        steps.unshift({
+             element: '#tour-header-my-courses',
+             popover: {
+                title: 'Access Your Learning',
+                description: 'You can always access your purchased content from the "My Courses" button in the header.',
+                side: 'bottom',
+                align: 'start',
+             }
+        });
     }
-  };
 
-  const handleFinish = () => {
-    onFinish();
-    onOpenChange(false);
-  }
 
-  const { icon: Icon, title, description } = tourSteps[currentStep];
-  const isLastStep = currentStep === tourSteps.length - 1;
-  const progress = ((currentStep + 1) / tourSteps.length) * 100;
+    const driverObj = driver({
+      showProgress: true,
+      steps: steps,
+      onDestroyStarted: () => {
+        onFinish();
+        driverObj.destroy();
+      },
+    });
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="items-center text-center">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
-             <Icon className="w-8 h-8" />
-          </div>
-          <DialogTitle className="font-headline text-2xl">{title}</DialogTitle>
-          <DialogDescription className="text-base">
-            {description}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className='py-4'>
-            <Progress value={progress} />
-        </div>
+    driverObj.drive();
 
-        <DialogFooter className="flex justify-between w-full">
-          {currentStep > 0 && !isLastStep && (
-            <Button variant="outline" onClick={handlePrev}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-            </Button>
-          )}
+  }, [active, onFinish, user]);
 
-          {isLastStep ? (
-             <Button onClick={handleFinish} className="w-full">
-                Let's Get Started!
-             </Button>
-          ) : (
-            <Button onClick={handleNext} className={currentStep === 0 ? 'w-full' : ''}>
-              Next <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  return null; // This component does not render anything itself
 }

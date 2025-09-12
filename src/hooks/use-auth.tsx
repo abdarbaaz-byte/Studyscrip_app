@@ -21,7 +21,7 @@ import {
 import { auth, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 
 
 export type UserRole = 'admin' | 'employee' | null;
@@ -178,9 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set flag for new user tour
       localStorage.setItem('isNewUser', 'true');
 
-      // Don't redirect immediately, let the login state handle it
-      // This allows the tour to correctly trigger on the homepage
-      // We will sign out and then push to login, so the user has to login once.
+      // After signup, take user to the login page so they can log in.
+      // This is a common pattern to confirm their action.
       await signOut(auth);
       router.push("/login");
       toast({ title: "Please login to continue."});
@@ -240,7 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if(user) {
         const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { activeSessionToken: null }, { merge: true });
+        await updateDoc(userDocRef, { activeSessionToken: null });
       }
       await signOut(auth);
       localStorage.removeItem('sessionToken');

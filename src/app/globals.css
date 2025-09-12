@@ -119,3 +119,47 @@ html {
     user-select: auto !important; /* Standard syntax */
   }
 }
+
+/* Driver.js tour styles */
+:root {
+  --driver-bg-color: hsl(var(--primary));
+  --driver-popover-bg-color: hsl(var(--card));
+  --driver-popover-text-color: hsl(var(--card-foreground));
+  --driver-popover-title-color: hsl(var(--card-foreground));
+  --driver-popover-border-radius: var(--radius);
+  --driver-popover-arrow-color: hsl(var(--card));
+  --driver-popover-box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.driver-popover-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.driver-popover-description {
+  font-family: 'PT Sans', sans-serif;
+  font-size: 1rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.driver-popover-navigation-btns {
+  justify-content: space-between;
+}
+
+.driver-popover-navigation-btns .driver-popover-prev-btn,
+.driver-popover-navigation-btns .driver-popover-next-btn {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  text-shadow: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+}
+
+.driver-popover-navigation-btns .driver-popover-close-btn {
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  text-shadow: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+}

@@ -92,8 +92,12 @@ export default function Home() {
     loadData();
 
     // Check for new user tour
-    if (localStorage.getItem('isNewUser') === 'true') {
-        setIsTourOpen(true);
+    const isNewUser = localStorage.getItem('isNewUser');
+    if (isNewUser === 'true') {
+        // Use a timeout to ensure the DOM is ready for the tour
+        setTimeout(() => {
+          setIsTourOpen(true);
+        }, 500);
     }
   }, []);
   
@@ -125,9 +129,9 @@ export default function Home() {
 
 
   const featureItems = [
-    { icon: LayoutGrid, text: "My Courses", href: "/my-courses" },
+    { icon: LayoutGrid, text: "My Courses", href: "/my-courses", id: "tour-my-courses" },
     { icon: FileText, text: "Free Notes", href: "/free-notes" },
-    { icon: MessageCircleQuestion, text: "Doubt", href: "/doubt-ai" },
+    { icon: MessageCircleQuestion, text: "Doubt", href: "/doubt-ai", id: "tour-doubt-ai" },
     { icon: Store, text: "Bookstore", href: "/bookstore" },
     { icon: Radio, text: "Live Classes", href: "/live-classes" },
     { icon: BrainCircuit, text: "Quiz", href: "/quizzes" },
@@ -137,58 +141,60 @@ export default function Home() {
 
   return (
     <>
-      {user && <UserTour open={isTourOpen} onOpenChange={setIsTourOpen} onFinish={handleTourFinish} />}
-      {loading ? (
-        <div className="flex justify-center py-16">
+      <UserTour active={isTourOpen} onFinish={handleTourFinish} />
+       <section className="mb-4">
+        {loading ? (
+             <div className="aspect-[4/1] w-full relative overflow-hidden bg-secondary animate-pulse"></div>
+        ) : activeBanners.length > 0 && (
+            <Carousel
+              plugins={[bannerAutoplay.current]}
+              className="w-full"
+              onMouseEnter={bannerAutoplay.current.stop}
+              onMouseLeave={bannerAutoplay.current.reset}
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+            >
+              <CarouselContent>
+                {activeBanners.map((banner) => (
+                  <CarouselItem key={banner.id}>
+                    <div className="aspect-[4/1] w-full relative overflow-hidden">
+                      {banner.linkUrl ? (
+                        <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
+                           <Image
+                            src={getGoogleDriveImageUrl(banner.imageUrl)}
+                            alt="Promotional Banner"
+                            fill
+                            className="object-cover"
+                            data-ai-hint="advertisement banner"
+                          />
+                        </Link>
+                      ) : (
+                         <Image
+                            src={getGoogleDriveImageUrl(banner.imageUrl)}
+                            alt="Promotional Banner"
+                            fill
+                            className="object-cover"
+                            data-ai-hint="advertisement banner"
+                          />
+                      )}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+        )}
+      </section>
+      
+      <div className="container mx-auto px-4">
+        {loading ? (
+           <div className="flex justify-center py-16">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      ) : (
+        ) : (
         <>
-          {activeBanners.length > 0 && (
-            <section className="mb-4">
-              <Carousel
-                plugins={[bannerAutoplay.current]}
-                className="w-full"
-                onMouseEnter={bannerAutoplay.current.stop}
-                onMouseLeave={bannerAutoplay.current.reset}
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-              >
-                <CarouselContent>
-                  {activeBanners.map((banner) => (
-                    <CarouselItem key={banner.id}>
-                      <div className="aspect-[4/1] w-full relative overflow-hidden">
-                        {banner.linkUrl ? (
-                          <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
-                             <Image
-                              src={getGoogleDriveImageUrl(banner.imageUrl)}
-                              alt="Promotional Banner"
-                              fill
-                              className="object-cover"
-                              data-ai-hint="advertisement banner"
-                            />
-                          </Link>
-                        ) : (
-                           <Image
-                              src={getGoogleDriveImageUrl(banner.imageUrl)}
-                              alt="Promotional Banner"
-                              fill
-                              className="object-cover"
-                              data-ai-hint="advertisement banner"
-                            />
-                        )}
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-            </section>
-          )}
-
-          <div className="container mx-auto px-4">
-            <section id="academics" className="pt-4 pb-8">
+          <section id="academics" className="pt-4 pb-8">
               <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
                 Choose Your Class
               </h2>
@@ -211,7 +217,7 @@ export default function Home() {
             <section id="features" className="py-16">
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-y-8 gap-x-4 text-center">
                 {featureItems.map((item, index) => (
-                  <Link href={item.href} key={index} className="group flex flex-col items-center gap-2">
+                  <Link href={item.href} key={index} id={item.id} className="group flex flex-col items-center gap-2">
                     <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
                       <item.icon className="w-10 h-10" />
                     </div>
@@ -366,11 +372,9 @@ export default function Home() {
                 )}
               </div>
             </section>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </>
   );
 }
-
-    
