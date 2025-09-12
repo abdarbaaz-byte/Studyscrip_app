@@ -163,6 +163,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await updateProfile(user, { displayName: name });
       
       const userDocRef = doc(db, "users", user.uid);
+      
+      // Create a new session token for the new user
+      const sessionToken = Date.now().toString();
+      localStorage.setItem('sessionToken', sessionToken);
+      
       await setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
@@ -171,15 +176,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           readNotifications: [],
           role: null,
           permissions: [],
+          activeSessionToken: sessionToken,
       });
 
       toast({ title: "Account created successfully!" });
       
-      // After signup, take user to the login page so they can log in.
-      // This is a common pattern to confirm their action.
-      await signOut(auth);
-      router.push("/login");
-      toast({ title: "Please login to continue."});
+      // User is already logged in by createUserWithEmailAndPassword,
+      // so we can just redirect them.
+      router.push("/");
 
       return true;
     } catch (error: any) {
