@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -15,6 +16,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { signUp } = useAuth();
   const { toast } = useToast();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,9 +30,10 @@ export default function SignupPage() {
       return;
     }
     setLoading(true);
-    const success = await signUp(email, password);
+    const success = await signUp(name, email, password);
     if (success) {
-      router.push("/login");
+      // The user will be redirected from the auth hook after successful login
+      // No need to push here, as it might conflict with the tour logic
     }
     setLoading(false);
   };
@@ -44,6 +47,10 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input id="name" type="text" placeholder="Your full name" required value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="you@gmail.com" required value={email} onChange={(e) => setEmail(e.target.value)} />

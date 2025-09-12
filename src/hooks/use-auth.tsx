@@ -15,6 +15,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  updateProfile,
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -48,7 +49,7 @@ interface AuthContextType {
   permissions: UserPermission[];
   loading: boolean;
   hasPermission: (permission: UserPermission) => boolean;
-  signUp: (email: string, password: string) => Promise<boolean>;
+  signUp: (name: string, email: string, password: string) => Promise<boolean>;
   logIn: (email: string, password: string) => Promise<boolean>;
   logOut: () => void;
   resetPassword: (email: string) => Promise<boolean>;
@@ -153,15 +154,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [user, router, toast]);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (name: string, email: string, password: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      // Update Firebase Auth user profile with display name
+      await updateProfile(user, { displayName: name });
       
       const userDocRef = doc(db, "users", user.uid);
       await setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
+          displayName: name,
           createdAt: new Date().toISOString(),
           readNotifications: [],
           role: null,
@@ -173,7 +178,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set flag for new user tour
       localStorage.setItem('isNewUser', 'true');
 
-      router.push("/");
+      // Don't redirect immediately, let the login state handle it
+      // This allows the tour to correctly trigger on the homepage
+      // We will sign out and then push to login, so the user has to login once.
+      await signOut(auth);
+      router.push("/login");
+      toast({ title: "Please login to continue."});
+
       return true;
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign-up failed", description: error.message });
@@ -202,6 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          await setDoc(userDocRef, {
             uid: loggedInUser.uid,
             email: loggedInUser.email,
+            displayName: loggedInUser.displayName, // Carry over display name
             createdAt: new Date().toISOString(),
             readNotifications: [],
             ...userData
