@@ -175,9 +175,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       toast({ title: "Account created successfully!" });
       
-      // Set flag for new user tour
-      localStorage.setItem('isNewUser', 'true');
-
       // After signup, take user to the login page so they can log in.
       // This is a common pattern to confirm their action.
       await signOut(auth);

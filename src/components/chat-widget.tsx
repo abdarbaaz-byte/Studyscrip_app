@@ -165,7 +165,7 @@ export function ChatWidget() {
 
   return (
     <>
-      <div id="tour-chat-widget" className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-50">
         <Button onClick={() => setIsOpen(!isOpen)} size="icon" className="rounded-full h-14 w-14 shadow-lg">
           {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
         </Button>

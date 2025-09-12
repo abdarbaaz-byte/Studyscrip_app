@@ -190,7 +190,7 @@ export function SiteHeader() {
         </Sheet>
         
         <div className="flex flex-1 items-center justify-end space-x-2">
-           <a id="tour-whatsapp" href="https://whatsapp.com/channel/0029Vb6Mj2mA2pLJ4M5xiH15" target="_blank" rel="noopener noreferrer">
+           <a href="https://whatsapp.com/channel/0029Vb6Mj2mA2pLJ4M5xiH15" target="_blank" rel="noopener noreferrer">
               <Button variant="ghost" className="hidden sm:inline-flex">
                   <WhatsAppIcon className="h-5 w-5 mr-2" />
                   Join WhatsApp
@@ -203,7 +203,7 @@ export function SiteHeader() {
 
            <Popover>
             <PopoverTrigger asChild>
-              <Button id="tour-notifications" variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs text-white">
@@ -247,7 +247,7 @@ export function SiteHeader() {
           
           {user ? (
             <>
-              <Button asChild variant="ghost" id="tour-header-my-courses">
+              <Button asChild variant="ghost">
                 <Link href="/my-courses">My Courses</Link>
               </Button>
               <Button onClick={logOut} variant="outline">

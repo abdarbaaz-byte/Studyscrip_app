@@ -12,8 +12,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { getAcademicData, AcademicClass } from "@/lib/academics";
 import { useEffect, useState, useRef } from "react";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
-import { UserTour } from "@/components/user-tour";
-import { useAuth } from "@/hooks/use-auth";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { cn } from "@/lib/utils";
@@ -29,8 +27,6 @@ export default function Home() {
   const [bannerSettings, setBannerSettings] = useState<BannerSettings | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isTourOpen, setIsTourOpen] = useState(false);
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const coursesAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
@@ -90,21 +86,7 @@ export default function Home() {
         setLoading(false);
     }
     loadData();
-
-    // Check for new user tour
-    const isNewUser = localStorage.getItem('isNewUser');
-    if (isNewUser === 'true') {
-        // Use a timeout to ensure the DOM is ready for the tour
-        setTimeout(() => {
-          setIsTourOpen(true);
-        }, 500);
-    }
   }, []);
-  
-  const handleTourFinish = () => {
-    localStorage.removeItem('isNewUser');
-    setIsTourOpen(false);
-  };
   
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,9 +111,9 @@ export default function Home() {
 
 
   const featureItems = [
-    { icon: LayoutGrid, text: "My Courses", href: "/my-courses", id: "tour-my-courses" },
+    { icon: LayoutGrid, text: "My Courses", href: "/my-courses" },
     { icon: FileText, text: "Free Notes", href: "/free-notes" },
-    { icon: MessageCircleQuestion, text: "Doubt", href: "/doubt-ai", id: "tour-doubt-ai" },
+    { icon: MessageCircleQuestion, text: "Doubt", href: "/doubt-ai" },
     { icon: Store, text: "Bookstore", href: "/bookstore" },
     { icon: Radio, text: "Live Classes", href: "/live-classes" },
     { icon: BrainCircuit, text: "Quiz", href: "/quizzes" },
@@ -141,7 +123,6 @@ export default function Home() {
 
   return (
     <>
-      <UserTour active={isTourOpen} onFinish={handleTourFinish} />
        <section className="mb-4">
         {loading ? (
              <div className="aspect-[4/1] w-full relative overflow-hidden bg-secondary animate-pulse"></div>
@@ -217,7 +198,7 @@ export default function Home() {
             <section id="features" className="py-16">
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-y-8 gap-x-4 text-center">
                 {featureItems.map((item, index) => (
-                  <Link href={item.href} key={index} id={item.id} className="group flex flex-col items-center gap-2">
+                  <Link href={item.href} key={index} className="group flex flex-col items-center gap-2">
                     <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
                       <item.icon className="w-10 h-10" />
                     </div>
