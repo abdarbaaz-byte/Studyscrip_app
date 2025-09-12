@@ -54,10 +54,25 @@ export function SiteHeader() {
   }, [user]);
 
   const handleMarkAsRead = (id: string) => {
-    if (user) {
+    if (user && !readNotificationIds.includes(id)) {
       markNotificationAsRead(user.uid, id);
     }
   };
+
+  const handleMarkAllAsRead = () => {
+    if (user && unreadCount > 0) {
+      const unreadIds = notifications
+        .filter(n => !readNotificationIds.includes(n.id))
+        .map(n => n.id);
+      
+      // We can call markNotificationAsRead for each, or create a new function
+      // for batch marking. For simplicity, we'll iterate.
+      unreadIds.forEach(id => {
+        markNotificationAsRead(user.uid, id);
+      });
+    }
+  };
+
 
   const handleShare = async () => {
     const shareData = {
@@ -203,7 +218,7 @@ export function SiteHeader() {
 
            <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative" onClick={handleMarkAllAsRead}>
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs text-white">
@@ -223,11 +238,7 @@ export function SiteHeader() {
                        <div 
                          key={notif.id} 
                          className="p-4 border-b flex gap-3 items-start hover:bg-secondary cursor-pointer"
-                         onClick={() => {
-                            if (!isRead) {
-                              handleMarkAsRead(notif.id);
-                            }
-                         }}
+                         onClick={() => handleMarkAsRead(notif.id)}
                         >
                         {!isRead && <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary flex-shrink-0" />}
                         <div className={cn("flex-1 min-w-0", isRead && "pl-5")}>
