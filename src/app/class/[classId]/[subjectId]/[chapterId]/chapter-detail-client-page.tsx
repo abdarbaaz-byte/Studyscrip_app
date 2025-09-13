@@ -126,28 +126,40 @@ export default function ChapterDetailClientPage() {
       if (youtubeId) {
         const embedUrl = `https://www.youtube.com/embed/${youtubeId}?rel=0&showinfo=0&iv_load_policy=3`;
         return (
-          <div className="relative w-full h-full">
-            <iframe src={embedUrl} className="w-full h-full" title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-            <div className="absolute inset-0 pointer-events-none"></div>
-          </div>
+          <iframe 
+            src={embedUrl} 
+            className="w-full h-full" 
+            title={title} 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowFullScreen
+            onContextMenu={(e) => e.preventDefault()}
+          ></iframe>
         );
       }
       const driveId = getGoogleDriveFileId(url);
       if (driveId) {
          const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
          return (
-          <div className="relative w-full h-full">
-            <iframe src={embedUrl} className="w-full h-full" title={title} allow="autoplay" allowFullScreen></iframe>
-            <div className="absolute inset-0 pointer-events-none"></div>
-          </div>
+          <iframe 
+            src={embedUrl} 
+            className="w-full h-full" 
+            title={title} 
+            allow="autoplay" 
+            allowFullScreen
+            onContextMenu={(e) => e.preventDefault()}
+          ></iframe>
          );
       }
       // Fallback for other video URLs
       return (
-        <div className="relative w-full h-full">
-          <iframe src={url} className="w-full h-full" title={title} allow="autoplay; fullscreen" allowFullScreen></iframe>
-          <div className="absolute inset-0 pointer-events-none"></div>
-        </div>
+        <iframe 
+          src={url} 
+          className="w-full h-full" 
+          title={title} 
+          allow="autoplay; fullscreen" 
+          allowFullScreen
+          onContextMenu={(e) => e.preventDefault()}
+        ></iframe>
       );
     }
 
@@ -156,18 +168,22 @@ export default function ChapterDetailClientPage() {
        if (driveId) {
            const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
            return (
-            <div className="relative w-full h-full">
-              <iframe src={embedUrl} className="w-full h-full" title={title}></iframe>
-              <div className="absolute inset-0 pointer-events-none"></div>
-            </div>
+            <iframe 
+              src={embedUrl} 
+              className="w-full h-full" 
+              title={title}
+              onContextMenu={(e) => e.preventDefault()}
+            ></iframe>
            );
        }
        // For other PDFs, add #toolbar=0 to attempt to hide controls. This also works for HTML pages.
        return (
-        <div className="relative w-full h-full">
-          <iframe src={`${url}#toolbar=0`} className="w-full h-full" title={title}></iframe>
-          <div className="absolute inset-0 pointer-events-none"></div>
-        </div>
+        <iframe 
+          src={`${url}#toolbar=0`} 
+          className="w-full h-full" 
+          title={title}
+          onContextMenu={(e) => e.preventDefault()}
+        ></iframe>
        );
     }
     
