@@ -128,69 +128,49 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
         const match = driveUrl.match(/file\/d\/([^/]+)/);
         return match ? match[1] : null;
     }
+    
+    let contentUrl = url;
+    let isIframe = false;
 
     if (type === 'video') {
-      const youtubeId = getYouTubeId(url);
-      if (youtubeId) {
-        const embedUrl = `https://www.youtube.com/embed/${youtubeId}?rel=0&showinfo=0&iv_load_policy=3`;
-        return (
-          <iframe 
-            src={embedUrl} 
-            className="w-full h-full" 
-            title={title} 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowFullScreen
-            onContextMenu={(e) => e.preventDefault()}
-          ></iframe>
-        );
-      }
-      const driveId = getGoogleDriveFileId(url);
-      if (driveId) {
-         const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-         return (
-          <iframe 
-            src={embedUrl} 
-            className="w-full h-full" 
-            title={title} 
-            allow="autoplay" 
-            allowFullScreen
-            onContextMenu={(e) => e.preventDefault()}
-          ></iframe>
-         );
-      }
-      return (
-        <iframe 
-          src={url} 
-          className="w-full h-full" 
-          title={title} 
-          allow="autoplay; fullscreen" 
-          allowFullScreen
-          onContextMenu={(e) => e.preventDefault()}
-        ></iframe>
-      );
+        const youtubeId = getYouTubeId(url);
+        if (youtubeId) {
+            contentUrl = `https://www.youtube.com/embed/${youtubeId}?rel=0&showinfo=0&iv_load_policy=3`;
+            isIframe = true;
+        } else {
+            const driveId = getGoogleDriveFileId(url);
+            if (driveId) {
+                contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+            } else {
+                contentUrl = url;
+            }
+            isIframe = true;
+        }
     }
 
     if (type === 'pdf') {
        const driveId = getGoogleDriveFileId(url);
        if (driveId) {
-           const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-           return (
-            <iframe 
-              src={embedUrl} 
-              className="w-full h-full" 
-              title={title}
-              onContextMenu={(e) => e.preventDefault()}
-            ></iframe>
-           );
+           contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+       } else {
+           contentUrl = `${url}#toolbar=0`;
        }
-       return (
-        <iframe 
-          src={`${url}#toolbar=0`} 
-          className="w-full h-full" 
-          title={title}
-          onContextMenu={(e) => e.preventDefault()}
-        ></iframe>
-       );
+       isIframe = true;
+    }
+    
+    if (isIframe) {
+        return (
+            <div className="w-full h-full overflow-auto">
+                <iframe 
+                    src={contentUrl} 
+                    className="w-full h-full border-0" 
+                    title={title} 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                    onContextMenu={(e) => e.preventDefault()}
+                ></iframe>
+            </div>
+        );
     }
     
     if (type === 'image') {
@@ -249,7 +229,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                   width={600}
                   height={400}
                   className="w-full h-auto rounded-t-lg"
-                  data-ai-hint="e-learning concept"
+                  data-ai-hint="online course"
                 />
                 <div className="p-6">
                   <div className="text-3xl font-bold mb-4">
