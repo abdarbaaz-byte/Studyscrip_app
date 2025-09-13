@@ -257,12 +257,13 @@ export function SiteHeader() {
           </Popover>
           
           {user ? (
-            <>
+            <div className="flex items-center gap-2">
+              <div className="w-2" />
               <Button onClick={logOut} variant="outline">
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </Button>
-            </>
+            </div>
           ) : (
             <>
               <Button asChild variant="ghost">
