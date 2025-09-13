@@ -30,18 +30,10 @@ export function ClientSideLayout({
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
     
-    // Disable right-click context menu
-    const handleContextMenu = (e: MouseEvent) => {
-        e.preventDefault();
-    };
-    document.addEventListener('contextmenu', handleContextMenu);
-
-
     return () => {
        if (isAndroid) {
          document.removeEventListener('visibilitychange', handleVisibilityChange);
        }
-       document.removeEventListener('contextmenu', handleContextMenu);
     };
   }, []);
 

@@ -152,14 +152,13 @@ export default function ChapterDetailClientPage() {
     
     if (isIframe) {
         return (
-            <div className="w-full h-full overflow-auto">
+            <div className="w-full h-full">
                 <iframe 
                     src={contentUrl} 
                     className="w-full h-full border-0" 
                     title={title} 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
-                    onContextMenu={(e) => e.preventDefault()}
                 ></iframe>
             </div>
         );
