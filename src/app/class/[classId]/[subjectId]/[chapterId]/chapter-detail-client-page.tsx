@@ -128,7 +128,7 @@ export default function ChapterDetailClientPage() {
         return (
           <div className="relative w-full h-full">
             <iframe src={embedUrl} className="w-full h-full" title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-            <div className="absolute inset-0"></div>
+            <div className="absolute inset-0 pointer-events-none"></div>
           </div>
         );
       }
@@ -138,7 +138,7 @@ export default function ChapterDetailClientPage() {
          return (
           <div className="relative w-full h-full">
             <iframe src={embedUrl} className="w-full h-full" title={title} allow="autoplay" allowFullScreen></iframe>
-            <div className="absolute inset-0"></div>
+            <div className="absolute inset-0 pointer-events-none"></div>
           </div>
          );
       }
@@ -146,7 +146,7 @@ export default function ChapterDetailClientPage() {
       return (
         <div className="relative w-full h-full">
           <iframe src={url} className="w-full h-full" title={title} allow="autoplay; fullscreen" allowFullScreen></iframe>
-          <div className="absolute inset-0"></div>
+          <div className="absolute inset-0 pointer-events-none"></div>
         </div>
       );
     }
@@ -158,7 +158,7 @@ export default function ChapterDetailClientPage() {
            return (
             <div className="relative w-full h-full">
               <iframe src={embedUrl} className="w-full h-full" title={title}></iframe>
-              <div className="absolute inset-0"></div>
+              <div className="absolute inset-0 pointer-events-none"></div>
             </div>
            );
        }
@@ -166,7 +166,7 @@ export default function ChapterDetailClientPage() {
        return (
         <div className="relative w-full h-full">
           <iframe src={`${url}#toolbar=0`} className="w-full h-full" title={title}></iframe>
-          <div className="absolute inset-0"></div>
+          <div className="absolute inset-0 pointer-events-none"></div>
         </div>
        );
     }
