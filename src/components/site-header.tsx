@@ -258,9 +258,6 @@ export function SiteHeader() {
           
           {user ? (
             <>
-              <Button asChild variant="ghost">
-                <Link href="/my-courses">My Courses</Link>
-              </Button>
               <Button onClick={logOut} variant="outline">
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
