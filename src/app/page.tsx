@@ -232,8 +232,6 @@ export default function Home() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
               </Carousel>
               {courses.length > 0 && (
                 <div className="py-4 text-center text-sm text-muted-foreground flex justify-center gap-2">
