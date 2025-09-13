@@ -125,25 +125,50 @@ export default function ChapterDetailClientPage() {
       const youtubeId = getYouTubeId(url);
       if (youtubeId) {
         const embedUrl = `https://www.youtube.com/embed/${youtubeId}?rel=0&showinfo=0&iv_load_policy=3`;
-        return <iframe src={embedUrl} className="w-full h-full" title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>;
+        return (
+          <div className="relative w-full h-full">
+            <iframe src={embedUrl} className="w-full h-full" title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+            <div className="absolute inset-0"></div>
+          </div>
+        );
       }
       const driveId = getGoogleDriveFileId(url);
       if (driveId) {
          const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-         return <iframe src={embedUrl} className="w-full h-full" title={title} allow="autoplay" allowFullScreen></iframe>;
+         return (
+          <div className="relative w-full h-full">
+            <iframe src={embedUrl} className="w-full h-full" title={title} allow="autoplay" allowFullScreen></iframe>
+            <div className="absolute inset-0"></div>
+          </div>
+         );
       }
       // Fallback for other video URLs
-      return <iframe src={url} className="w-full h-full" title={title} allow="autoplay; fullscreen" allowFullScreen></iframe>;
+      return (
+        <div className="relative w-full h-full">
+          <iframe src={url} className="w-full h-full" title={title} allow="autoplay; fullscreen" allowFullScreen></iframe>
+          <div className="absolute inset-0"></div>
+        </div>
+      );
     }
 
     if (type === 'pdf') {
        const driveId = getGoogleDriveFileId(url);
        if (driveId) {
            const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-           return <iframe src={embedUrl} className="w-full h-full" title={title}></iframe>;
+           return (
+            <div className="relative w-full h-full">
+              <iframe src={embedUrl} className="w-full h-full" title={title}></iframe>
+              <div className="absolute inset-0"></div>
+            </div>
+           );
        }
-       // For other PDFs, add #toolbar=0 to attempt to hide controls
-       return <iframe src={`${url}#toolbar=0`} className="w-full h-full" title={title}></iframe>;
+       // For other PDFs, add #toolbar=0 to attempt to hide controls. This also works for HTML pages.
+       return (
+        <div className="relative w-full h-full">
+          <iframe src={`${url}#toolbar=0`} className="w-full h-full" title={title}></iframe>
+          <div className="absolute inset-0"></div>
+        </div>
+       );
     }
     
     if (type === 'image') {
@@ -240,5 +265,3 @@ export default function ChapterDetailClientPage() {
     </>
   );
 }
-
-    
