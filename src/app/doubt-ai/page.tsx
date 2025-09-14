@@ -96,7 +96,7 @@ export default function DoubtAiPage() {
                         Ask any question related to your studies, and I'll do my best to help!
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 p-0 overflow-hidden flex flex-col min-h-0">
+                <CardContent className="flex-1 p-0 flex flex-col min-h-0">
                      <ScrollArea className="h-full p-4 md:p-6" ref={scrollAreaRef}>
                         <div className="space-y-6">
                             {messages.map((msg, index) => (
@@ -126,6 +126,13 @@ export default function DoubtAiPage() {
                                      <div className="max-w-[80%] rounded-lg px-4 py-3 bg-secondary flex items-center">
                                        <Loader2 className="h-5 w-5 animate-spin"/>
                                     </div>
+                                </div>
+                            )}
+                             {messages.length === 0 && !isLoading && (
+                                <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-full py-16">
+                                    <BrainCircuit className="h-12 w-12 mb-4" />
+                                    <p>Your chat history will appear here.</p>
+                                    <p className="text-xs">Start by typing a question below.</p>
                                 </div>
                             )}
                         </div>
