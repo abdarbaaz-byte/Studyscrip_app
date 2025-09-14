@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -159,17 +160,17 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
     }
     
     if (isIframe) {
-        return (
-            <div className="w-full h-full overflow-auto">
-                <iframe 
-                    src={contentUrl} 
-                    className="w-full h-full border-0" 
-                    title={title} 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                ></iframe>
-            </div>
-        );
+      return (
+        <div className="w-full h-full overflow-auto">
+          <iframe
+            src={contentUrl}
+            className="w-full h-full border-0"
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
+      );
     }
     
     if (type === 'image') {
@@ -231,7 +232,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                   data-ai-hint="online course"
                 />
                 <div className="p-6">
-                  <div className="text-3xl font-bold mb-4" dangerouslySetInnerHTML={{ __html: `&#8377;${course.price}` }} />
+                  <div className="text-3xl font-bold mb-4">Rs. {course.price}</div>
                   {loadingPurchase && <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
                   {showPurchaseButton && (
                     <Button size="lg" className="w-full" onClick={handleBuyClick} disabled={isBuying}>
@@ -275,5 +276,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
     </>
   );
 }
+
+    
 
     

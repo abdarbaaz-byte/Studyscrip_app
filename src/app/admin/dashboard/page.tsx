@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -647,7 +648,7 @@ export default function AdminDashboardPage() {
             {courses.map((course) => (
               <TableRow key={course.docId}>
                 <TableCell className="font-medium">{course.title}</TableCell>
-                <TableCell dangerouslySetInnerHTML={{ __html: `&#8377;${course.price}` }} />
+                <TableCell>Rs. {course.price}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{course.content.length}</Badge>
                 </TableCell>
@@ -934,7 +935,7 @@ export default function AdminDashboardPage() {
               <TableRow key={req.id}>
                 <TableCell>
                     <div className="font-medium">{req.userName}</div>
-                    <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: `&#8377;${req.itemPrice}` }} />
+                    <div className="text-sm text-muted-foreground">Rs. {req.itemPrice}</div>
                 </TableCell>
                 <TableCell>
                     <div className="font-medium">{req.itemTitle}</div>
@@ -1296,7 +1297,7 @@ export default function AdminDashboardPage() {
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">{payment.userName}</TableCell>
                     <TableCell className="text-muted-foreground">{payment.itemTitle}</TableCell>
-                    <TableCell className="font-medium" dangerouslySetInnerHTML={{ __html: `&#8377;${payment.amount}` }} />
+                    <TableCell className="font-medium">Rs. {payment.amount}</TableCell>
                     <TableCell className="text-muted-foreground">{payment.paymentDate}</TableCell>
                     <TableCell className="text-right">
                       <Badge
@@ -1509,6 +1510,8 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
 
     
 

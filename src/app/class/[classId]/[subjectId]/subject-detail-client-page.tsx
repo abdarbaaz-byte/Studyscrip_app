@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -163,7 +164,7 @@ export default function SubjectDetailClientPage() {
               <CardDescription>Get access to all {subject.chapters.length} chapters of {subject.name} with a single purchase.</CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-                <div className="text-4xl font-bold text-primary mb-4" dangerouslySetInnerHTML={{ __html: `&#8377;${subject.price}` }} />
+                <div className="text-4xl font-bold text-primary mb-4">Rs. {subject.price}</div>
                 <Button size="lg" onClick={handleBuyClick} disabled={isBuying}>
                    {isBuying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Unlock className="mr-2 h-4 w-4" />}
                    {isBuying ? "Processing..." : "Buy Subject Now"}
@@ -192,5 +193,7 @@ export default function SubjectDetailClientPage() {
     </>
   );
 }
+
+    
 
     

@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -40,7 +41,7 @@ export function CourseCard({ course }: CourseCardProps) {
           </Link>
         </CardTitle>
         <CardDescription className="flex-grow">{course.description}</CardDescription>
-        <p className="text-2xl font-bold text-primary mt-4" dangerouslySetInnerHTML={{ __html: `&#8377;${course.price}` }} />
+        <p className="text-2xl font-bold text-primary mt-4">Rs. {course.price}</p>
       </div>
       <CardFooter className="p-6 pt-0">
         <Button asChild className="w-full">
@@ -50,5 +51,7 @@ export function CourseCard({ course }: CourseCardProps) {
     </Card>
   );
 }
+
+    
 
     
