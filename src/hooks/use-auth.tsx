@@ -16,6 +16,7 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
+  sendEmailVerification,
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Effect to listen to user's role and permissions from Firestore
   useEffect(() => {
-    if (user) {
+    if (user && user.emailVerified) { // Only fetch roles for verified users
       // Check for super admin first
       if (user.email === SUPER_ADMIN_EMAIL) {
           setUserRole('admin');
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return () => unsubscribeFirestore();
     } else {
-      // No user, clear role data
+      // No user or user not verified, clear role data
       setUserRole(null);
       setPermissions([]);
       setLoading(false);
@@ -162,11 +163,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Update Firebase Auth user profile with display name
       await updateProfile(user, { displayName: name });
       
+      // Send verification email
+      await sendEmailVerification(user);
+
       const userDocRef = doc(db, "users", user.uid);
-      
-      // Create a new session token for the new user
-      const sessionToken = Date.now().toString();
-      localStorage.setItem('sessionToken', sessionToken);
       
       await setDoc(userDocRef, {
           uid: user.uid,
@@ -176,14 +176,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           readNotifications: [],
           role: null,
           permissions: [],
-          activeSessionToken: sessionToken,
+          activeSessionToken: null, // Session token will be set on first verified login
       });
 
-      toast({ title: "Account created successfully!" });
+      toast({ 
+        title: "Account Created!",
+        description: "A verification link has been sent to your email."
+      });
       
-      // User is already logged in by createUserWithEmailAndPassword,
-      // so we can just redirect them.
-      router.push("/");
+      // Log the user out and redirect to verification page
+      await signOut(auth);
+      router.push("/verify-email");
 
       return true;
     } catch (error: any) {
@@ -196,6 +199,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const loggedInUser = userCredential.user;
+
+      if (!loggedInUser.emailVerified) {
+          await signOut(auth); // Log them out
+          toast({
+              variant: "destructive",
+              title: "Email Not Verified",
+              description: "Please verify your email address before logging in.",
+          });
+          router.push("/verify-email");
+          return false;
+      }
 
       const userDocRef = doc(db, 'users', loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
