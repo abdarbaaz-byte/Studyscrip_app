@@ -196,7 +196,7 @@ export function PaymentDialog({
 
         <div className="flex justify-between items-center bg-secondary p-4 rounded-lg my-4">
             <span className="font-medium text-lg">{itemName}</span>
-            <span className="font-bold text-xl text-primary">₹{itemPrice}</span>
+            <span className="font-bold text-xl text-primary" dangerouslySetInnerHTML={{ __html: `&#8377;${itemPrice}` }} />
         </div>
 
         <Tabs defaultValue="razorpay" className="w-full">

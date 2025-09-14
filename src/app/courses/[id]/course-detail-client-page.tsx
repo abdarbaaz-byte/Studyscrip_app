@@ -153,7 +153,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
        if (driveId) {
            contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
        } else {
-           contentUrl = url;
+           contentUrl = `${url}#toolbar=0`;
        }
        isIframe = true;
     }
@@ -231,9 +231,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                   data-ai-hint="online course"
                 />
                 <div className="p-6">
-                  <div className="text-3xl font-bold mb-4">
-                    ₹{course.price}
-                  </div>
+                  <div className="text-3xl font-bold mb-4" dangerouslySetInnerHTML={{ __html: `&#8377;${course.price}` }} />
                   {loadingPurchase && <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
                   {showPurchaseButton && (
                     <Button size="lg" className="w-full" onClick={handleBuyClick} disabled={isBuying}>
@@ -258,7 +256,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
           <DialogHeader className="p-2 border-b shrink-0">
             <DialogTitle>{contentToView?.title}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 bg-secondary min-h-0">
+          <div className="flex-1 bg-secondary min-h-0 overflow-auto">
             {renderContentInDialog()}
           </div>
         </DialogContent>

@@ -40,9 +40,7 @@ export function CourseCard({ course }: CourseCardProps) {
           </Link>
         </CardTitle>
         <CardDescription className="flex-grow">{course.description}</CardDescription>
-        <p className="text-2xl font-bold text-primary mt-4">
-          ₹{course.price}
-        </p>
+        <p className="text-2xl font-bold text-primary mt-4" dangerouslySetInnerHTML={{ __html: `&#8377;${course.price}` }} />
       </div>
       <CardFooter className="p-6 pt-0">
         <Button asChild className="w-full">
