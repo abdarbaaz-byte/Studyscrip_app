@@ -165,14 +165,14 @@ export function ChatWidget() {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-20 right-4 z-50 md:bottom-4">
         <Button onClick={() => setIsOpen(!isOpen)} size="icon" className="rounded-full h-14 w-14 shadow-lg">
           {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
         </Button>
       </div>
 
       {isOpen && (
-        <div className="fixed bottom-20 right-4 z-50">
+        <div className="fixed bottom-[100px] right-4 z-50 md:bottom-20">
           <Card className="w-[350px] h-[500px] flex flex-col shadow-2xl">
              {!user ? (
                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
