@@ -9,6 +9,7 @@ import { InstallPwaButton } from "@/components/install-pwa-button";
 import { OneSignalProvider } from "@/components/onesignal-provider";
 import "./globals.css";
 import { ClientSideLayout } from "@/components/client-side-layout";
+import { BottomNavigation } from "@/components/bottom-navigation";
 
 
 export const metadata: Metadata = {
@@ -47,9 +48,10 @@ export default function RootLayout({
             <ClientSideLayout>
                 <div className="relative flex min-h-screen flex-col">
                   <SiteHeader />
-                  <main className="flex-1">{children}</main>
+                  <main className="flex-1 pb-20 md:pb-0">{children}</main>
                   <SiteFooter />
                 </div>
+                <BottomNavigation />
                 <ChatWidget />
                 <Toaster />
                 <InstallPwaButton />
