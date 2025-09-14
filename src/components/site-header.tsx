@@ -206,12 +206,12 @@ export function SiteHeader() {
         
         <div className="flex flex-1 items-center justify-end space-x-2">
            <a href="https://whatsapp.com/channel/0029Vb6Bh8yDZ4Lf5WmUoC0m" target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" className="hidden sm:inline-flex">
-                  <WhatsAppIcon className="h-5 w-5 mr-2" />
+              <Button variant="ghost" className="hidden sm:inline-flex items-center gap-2">
+                  <WhatsAppIcon />
                   Join WhatsApp
               </Button>
               <Button variant="ghost" size="icon" className="sm:hidden">
-                  <WhatsAppIcon className="h-5 w-5" />
+                  <WhatsAppIcon />
                   <span className="sr-only">Join WhatsApp</span>
               </Button>
            </a>
