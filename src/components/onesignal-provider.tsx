@@ -11,7 +11,8 @@ export function OneSignalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function initializeOneSignal() {
-      if (typeof window === 'undefined' || isOneSignalInitialized) return;
+      // Only initialize in production and on the client side.
+      if (process.env.NODE_ENV !== 'production' || typeof window === 'undefined' || isOneSignalInitialized) return;
 
       if (!process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID) {
         console.error("OneSignal App ID is not configured. Push notifications will be disabled.");
