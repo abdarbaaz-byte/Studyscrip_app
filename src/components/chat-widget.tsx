@@ -76,6 +76,33 @@ export function ChatWidget() {
   }, [user, isOpen]);
 
 
+  // Effect to handle back press for closing the widget
+  useEffect(() => {
+    const handleHashChange = () => {
+      // If hash is removed (back press), close the widget
+      if (window.location.hash === '') {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      // Add a hash to the URL when the widget opens
+      window.location.hash = 'chat';
+      window.addEventListener('hashchange', handleHashChange);
+    } else {
+      // If the widget is closed, but the hash is still there, go back
+      if (window.location.hash === '#chat') {
+        window.history.back();
+      }
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [isOpen]);
+
+
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
