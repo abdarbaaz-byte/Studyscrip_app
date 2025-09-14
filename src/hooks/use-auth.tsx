@@ -231,7 +231,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return true;
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Login failed", description: error.message });
+      let description = "An unexpected error occurred. Please try again.";
+      switch (error.code) {
+        case 'auth/user-not-found':
+        case 'auth/invalid-email':
+          description = "Invalid user email. Please check and try again.";
+          break;
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          description = "Incorrect password. Please try again.";
+          break;
+        default:
+          description = error.message;
+          break;
+      }
+      toast({ variant: "destructive", title: "Login failed", description });
       return false;
     }
   };
