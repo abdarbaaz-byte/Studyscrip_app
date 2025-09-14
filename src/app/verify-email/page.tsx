@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +10,35 @@ import { Loader2, MailCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { sendEmailVerification, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
 export default function VerifyEmailPage() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [resendLoading, setResendLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // If the user is verified, redirect them to the homepage.
+    if (user?.emailVerified) {
+      router.push("/");
+    }
+  }, [user, router]);
+  
+  // Periodically check verification status
+  useEffect(() => {
+    if (authLoading || !user || user.emailVerified) return;
+
+    const interval = setInterval(async () => {
+      await user.reload();
+      if (user.emailVerified) {
+        toast({ title: "Email Verified!", description: "Redirecting you to the homepage..." });
+        router.push("/");
+      }
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [user, authLoading, router, toast]);
 
   const handleResendEmail = async () => {
     if (!auth.currentUser) {
@@ -23,9 +47,10 @@ export default function VerifyEmailPage() {
             title: "Not Logged In",
             description: "Cannot resend email. Please log in again.",
         });
+        router.push("/login");
         return;
     }
-    setLoading(true);
+    setResendLoading(true);
     try {
         await sendEmailVerification(auth.currentUser);
         toast({
@@ -39,7 +64,7 @@ export default function VerifyEmailPage() {
             description: "Failed to resend verification email. Please try again later.",
         });
     }
-    setLoading(false);
+    setResendLoading(false);
   };
 
   return (
@@ -52,14 +77,15 @@ export default function VerifyEmailPage() {
           <CardTitle className="font-headline text-2xl mt-4">Verify Your Email</CardTitle>
           <CardDescription>
             We've sent a verification link to your email address. Please check your inbox (and spam folder) to continue.
+             <br /> This page will automatically redirect after you verify.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
                 Didn't receive an email?
             </p>
-            <Button onClick={handleResendEmail} className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button onClick={handleResendEmail} className="w-full" disabled={resendLoading}>
+              {resendLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Resend Verification Email
             </Button>
            <div className="mt-4 text-center">

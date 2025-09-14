@@ -122,7 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // No user or user not verified, clear role data
       setUserRole(null);
       setPermissions([]);
-      setLoading(false);
+      if (user && !user.emailVerified) {
+        // If user is logged in but not verified, stop loading
+        setLoading(false);
+      }
     }
   }, [user]);
 
@@ -201,13 +204,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const loggedInUser = userCredential.user;
 
       if (!loggedInUser.emailVerified) {
-          await signOut(auth); // Log them out
+          // DO NOT log them out. Keep them logged in so they can resend verification.
           toast({
               variant: "destructive",
               title: "Email Not Verified",
               description: "Please verify your email address before logging in.",
           });
-          router.push("/verify-email");
+          router.push("/verify-email"); // Redirect to verification page
           return false;
       }
 
