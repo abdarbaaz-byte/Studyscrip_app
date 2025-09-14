@@ -89,14 +89,14 @@ export default function DoubtAiPage() {
 
     return (
         <div className="flex flex-col h-full md:container md:mx-auto md:py-8">
-            <Card className="w-full max-w-4xl mx-auto flex-1 flex flex-col shadow-2xl h-full border-0 md:border">
+            <Card className="w-full max-w-4xl mx-auto flex-1 flex flex-col shadow-2xl border-0 md:border">
                 <CardHeader className="text-center">
                     <CardTitle className="font-headline text-3xl md:text-4xl">AI Doubt Solver</CardTitle>
                     <CardDescription className="text-md md:text-lg text-muted-foreground pt-2">
                         Ask any question related to your studies, and I'll do my best to help!
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 p-0 overflow-hidden">
+                <CardContent className="flex-1 p-0 overflow-hidden flex flex-col min-h-0">
                      <ScrollArea className="h-full p-4 md:p-6" ref={scrollAreaRef}>
                         <div className="space-y-6">
                             {messages.map((msg, index) => (
