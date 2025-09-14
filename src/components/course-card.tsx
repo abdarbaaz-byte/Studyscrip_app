@@ -41,7 +41,7 @@ export function CourseCard({ course }: CourseCardProps) {
         </CardTitle>
         <CardDescription className="flex-grow">{course.description}</CardDescription>
         <p className="text-2xl font-bold text-primary mt-4">
-          Rs. {course.price.toFixed(2)}
+          ₹{course.price}
         </p>
       </div>
       <CardFooter className="p-6 pt-0">
@@ -52,3 +52,5 @@ export function CourseCard({ course }: CourseCardProps) {
     </Card>
   );
 }
+
+    

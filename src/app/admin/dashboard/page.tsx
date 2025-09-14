@@ -647,7 +647,7 @@ export default function AdminDashboardPage() {
             {courses.map((course) => (
               <TableRow key={course.docId}>
                 <TableCell className="font-medium">{course.title}</TableCell>
-                <TableCell>Rs. {course.price.toFixed(2)}</TableCell>
+                <TableCell>₹{course.price}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{course.content.length}</Badge>
                 </TableCell>
@@ -934,7 +934,7 @@ export default function AdminDashboardPage() {
               <TableRow key={req.id}>
                 <TableCell>
                     <div className="font-medium">{req.userName}</div>
-                    <div className="text-sm text-muted-foreground">Rs. {req.itemPrice.toFixed(2)}</div>
+                    <div className="text-sm text-muted-foreground">₹{req.itemPrice}</div>
                 </TableCell>
                 <TableCell>
                     <div className="font-medium">{req.itemTitle}</div>
@@ -1296,7 +1296,7 @@ export default function AdminDashboardPage() {
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">{payment.userName}</TableCell>
                     <TableCell className="text-muted-foreground">{payment.itemTitle}</TableCell>
-                    <TableCell className="font-medium">Rs. {payment.amount.toFixed(2)}</TableCell>
+                    <TableCell className="font-medium">₹{payment.amount}</TableCell>
                     <TableCell className="text-muted-foreground">{payment.paymentDate}</TableCell>
                     <TableCell className="text-right">
                       <Badge
@@ -1509,5 +1509,7 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
 
     

@@ -153,14 +153,14 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
        if (driveId) {
            contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
        } else {
-           contentUrl = `${url}#toolbar=0`;
+           contentUrl = url;
        }
        isIframe = true;
     }
     
     if (isIframe) {
         return (
-            <div className="w-full h-full">
+            <div className="w-full h-full overflow-auto">
                 <iframe 
                     src={contentUrl} 
                     className="w-full h-full border-0" 
@@ -232,7 +232,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                 />
                 <div className="p-6">
                   <div className="text-3xl font-bold mb-4">
-                    Rs. {course.price.toFixed(2)}
+                    ₹{course.price}
                   </div>
                   {loadingPurchase && <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
                   {showPurchaseButton && (
@@ -277,3 +277,5 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
     </>
   );
 }
+
+    

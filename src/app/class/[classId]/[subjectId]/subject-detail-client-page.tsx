@@ -164,7 +164,7 @@ export default function SubjectDetailClientPage() {
             </CardHeader>
             <CardContent className="text-center">
                 <div className="text-4xl font-bold text-primary mb-4">
-                    Rs. {subject.price.toFixed(2)}
+                    ₹{subject.price}
                 </div>
                 <Button size="lg" onClick={handleBuyClick} disabled={isBuying}>
                    {isBuying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Unlock className="mr-2 h-4 w-4" />}
@@ -194,3 +194,5 @@ export default function SubjectDetailClientPage() {
     </>
   );
 }
+
+    
