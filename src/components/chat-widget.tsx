@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { sendMessage, listenToChat } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
+import { usePathname } from "next/navigation";
 
 
 const adminProfile: AdminProfile = {
@@ -40,11 +41,46 @@ export function ChatWidget() {
   const [isMounted, setIsMounted] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const pathname = usePathname();
+  const chatWidgetRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
   
+  // Close chat on route change
+  useEffect(() => {
+    if (isOpen) {
+        setIsOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // Close chat on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (chatWidgetRef.current && !chatWidgetRef.current.contains(event.target as Node)) {
+        // Make sure not to close if the click is on the toggle button itself
+        const toggleButton = document.getElementById('chat-widget-toggle');
+        if (toggleButton && toggleButton.contains(event.target as Node)) {
+            return;
+        }
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!user || !isOpen) {
         setActiveChat(null); // Reset chat when closed or logged out
@@ -191,15 +227,15 @@ export function ChatWidget() {
   if (!isMounted) return null;
 
   return (
-    <>
+    <div ref={chatWidgetRef}>
       <div className="fixed bottom-20 right-4 z-50 md:bottom-4">
-        <Button onClick={() => setIsOpen(!isOpen)} size="icon" className="rounded-full h-14 w-14 shadow-lg">
+        <Button id="chat-widget-toggle" onClick={() => setIsOpen(!isOpen)} size="icon" className="rounded-full h-14 w-14 shadow-lg">
           {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
         </Button>
       </div>
 
       {isOpen && (
-        <div className="fixed bottom-[100px] right-4 z-50 md:bottom-20">
+        <div className="fixed bottom-[148px] right-4 z-50 md:bottom-20">
           <Card className="w-[350px] h-[500px] flex flex-col shadow-2xl">
              {!user ? (
                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -295,6 +331,6 @@ export function ChatWidget() {
           </Card>
         </div>
       )}
-    </>
+    </div>
   );
 }
