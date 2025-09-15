@@ -33,16 +33,13 @@ export function SiteHeader() {
   );
 
   useEffect(() => {
-    // Listen to all notifications
     const unsubscribeNotifications = listenToNotifications((liveNotifications) => {
       setNotifications(liveNotifications);
     });
-
     return () => unsubscribeNotifications();
   }, []);
 
   useEffect(() => {
-    // Listen to the user's read notifications
     if (user) {
       const unsubscribeReadStatus = listenToUserReadNotifications(user.uid, (readIds) => {
         setReadNotificationIds(readIds);
@@ -89,12 +86,12 @@ export function SiteHeader() {
         description: "Your browser does not support the Web Share API.",
       });
     }
-    setIsSheetOpen(false); // Close sheet after attempting to share
+    setIsSheetOpen(false);
   };
 
-  if (isAuthPage) {
-    return null;
-  }
+  const handleLinkClick = () => {
+    setIsSheetOpen(false);
+  };
   
   const navLinks = [
     { href: "/", label: "Home" },
@@ -105,10 +102,10 @@ export function SiteHeader() {
     { href: "/privacy", label: "Privacy Policy" },
     { href: "/disclaimer", label: "Disclaimer" },
   ];
-  
-  const handleLinkClick = () => {
-    setIsSheetOpen(false);
-  };
+
+  if (isAuthPage) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -273,7 +270,7 @@ export function SiteHeader() {
                 </Button>
             </div>
           ) : (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="items-center gap-2 md:flex">
               <Button asChild variant="ghost">
                 <Link href="/login">
                   Login
