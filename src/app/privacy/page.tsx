@@ -28,6 +28,7 @@ export default function PrivacyPage() {
                         <li><strong>Chat Data:</strong> We store your conversations with our support team to provide better service and maintain a history of your queries.</li>
                         <li><strong>Quiz Information:</strong> When you attempt a quiz, we collect your name, school name, class, and place, along with your quiz answers and score. This information is linked to your user account and is used to display your results and for our internal analysis.</li>
                         <li><strong>Live Class Survey Information:</strong> If you participate in a survey for live classes, we collect your name and mobile number, along with your preferences for subjects and timings. This helps us plan our live classes better.</li>
+                        <li><strong>Review Information:</strong> If you choose to submit a review, we collect your name, class name, and the comment you provide. Your review will be stored and may be displayed publicly on our website after it has been approved by our team.</li>
                         <li><strong>Usage Information:</strong> We may collect information about how you use the Service, such as the pages you visit and the content you access. This is to improve our app.</li>
                     </ul>
                 </div>
@@ -41,6 +42,7 @@ export default function PrivacyPage() {
                         <li>To plan and inform you about live classes based on survey feedback.</li>
                         <li>To communicate with you, including responding to your support requests and sending important notifications.</li>
                         <li>To personalize your learning experience.</li>
+                        <li>To display student reviews on our platform to help other users.</li>
                         <li>To enforce our terms and prevent fraudulent activities.</li>
                     </ul>
                 </div>
