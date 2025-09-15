@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Timer, AlertTriangle } from "lucide-react";
+import { Loader2, Timer, AlertTriangle, GripVertical } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
@@ -21,8 +21,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
@@ -37,47 +38,102 @@ const shuffleArray = (array: any[]) => {
   return array;
 };
 
+
+// Draggable Answer Item for Match the Following
+const SortableAnswer = ({ id, answerText }: { id: string; answerText: string }) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="flex items-center gap-2 p-3 bg-white border rounded-md shadow-sm">
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+            <span>{answerText}</span>
+        </div>
+    );
+};
+
+
 const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question, answer: any, onAnswerChange: (questionId: string, value: any) => void }) => {
     
-    // Memoize the shuffled options for matching questions
-    const shuffledAnswers = useMemo(() => {
+    // State for drag and drop
+    const [dndAnswers, setDndAnswers] = useState<MatchOption[]>([]);
+
+    useEffect(() => {
         if (question.type === 'match' && question.matchOptions) {
-            return shuffleArray([...question.matchOptions.map(opt => opt.answer)]);
+            // If answers are already present, order them, else shuffle.
+            if (answer && Object.keys(answer).length === question.matchOptions.length) {
+                 const orderedAnswers = question.matchOptions.map(qOpt => {
+                    const answerId = answer[qOpt.id];
+                    return question.matchOptions.find(aOpt => aOpt.answer === answerId) || qOpt; // Fallback
+                });
+                setDndAnswers(orderedAnswers);
+            } else {
+                 setDndAnswers(shuffleArray([...question.matchOptions]));
+            }
         }
-        return [];
-    }, [question]);
+    }, [question, answer]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+    
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            setDndAnswers((items) => {
+                const oldIndex = items.findIndex((item) => item.id === active.id);
+                const newIndex = items.findIndex((item) => item.id === over.id);
+                const newOrder = arrayMove(items, oldIndex, newIndex);
+
+                // Update the main `answers` state after reordering
+                const newAnswerObject: { [matchId: string]: string } = {};
+                question.matchOptions.forEach((qOpt, index) => {
+                    newAnswerObject[qOpt.id] = newOrder[index].answer;
+                });
+                onAnswerChange(question.id, newAnswerObject);
+
+                return newOrder;
+            });
+        }
+    };
+
 
     switch (question.type) {
         case 'match':
             return (
-                <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 font-semibold text-center border-b pb-2">
-                        <div>Column A (Question)</div>
-                        <div>Column B (Answer)</div>
+                <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                    {/* Column A (Questions) */}
+                    <div className="space-y-4">
+                        <div className="font-semibold text-center pb-2 border-b">Column A</div>
+                        {question.matchOptions.map((matchOpt) => (
+                            <div key={matchOpt.id} className="h-[52px] flex items-center justify-center p-3 bg-secondary rounded-md text-sm text-center">
+                                {matchOpt.question}
+                            </div>
+                        ))}
                     </div>
-                    {question.matchOptions.map((matchOpt) => (
-                        <div key={matchOpt.id} className="grid grid-cols-2 gap-4 items-center">
-                            <div className="p-3 bg-secondary rounded-md text-sm">{matchOpt.question}</div>
-                            <Select
-                                value={answer?.[matchOpt.id] || ""}
-                                onValueChange={(value) => {
-                                    const newMatchAnswers = { ...(answer || {}), [matchOpt.id]: value };
-                                    onAnswerChange(question.id, newMatchAnswers);
-                                }}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select an answer..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {shuffledAnswers.map((shuffledAns, index) => (
-                                        <SelectItem key={index} value={shuffledAns}>
-                                            {shuffledAns}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    ))}
+
+                    <div className="text-muted-foreground text-2xl font-thin">...</div>
+
+                    {/* Column B (Answers) - Draggable */}
+                     <div className="space-y-4">
+                        <div className="font-semibold text-center pb-2 border-b">Column B</div>
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                            <SortableContext items={dndAnswers.map(a => a.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-2">
+                                {dndAnswers.map(ans => (
+                                    <SortableAnswer key={ans.id} id={ans.id} answerText={ans.answer} />
+                                ))}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                    </div>
                 </div>
             );
         case 'true_false':
@@ -314,7 +370,7 @@ function QuizAttemptContent() {
 
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
