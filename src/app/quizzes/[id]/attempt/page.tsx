@@ -95,10 +95,10 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
                     {/* Column B (Answers) - Re-orderable */}
                      <div className="space-y-4">
                         <div className="font-semibold text-center pb-2 border-b">Column B</div>
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                           {orderedAnswers.map((ans, index) => (
                               <div key={ans.id} className="flex items-center gap-2">
-                                  <div className="flex-grow p-3 h-[52px] flex items-center justify-center bg-white border rounded-md shadow-sm text-sm">
+                                  <div className="flex-grow p-3 h-[52px] flex items-center justify-center bg-background border rounded-md shadow-sm text-sm">
                                     {ans.answer}
                                   </div>
                                   <div className="flex flex-col gap-1">
@@ -210,7 +210,7 @@ function QuizAttemptContent() {
                 score++;
             }
         } else if (q.type === 'match') {
-            if (typeof userAnswer === 'object' && userAnswer !== null) {
+            if (typeof userAnswer === 'object' && userAnswer !== null && Object.keys(userAnswer).length > 0) {
                 const correctMatches = q.matchOptions.every(
                     (opt) => (userAnswer as any)[opt.id] === opt.answer
                 );
