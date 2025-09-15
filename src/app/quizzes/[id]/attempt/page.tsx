@@ -84,7 +84,7 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
             return (
                  <RadioGroup 
                     value={answer?.toString()} 
-                    onValueChange={(value) => onAnswerChange(question.id, value)}
+                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
                     className="space-y-4"
                 >
                     <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
@@ -235,7 +235,9 @@ function QuizAttemptContent() {
     router.replace(`/quizzes/${quizId}/results?${queryParams}`);
   }, [quiz, quizId, quizType, name, school, userClass, place, userId, userEmail, router, toast]);
 
-  const triggerSubmit = () => handleSubmit(answers);
+  const triggerSubmit = useCallback(() => {
+    handleSubmit(answers);
+  }, [answers, handleSubmit]);
 
   useEffect(() => {
     async function loadQuiz() {
@@ -256,16 +258,6 @@ function QuizAttemptContent() {
     loadQuiz();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizId, router, toast]);
-
-  useEffect(() => {
-    // This function will be called when the component is about to unmount
-    return () => {
-      if (!hasSubmittedRef.current) {
-        triggerSubmit();
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answers, quiz]);
 
 
   useEffect(() => {
@@ -307,8 +299,7 @@ function QuizAttemptContent() {
     return () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quiz, answers]);
+  }, [triggerSubmit]);
 
   
   const handleAnswerChange = (questionId: string, value: any) => {
