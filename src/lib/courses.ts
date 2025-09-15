@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore';
+
 export type CourseContent = {
   type: 'pdf' | 'video' | 'image';
   title: string;
@@ -13,6 +15,7 @@ export type Course = {
   thumbnail: string;
   price: number;
   content: CourseContent[];
+  createdAt?: Timestamp; // Added for sorting
 };
 
 export const courses: Course[] = [

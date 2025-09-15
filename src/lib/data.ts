@@ -74,7 +74,8 @@ export type Review = {
 // COURSES
 export async function getCourses(): Promise<Course[]> {
   const coursesCol = collection(db, 'courses');
-  const courseSnapshot = await getDocs(coursesCol);
+  const q = query(coursesCol, orderBy('createdAt', 'desc'));
+  const courseSnapshot = await getDocs(q);
   const courseList = courseSnapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() } as Course));
   return courseList;
 }
@@ -97,10 +98,12 @@ export async function saveCourse(courseData: Omit<Course, 'docId'> & { docId?: s
     const { docId, ...data } = courseData;
     if (docId) {
         const courseDocRef = doc(db, 'courses', docId);
-        return await setDoc(courseDocRef, data, { merge: true });
+        // Don't update createdAt when editing an existing course
+        const { createdAt, ...updateData } = data;
+        return await setDoc(courseDocRef, updateData, { merge: true });
     } else {
         const coursesCol = collection(db, 'courses');
-        return await addDoc(coursesCol, data);
+        return await addDoc(coursesCol, { ...data, createdAt: serverTimestamp() });
     }
 }
 
