@@ -26,7 +26,7 @@ const faqs = [
     },
     {
         question: "Kya StudyScript Google Play Store ya Apple App Store par available hai?",
-        answer: "Abhi nahi, lekin hum is par tezi se kaam kar rahe hain! Hamari team dedicatedly Play Store aur App Store ke liye native apps bana rahi hai. Jald hi aap wahan se bhi StudyScript download kar payenge. Tab tak, aap hamari website ko apne mobile browser mein kholkar 'Install App' button se PWA (Progressive Web App) install kar sakte hain. Yeh bilkul ek native app ki tarah hi kaam karta hai!"
+        answer: "Abhi nahi, lekin hum is par tezi se kaam kar rahe hain! Hamari team dedicatedly Play Store aur App Store ke liye kaam kar rahi hai. Jald hi aap wahan se bhi StudyScript download kar payenge. Tab tak, aap hamari website ko apne mobile browser mein kholkar 'Install App' button se App install kar sakte hain."
     },
     {
         question: "Agar mujhe koi samasya aati hai to main aapse kaise sampark karun?",
