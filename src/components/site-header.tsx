@@ -65,8 +65,6 @@ export function SiteHeader() {
         .filter(n => !readNotificationIds.includes(n.id))
         .map(n => n.id);
       
-      // We can call markNotificationAsRead for each, or create a new function
-      // for batch marking. For simplicity, we'll iterate.
       unreadIds.forEach(id => {
         markNotificationAsRead(user.uid, id);
       });
@@ -93,7 +91,7 @@ export function SiteHeader() {
     }
     setIsSheetOpen(false); // Close sheet after attempting to share
   };
-  
+
   if (isAuthPage) {
     return null;
   }
@@ -105,7 +103,7 @@ export function SiteHeader() {
     { href: "/contact", label: "Contact" },
     { href: "/about", label: "About" },
     { href: "/privacy", label: "Privacy Policy" },
-    { href: "/disclaimer", label: "Disclaimer" }
+    { href: "/disclaimer", label: "Disclaimer" },
   ];
   
   const handleLinkClick = () => {
@@ -275,7 +273,7 @@ export function SiteHeader() {
                 </Button>
             </div>
           ) : (
-            <div className="md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Button asChild variant="ghost">
                 <Link href="/login">
                   Login
