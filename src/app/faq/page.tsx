@@ -25,8 +25,8 @@ const faqs = [
         answer: "Hum Razorpay ke through Card, Netbanking, aur Wallet payments accept karte hain. Saath hi, aap UPI ke through bhi payment kar sakte hain. UPI payment verification mein 24 ghante tak lag sakte hain."
     },
     {
-        question: "Kya StudyScript ka mobile app hai?",
-        answer: "Haan! Aap hamari website ko apne mobile browser mein kholkar 'Install App' button se PWA (Progressive Web App) install kar sakte hain. Yeh bilkul ek app ki tarah kaam karta hai."
+        question: "Kya StudyScript Google Play Store ya Apple App Store par available hai?",
+        answer: "Abhi nahi, lekin hum is par tezi se kaam kar rahe hain! Hamari team dedicatedly Play Store aur App Store ke liye native apps bana rahi hai. Jald hi aap wahan se bhi StudyScript download kar payenge. Tab tak, aap hamari website ko apne mobile browser mein kholkar 'Install App' button se PWA (Progressive Web App) install kar sakte hain. Yeh bilkul ek native app ki tarah hi kaam karta hai!"
     },
     {
         question: "Agar mujhe koi samasya aati hai to main aapse kaise sampark karun?",
