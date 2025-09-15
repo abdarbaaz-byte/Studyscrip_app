@@ -21,7 +21,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { user, isAdmin, logOut } = useAuth();
   const { toast } = useToast();
-  const isAuthPage = ["/login", "/signup", "/forgot-password"].includes(pathname);
+  const isAuthPage = ["/login", "/signup", "/forgot-password", "/verify-email"].includes(pathname);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -160,17 +160,20 @@ export function SiteHeader() {
               <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="pr-0">
+          <SheetContent side="left" className="pr-0 flex flex-col">
              <SheetHeader>
               <SheetTitle></SheetTitle>
               <SheetDescription className="sr-only">
                 Main navigation links for StudyScript.
               </SheetDescription>
             </SheetHeader>
-            <Link href="/" className="mr-6 flex items-center space-x-2 pl-6" onClick={handleLinkClick}>
-              <span className="font-bold font-headline">StudyScript</span>
-            </Link>
-            <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+            <div className="pl-6">
+                <Link href="/" className="mr-6 flex items-center space-x-2" onClick={handleLinkClick}>
+                <span className="font-bold font-headline">StudyScript</span>
+                </Link>
+            </div>
+            
+            <div className="flex-grow my-4 pl-6 overflow-y-auto">
               <div className="flex flex-col space-y-3">
                 {navLinks.map((link) => (
                   <Link
@@ -201,6 +204,15 @@ export function SiteHeader() {
                   </Button>
               </div>
             </div>
+
+            {user && (
+              <div className="mt-auto p-4 border-t">
+                  <Button onClick={logOut} variant="outline" className="w-full">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </Button>
+              </div>
+            )}
           </SheetContent>
         </Sheet>
         
@@ -257,15 +269,14 @@ export function SiteHeader() {
           </Popover>
           
           {user ? (
-            <div className="flex items-center gap-2">
-              <div className="w-2" />
-              <Button onClick={logOut} variant="outline">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
+             <div className="hidden md:flex items-center gap-2">
+                <Button onClick={logOut} variant="outline">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </Button>
             </div>
           ) : (
-            <>
+            <div className="hidden md:flex items-center gap-2">
               <Button asChild variant="ghost">
                 <Link href="/login">
                   Login
@@ -276,7 +287,7 @@ export function SiteHeader() {
                   Sign Up
                 </Link>
               </Button>
-            </>
+            </div>
           )}
 
         </div>
