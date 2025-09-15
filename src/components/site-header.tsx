@@ -279,7 +279,7 @@ export function SiteHeader() {
               <Button asChild>
                 <Link href="/signup">
                   Sign Up
-                </Button>
+                </Link>
               </Button>
             </div>
           )}
