@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useEffect, useRef, Suspense, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt, type Question, type MatchOption } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Timer, AlertTriangle, GripVertical } from "lucide-react";
+import { Loader2, Timer, AlertTriangle, ArrowUp, ArrowDown } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
@@ -21,9 +21,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
@@ -38,77 +35,51 @@ const shuffleArray = (array: any[]) => {
   return array;
 };
 
-
-// Draggable Answer Item for Match the Following
-const SortableAnswer = ({ id, answerText }: { id: string; answerText: string }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-
-    return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="flex items-center gap-2 p-3 bg-white border rounded-md shadow-sm">
-            <GripVertical className="h-5 w-5 text-muted-foreground" />
-            <span>{answerText}</span>
-        </div>
-    );
-};
-
-
 const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question, answer: any, onAnswerChange: (questionId: string, value: any) => void }) => {
     
-    // State for drag and drop
-    const [dndAnswers, setDndAnswers] = useState<MatchOption[]>([]);
+    // State for re-orderable list
+    const [orderedAnswers, setOrderedAnswers] = useState<MatchOption[]>([]);
 
     useEffect(() => {
         if (question.type === 'match' && question.matchOptions) {
             // If answers are already present, order them, else shuffle.
             if (answer && Object.keys(answer).length === question.matchOptions.length) {
-                 const orderedAnswers = question.matchOptions.map(qOpt => {
-                    const answerId = answer[qOpt.id];
-                    return question.matchOptions.find(aOpt => aOpt.answer === answerId) || qOpt; // Fallback
+                 const currentAnswerOrder = question.matchOptions.map(qOpt => {
+                    const answerText = (answer as any)[qOpt.id];
+                    // Find the original match option that has this answer text
+                    return question.matchOptions.find(aOpt => aOpt.answer === answerText)!;
                 });
-                setDndAnswers(orderedAnswers);
+                setOrderedAnswers(currentAnswerOrder);
             } else {
-                 setDndAnswers(shuffleArray([...question.matchOptions]));
+                 setOrderedAnswers(shuffleArray([...question.matchOptions]));
             }
         }
     }, [question, answer]);
 
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-    
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (over && active.id !== over.id) {
-            setDndAnswers((items) => {
-                const oldIndex = items.findIndex((item) => item.id === active.id);
-                const newIndex = items.findIndex((item) => item.id === over.id);
-                const newOrder = arrayMove(items, oldIndex, newIndex);
+    const handleReorder = (index: number, direction: 'up' | 'down') => {
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= orderedAnswers.length) return;
 
-                // Update the main `answers` state after reordering
-                const newAnswerObject: { [matchId: string]: string } = {};
-                question.matchOptions.forEach((qOpt, index) => {
-                    newAnswerObject[qOpt.id] = newOrder[index].answer;
-                });
-                onAnswerChange(question.id, newAnswerObject);
+        const newOrder = [...orderedAnswers];
+        const temp = newOrder[index];
+        newOrder[index] = newOrder[newIndex];
+        newOrder[newIndex] = temp;
 
-                return newOrder;
-            });
-        }
+        setOrderedAnswers(newOrder);
+
+        // Update the main `answers` state after reordering
+        const newAnswerObject: { [matchId: string]: string } = {};
+        question.matchOptions.forEach((qOpt, idx) => {
+            newAnswerObject[qOpt.id] = newOrder[idx].answer;
+        });
+        onAnswerChange(question.id, newAnswerObject);
     };
 
 
     switch (question.type) {
         case 'match':
             return (
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
                     {/* Column A (Questions) */}
                     <div className="space-y-4">
                         <div className="font-semibold text-center pb-2 border-b">Column A</div>
@@ -119,20 +90,28 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
                         ))}
                     </div>
 
-                    <div className="text-muted-foreground text-2xl font-thin">...</div>
+                    <div className="text-muted-foreground text-2xl font-thin mt-12">...</div>
 
-                    {/* Column B (Answers) - Draggable */}
+                    {/* Column B (Answers) - Re-orderable */}
                      <div className="space-y-4">
                         <div className="font-semibold text-center pb-2 border-b">Column B</div>
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                            <SortableContext items={dndAnswers.map(a => a.id)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-2">
-                                {dndAnswers.map(ans => (
-                                    <SortableAnswer key={ans.id} id={ans.id} answerText={ans.answer} />
-                                ))}
-                                </div>
-                            </SortableContext>
-                        </DndContext>
+                        <div className="space-y-2">
+                          {orderedAnswers.map((ans, index) => (
+                              <div key={ans.id} className="flex items-center gap-2">
+                                  <div className="flex-grow p-3 h-[52px] flex items-center justify-center bg-white border rounded-md shadow-sm text-sm">
+                                    {ans.answer}
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                      <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => handleReorder(index, 'up')} disabled={index === 0}>
+                                          <ArrowUp className="h-4 w-4" />
+                                      </Button>
+                                      <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => handleReorder(index, 'down')} disabled={index === orderedAnswers.length - 1}>
+                                          <ArrowDown className="h-4 w-4" />
+                                      </Button>
+                                  </div>
+                              </div>
+                          ))}
+                        </div>
                     </div>
                 </div>
             );
@@ -140,7 +119,7 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
             return (
                  <RadioGroup 
                     value={answer?.toString()} 
-                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
+                    onValueChange={(value) => onAnswerChange(question.id, value)}
                     className="space-y-4"
                 >
                     <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
@@ -214,7 +193,7 @@ function QuizAttemptContent() {
   const userId = searchParams.get('userId');
   const userEmail = searchParams.get('userEmail');
 
-  const handleSubmit = useCallback(async (currentAnswers: AnswersState) => {
+  const handleSubmit = useCallback((currentAnswers: AnswersState) => {
     if (!quiz || hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
     
@@ -259,7 +238,7 @@ function QuizAttemptContent() {
         };
         
         try {
-            await saveQuizAttempt(attemptData);
+            saveQuizAttempt(attemptData);
         } catch(error) {
             console.error("Failed to save quiz attempt:", error);
             toast({ variant: "destructive", title: "Error saving results. Please try again."})
@@ -337,7 +316,7 @@ function QuizAttemptContent() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft]);
+  }, [timeLeft, triggerSubmit]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -370,7 +349,7 @@ function QuizAttemptContent() {
 
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentQuestionIndex(prev => prev - 1);
     }
   };
 
