@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-type AnswersState = { [questionId: string]: number };
+type AnswersState = { [questionId: string]: number | string };
 
 function QuizResultsContent() {
   const params = useParams();
@@ -66,9 +66,16 @@ function QuizResultsContent() {
 
         let currentScore = 0;
         loadedQuiz.questions.forEach(q => {
-          if (answers[q.id] === q.correctAnswer) {
-            currentScore++;
-          }
+            const userAnswer = answers[q.id];
+            if (q.type === 'mcq' || q.type === 'true_false') {
+                if (userAnswer === q.correctAnswer) {
+                    currentScore++;
+                }
+            } else if (q.type === 'fill_in_blank') {
+                if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
+                    currentScore++;
+                }
+            }
         });
         setScore(currentScore);
         
@@ -130,9 +137,14 @@ function QuizResultsContent() {
         <div className="space-y-6">
             <h2 className="font-headline text-2xl font-bold">Detailed Analysis</h2>
             {quiz.questions.map((question, index) => {
-                const userAnswerIndex = answers[question.id];
-                const isCorrect = userAnswerIndex === question.correctAnswer;
-                
+                const userAnswer = answers[question.id];
+                let isCorrect = false;
+                if(question.type === 'mcq' || question.type === 'true_false') {
+                    isCorrect = userAnswer === question.correctAnswer;
+                } else if (question.type === 'fill_in_blank') {
+                    isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
+                }
+
                 return (
                     <Card key={question.id} className={cn("border-l-4", isCorrect ? "border-green-500" : "border-red-500")}>
                         <CardHeader>
@@ -142,25 +154,55 @@ function QuizResultsContent() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                {question.options.map((option, optIndex) => {
-                                    const isUserAnswer = userAnswerIndex === optIndex;
-                                    const isCorrectAnswer = question.correctAnswer === optIndex;
-                                    return (
-                                        <div
-                                        key={optIndex}
-                                        className={cn(
-                                            "flex items-center gap-3 p-3 rounded-md border",
-                                            isCorrectAnswer ? "bg-green-100 border-green-300" : "",
-                                            isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
-                                        )}
-                                        >
-                                        {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
-                                        <span className="flex-1">{option}</span>
-                                        </div>
-                                    )
-                                })}
-                            </div>
+                            {question.type === 'mcq' && question.options.map((option, optIndex) => {
+                                const isUserAnswer = userAnswer === optIndex;
+                                const isCorrectAnswer = question.correctAnswer === optIndex;
+                                return (
+                                    <div
+                                    key={optIndex}
+                                    className={cn(
+                                        "flex items-center gap-3 p-3 rounded-md border",
+                                        isCorrectAnswer ? "bg-green-100 border-green-300" : "",
+                                        isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
+                                    )}
+                                    >
+                                    {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
+                                    <span className="flex-1">{option}</span>
+                                    </div>
+                                )
+                            })}
+
+                             {question.type === 'true_false' && ['True', 'False'].map((option, optIndex) => {
+                                const isUserAnswer = userAnswer === optIndex;
+                                const isCorrectAnswer = question.correctAnswer === optIndex;
+                                return (
+                                    <div
+                                    key={optIndex}
+                                    className={cn(
+                                        "flex items-center gap-3 p-3 rounded-md border",
+                                        isCorrectAnswer ? "bg-green-100 border-green-300" : "",
+                                        isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
+                                    )}
+                                    >
+                                    {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
+                                    <span className="flex-1">{option}</span>
+                                    </div>
+                                )
+                            })}
+
+                            {question.type === 'fill_in_blank' && (
+                                <div className="space-y-2">
+                                     <div className={cn("flex items-center gap-3 p-3 rounded-md border bg-red-100 border-red-300")}>
+                                        <XCircle className="h-5 w-5 text-red-600"/>
+                                        <span className="flex-1">Your Answer: <span className="font-mono">{userAnswer as string || '""'}</span></span>
+                                     </div>
+                                      <div className={cn("flex items-center gap-3 p-3 rounded-md border bg-green-100 border-green-300")}>
+                                        <CheckCircle2 className="h-5 w-5 text-green-600"/>
+                                        <span className="flex-1">Correct Answer: <span className="font-mono">{question.answerText}</span></span>
+                                     </div>
+                                </div>
+                            )}
+
                             {question.explanation && (
                                 <div className="p-3 bg-secondary rounded-lg text-sm text-muted-foreground">
                                     <h4 className="font-semibold text-foreground mb-1">Explanation:</h4>

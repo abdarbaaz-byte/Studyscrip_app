@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt } from "@/lib/data";
+import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt, type Question } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -20,8 +20,64 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
-type AnswersState = { [questionId: string]: number };
+type AnswersState = { [questionId: string]: number | string };
+
+const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question, answer: number | string, onAnswerChange: (questionId: string, value: number | string) => void }) => {
+    switch (question.type) {
+        case 'true_false':
+            return (
+                 <RadioGroup 
+                    value={answer?.toString()} 
+                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
+                    className="space-y-4"
+                >
+                    <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                        <RadioGroupItem value="0" id={`q-opt-true`} />
+                        <Label htmlFor={`q-opt-true`} className="text-base font-normal flex-1 cursor-pointer">
+                            True
+                        </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                        <RadioGroupItem value="1" id={`q-opt-false`} />
+                        <Label htmlFor={`q-opt-false`} className="text-base font-normal flex-1 cursor-pointer">
+                            False
+                        </Label>
+                    </div>
+                </RadioGroup>
+            );
+        case 'fill_in_blank':
+            return (
+                <Input
+                    type="text"
+                    placeholder="Type your answer here..."
+                    value={answer as string || ""}
+                    onChange={(e) => onAnswerChange(question.id, e.target.value)}
+                    className="text-base"
+                />
+            );
+        case 'mcq':
+        default:
+            return (
+                 <RadioGroup 
+                    value={answer?.toString()} 
+                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
+                    className="space-y-4"
+                >
+                    {question.options.map((option, index) => (
+                        <div key={index} className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                        <RadioGroupItem value={index.toString()} id={`q-opt-${index}`} />
+                        <Label htmlFor={`q-opt-${index}`} className="text-base font-normal flex-1 cursor-pointer">
+                            {option}
+                        </Label>
+                        </div>
+                    ))}
+                </RadioGroup>
+            );
+    }
+}
+
 
 function QuizAttemptContent() {
   const params = useParams();
@@ -53,15 +109,21 @@ function QuizAttemptContent() {
     hasSubmittedRef.current = true;
     
     if (timerRef.current) clearInterval(timerRef.current);
+    let score = 0;
+    quiz.questions.forEach(q => {
+        const userAnswer = answers[q.id];
+        if (q.type === 'mcq' || q.type === 'true_false') {
+            if (userAnswer === q.correctAnswer) {
+                score++;
+            }
+        } else if (q.type === 'fill_in_blank') {
+            if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
+                score++;
+            }
+        }
+    });
 
     if (quizType === 'live') {
-        let currentScore = 0;
-        quiz.questions.forEach(q => {
-            if (answers[q.id] === q.correctAnswer) {
-                currentScore++;
-            }
-        });
-
         const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
           quizId,
           quizTitle: quiz.title,
@@ -72,9 +134,9 @@ function QuizAttemptContent() {
           userClass: userClass || 'N/A',
           userPlace: place || 'N/A',
           answers,
-          score: currentScore,
+          score: score,
           totalQuestions: quiz.questions.length,
-          percentage: (currentScore / quiz.questions.length) * 100,
+          percentage: (score / quiz.questions.length) * 100,
         };
         
         try {
@@ -185,8 +247,8 @@ function QuizAttemptContent() {
   }, [quiz, answers]);
 
   
-  const handleAnswerChange = (questionId: string, optionIndex: number) => {
-    setAnswers(prev => ({ ...prev, [questionId]: optionIndex }));
+  const handleAnswerChange = (questionId: string, value: number | string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
   const handleNext = () => {
@@ -243,20 +305,11 @@ function QuizAttemptContent() {
         <CardContent>
           <div className="py-6 min-h-[300px]">
             <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
-            <RadioGroup 
-                value={answers[currentQuestion.id]?.toString()} 
-                onValueChange={(value) => handleAnswerChange(currentQuestion.id, parseInt(value))}
-                className="space-y-4"
-            >
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
-                  <RadioGroupItem value={index.toString()} id={`q${currentQuestionIndex}-opt${index}`} />
-                  <Label htmlFor={`q${currentQuestionIndex}-opt${index}`} className="text-base font-normal flex-1 cursor-pointer">
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+            <QuizQuestion 
+                question={currentQuestion}
+                answer={answers[currentQuestion.id]}
+                onAnswerChange={handleAnswerChange}
+            />
           </div>
           
           <div className="flex justify-between items-center mt-8">

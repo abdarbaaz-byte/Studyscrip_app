@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Quiz, Question } from "@/lib/data";
+import type { Quiz, Question, QuestionType } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, parse } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 interface AdminQuizFormProps {
@@ -193,8 +194,10 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
     const newQuestion: Question = {
         id: generateId('q'),
         text: '',
+        type: 'mcq',
         options: ['', '', '', ''],
         correctAnswer: 0,
+        answerText: '',
         explanation: ''
     };
     setFormData(prev => ({...prev, questions: [...prev.questions, newQuestion]}));
@@ -204,9 +207,9 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
     setFormData(prev => ({ ...prev, questions: prev.questions.filter((_, i) => i !== index)}));
   };
   
-  const handleQuestionChange = (qIndex: number, field: 'text' | 'explanation', value: string) => {
+  const handleQuestionChange = (qIndex: number, field: keyof Question, value: string | number) => {
     const newQuestions = [...formData.questions];
-    newQuestions[qIndex][field] = value;
+    (newQuestions[qIndex] as any)[field] = value;
     setFormData(prev => ({...prev, questions: newQuestions}));
   };
   
@@ -310,7 +313,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
         </div>
         <div className="space-y-4">
           {formData.questions.map((q, qIndex) => (
-            <div key={q.id || qIndex} className="p-4 border rounded-md space-y-3 relative bg-secondary/50">
+            <div key={q.id || qIndex} className="p-4 border rounded-md space-y-4 relative bg-secondary/50">
                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 text-destructive" onClick={() => removeQuestion(qIndex)}>
                   <Trash2 className="h-4 w-4" />
                </Button>
@@ -318,23 +321,72 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                  <Label htmlFor={`q-text-${qIndex}`}>Question {qIndex + 1}</Label>
                  <Textarea id={`q-text-${qIndex}`} value={q.text} onChange={e => handleQuestionChange(qIndex, 'text', e.target.value)} required />
                </div>
-               <div className="space-y-3">
-                 <Label>Options & Correct Answer</Label>
-                 <RadioGroup value={q.correctAnswer.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
-                    {q.options.map((opt, optIndex) => (
-                        <div key={optIndex} className="flex items-center gap-2">
-                            <RadioGroupItem value={optIndex.toString()} id={`q-${qIndex}-opt-${optIndex}`} />
-                            <Input 
-                                id={`q-${qIndex}-opt-input-${optIndex}`}
-                                placeholder={`Option ${optIndex + 1}`}
-                                value={opt}
-                                onChange={e => handleOptionChange(qIndex, optIndex, e.target.value)}
-                                required
-                            />
-                        </div>
-                    ))}
-                 </RadioGroup>
-               </div>
+
+                <div className="space-y-2">
+                    <Label>Question Type</Label>
+                    <Select value={q.type} onValueChange={(value: QuestionType) => handleQuestionChange(qIndex, 'type', value)}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="mcq">Multiple Choice</SelectItem>
+                            <SelectItem value="true_false">True / False</SelectItem>
+                            <SelectItem value="fill_in_blank">Fill in the Blank</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+               
+                {q.type === 'mcq' && (
+                    <div className="space-y-3">
+                        <Label>Options & Correct Answer</Label>
+                        <RadioGroup value={q.correctAnswer.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
+                            {q.options.map((opt, optIndex) => (
+                                <div key={optIndex} className="flex items-center gap-2">
+                                    <RadioGroupItem value={optIndex.toString()} id={`q-${qIndex}-opt-${optIndex}`} />
+                                    <Input 
+                                        id={`q-${qIndex}-opt-input-${optIndex}`}
+                                        placeholder={`Option ${optIndex + 1}`}
+                                        value={opt}
+                                        onChange={e => handleOptionChange(qIndex, optIndex, e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            ))}
+                        </RadioGroup>
+                    </div>
+                )}
+
+                 {q.type === 'true_false' && (
+                    <div className="space-y-3">
+                        <Label>Correct Answer</Label>
+                         <RadioGroup value={q.correctAnswer.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
+                             <div className="flex items-center gap-2">
+                                <RadioGroupItem value="0" id={`q-${qIndex}-opt-true`} />
+                                <Label htmlFor={`q-${qIndex}-opt-true`}>True</Label>
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <RadioGroupItem value="1" id={`q-${qIndex}-opt-false`} />
+                                <Label htmlFor={`q-${qIndex}-opt-false`}>False</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                )}
+                
+                {q.type === 'fill_in_blank' && (
+                    <div className="space-y-2">
+                        <Label htmlFor={`q-answer-text-${qIndex}`}>Correct Answer Text</Label>
+                        <Input 
+                            id={`q-answer-text-${qIndex}`} 
+                            value={q.answerText} 
+                            onChange={(e) => handleQuestionChange(qIndex, 'answerText', e.target.value)} 
+                            placeholder="Enter the exact answer"
+                            required
+                        />
+                         <p className="text-xs text-muted-foreground">Note: The answer check is case-insensitive. "Delhi" and "delhi" are treated as the same.</p>
+                    </div>
+                )}
+
+
                 <div className="space-y-2">
                  <Label htmlFor={`q-explanation-${qIndex}`}>Explanation (Optional)</Label>
                  <Textarea id={`q-explanation-${qIndex}`} value={q.explanation} onChange={e => handleQuestionChange(qIndex, 'explanation', e.target.value)} placeholder="Explain why this is the correct answer."/>
