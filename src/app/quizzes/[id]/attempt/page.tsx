@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, Suspense, useMemo } from "react";
+import { useState, useEffect, useRef, Suspense, useMemo, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt, type Question, type MatchOption } from "@/lib/data";
 import { Button } from "@/components/ui/button";
@@ -158,14 +158,14 @@ function QuizAttemptContent() {
   const userId = searchParams.get('userId');
   const userEmail = searchParams.get('userEmail');
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async (currentAnswers: AnswersState) => {
     if (!quiz || hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
     
     if (timerRef.current) clearInterval(timerRef.current);
     let score = 0;
     quiz.questions.forEach(q => {
-        const userAnswer = answers[q.id];
+        const userAnswer = currentAnswers[q.id];
         if (q.type === 'mcq' || q.type === 'true_false') {
             if (userAnswer?.toString() === q.correctAnswer?.toString()) {
                 score++;
@@ -196,7 +196,7 @@ function QuizAttemptContent() {
           userSchool: school || 'N/A',
           userClass: userClass || 'N/A',
           userPlace: place || 'N/A',
-          answers,
+          answers: currentAnswers,
           score: score,
           totalQuestions: quiz.questions.length,
           percentage: (score / quiz.questions.length) * 100,
@@ -211,8 +211,7 @@ function QuizAttemptContent() {
             return;
         }
 
-        // Set localStorage flags for live quizzes to prevent re-attempts
-        const encodedAnswers = encodeURIComponent(JSON.stringify(answers));
+        const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
         localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
         localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({
             answers: encodedAnswers,
@@ -223,7 +222,7 @@ function QuizAttemptContent() {
         }));
     }
 
-    const encodedAnswers = encodeURIComponent(JSON.stringify(answers));
+    const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
     const queryParams = new URLSearchParams({
         type: quizType,
         answers: encodedAnswers,
@@ -234,7 +233,9 @@ function QuizAttemptContent() {
     }).toString();
     
     router.replace(`/quizzes/${quizId}/results?${queryParams}`);
-  };
+  }, [quiz, quizId, quizType, name, school, userClass, place, userId, userEmail, router, toast]);
+
+  const triggerSubmit = () => handleSubmit(answers);
 
   useEffect(() => {
     async function loadQuiz() {
@@ -260,11 +261,11 @@ function QuizAttemptContent() {
     // This function will be called when the component is about to unmount
     return () => {
       if (!hasSubmittedRef.current) {
-        handleSubmit();
+        triggerSubmit();
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quiz, answers]); // Depend on quiz and answers to have the latest state on submit
+  }, [answers, quiz]);
 
 
   useEffect(() => {
@@ -275,7 +276,7 @@ function QuizAttemptContent() {
           title: "Time's Up!",
           description: "Your quiz has been automatically submitted.",
         });
-        handleSubmit();
+        triggerSubmit();
       }
       return;
     }
@@ -298,7 +299,7 @@ function QuizAttemptContent() {
                 title: 'Quiz Submitted',
                 description: 'You moved to another tab. Your quiz has been submitted to prevent cheating.',
             });
-            handleSubmit();
+            triggerSubmit();
         }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -322,7 +323,7 @@ function QuizAttemptContent() {
 
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentQuestionIndex(prev => prev - 1);
     }
   };
 
@@ -403,7 +404,7 @@ function QuizAttemptContent() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                   <Button variant="ghost" onClick={() => setShowSubmitConfirm(false)}>Review Answers</Button>
-                  <AlertDialogAction onClick={handleSubmit}>Submit</AlertDialogAction>
+                  <AlertDialogAction onClick={triggerSubmit}>Submit</AlertDialogAction>
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
