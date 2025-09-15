@@ -84,7 +84,7 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
             return (
                  <RadioGroup 
                     value={answer?.toString()} 
-                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
+                    onValueChange={(value) => onAnswerChange(question.id, value)}
                     className="space-y-4"
                 >
                     <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
@@ -167,7 +167,7 @@ function QuizAttemptContent() {
     quiz.questions.forEach(q => {
         const userAnswer = answers[q.id];
         if (q.type === 'mcq' || q.type === 'true_false') {
-            if (userAnswer === q.correctAnswer) {
+            if (userAnswer?.toString() === q.correctAnswer?.toString()) {
                 score++;
             }
         } else if (q.type === 'fill_in_blank') {
@@ -322,7 +322,7 @@ function QuizAttemptContent() {
 
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
