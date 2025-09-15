@@ -12,13 +12,20 @@ import { UserPermission } from '@/hooks/use-auth';
 export type { ContentItem } from './academics';
 
 // --- QUIZ ---
-export type QuestionType = 'mcq' | 'true_false' | 'fill_in_blank';
+export type QuestionType = 'mcq' | 'true_false' | 'fill_in_blank' | 'match';
+
+export type MatchOption = {
+    id: string;
+    question: string;
+    answer: string;
+};
 
 export type Question = {
     id: string;
     text: string;
     type: QuestionType;
     options: string[]; // Used for MCQ
+    matchOptions: MatchOption[]; // Used for Match the Following
     correctAnswer: number; // Index for MCQ, 0 for True/1 for False
     answerText: string; // Used for fill_in_blank
     explanation: string;
@@ -46,7 +53,7 @@ export type QuizAttempt = {
   userSchool: string;
   userClass: string;
   userPlace: string;
-  answers: { [questionId: string]: number | string }; // Can be index or text
+  answers: { [questionId: string]: number | string | { [matchId: string]: string } };
   score: number;
   totalQuestions: number;
   percentage: number;

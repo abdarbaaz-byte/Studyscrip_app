@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Quiz, Question, QuestionType } from "@/lib/data";
+import type { Quiz, Question, QuestionType, MatchOption } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit, Calendar as CalendarIcon } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Calendar as CalendarIcon, GripVertical } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   AlertDialog,
@@ -196,6 +196,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
         text: '',
         type: 'mcq',
         options: ['', '', '', ''],
+        matchOptions: [{id: generateId('match'), question: '', answer: ''}],
         correctAnswer: 0,
         answerText: '',
         explanation: ''
@@ -216,6 +217,27 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
   const handleOptionChange = (qIndex: number, optIndex: number, text: string) => {
     const newQuestions = [...formData.questions];
     newQuestions[qIndex].options[optIndex] = text;
+    setFormData(prev => ({...prev, questions: newQuestions}));
+  };
+
+  const addMatchOption = (qIndex: number) => {
+    const newQuestions = [...formData.questions];
+    if (!newQuestions[qIndex].matchOptions) {
+        newQuestions[qIndex].matchOptions = [];
+    }
+    newQuestions[qIndex].matchOptions.push({id: generateId('match'), question: '', answer: ''});
+    setFormData(prev => ({...prev, questions: newQuestions}));
+  };
+
+  const removeMatchOption = (qIndex: number, matchIndex: number) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[qIndex].matchOptions.splice(matchIndex, 1);
+    setFormData(prev => ({...prev, questions: newQuestions}));
+  };
+  
+  const handleMatchOptionChange = (qIndex: number, matchIndex: number, field: 'question' | 'answer', value: string) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[qIndex].matchOptions[matchIndex][field] = value;
     setFormData(prev => ({...prev, questions: newQuestions}));
   };
   
@@ -332,6 +354,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                             <SelectItem value="mcq">Multiple Choice</SelectItem>
                             <SelectItem value="true_false">True / False</SelectItem>
                             <SelectItem value="fill_in_blank">Fill in the Blank</SelectItem>
+                            <SelectItem value="match">Match the Following</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -339,7 +362,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                 {q.type === 'mcq' && (
                     <div className="space-y-3">
                         <Label>Options & Correct Answer</Label>
-                        <RadioGroup value={q.correctAnswer.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
+                        <RadioGroup value={q.correctAnswer?.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
                             {q.options.map((opt, optIndex) => (
                                 <div key={optIndex} className="flex items-center gap-2">
                                     <RadioGroupItem value={optIndex.toString()} id={`q-${qIndex}-opt-${optIndex}`} />
@@ -359,7 +382,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                  {q.type === 'true_false' && (
                     <div className="space-y-3">
                         <Label>Correct Answer</Label>
-                         <RadioGroup value={q.correctAnswer.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
+                         <RadioGroup value={q.correctAnswer?.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
                              <div className="flex items-center gap-2">
                                 <RadioGroupItem value="0" id={`q-${qIndex}-opt-true`} />
                                 <Label htmlFor={`q-${qIndex}-opt-true`}>True</Label>
@@ -377,7 +400,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                         <Label htmlFor={`q-answer-text-${qIndex}`}>Correct Answer Text</Label>
                         <Input 
                             id={`q-answer-text-${qIndex}`} 
-                            value={q.answerText} 
+                            value={q.answerText || ''} 
                             onChange={(e) => handleQuestionChange(qIndex, 'answerText', e.target.value)} 
                             placeholder="Enter the exact answer"
                             required
@@ -386,10 +409,39 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                     </div>
                 )}
 
+                {q.type === 'match' && (
+                    <div className="space-y-3">
+                        <Label>Matching Pairs</Label>
+                        <div className="space-y-2">
+                            {(q.matchOptions || []).map((matchOpt, matchIndex) => (
+                                <div key={matchOpt.id} className="flex items-center gap-2">
+                                    <GripVertical className="h-5 w-5 text-muted-foreground"/>
+                                    <Input 
+                                        placeholder={`Question ${matchIndex + 1}`} 
+                                        value={matchOpt.question}
+                                        onChange={(e) => handleMatchOptionChange(qIndex, matchIndex, 'question', e.target.value)}
+                                    />
+                                    <Input 
+                                        placeholder={`Answer ${matchIndex + 1}`} 
+                                        value={matchOpt.answer}
+                                        onChange={(e) => handleMatchOptionChange(qIndex, matchIndex, 'answer', e.target.value)}
+                                    />
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeMatchOption(qIndex, matchIndex)}>
+                                        <Trash2 className="h-4 w-4 text-destructive"/>
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button type="button" variant="outline" size="sm" onClick={() => addMatchOption(qIndex)}>
+                            <PlusCircle className="mr-2 h-4 w-4"/> Add Pair
+                        </Button>
+                    </div>
+                )}
+
 
                 <div className="space-y-2">
                  <Label htmlFor={`q-explanation-${qIndex}`}>Explanation (Optional)</Label>
-                 <Textarea id={`q-explanation-${qIndex}`} value={q.explanation} onChange={e => handleQuestionChange(qIndex, 'explanation', e.target.value)} placeholder="Explain why this is the correct answer."/>
+                 <Textarea id={`q-explanation-${qIndex}`} value={q.explanation || ''} onChange={e => handleQuestionChange(qIndex, 'explanation', e.target.value)} placeholder="Explain why this is the correct answer."/>
                </div>
             </div>
           ))}

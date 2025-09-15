@@ -6,13 +6,13 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { getQuiz, type Quiz } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap, Clock } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap, Clock, ArrowRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-type AnswersState = { [questionId: string]: number | string };
+type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
 function QuizResultsContent() {
   const params = useParams();
@@ -74,6 +74,13 @@ function QuizResultsContent() {
             } else if (q.type === 'fill_in_blank') {
                 if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
                     currentScore++;
+                }
+            } else if (q.type === 'match') {
+                if (typeof userAnswer === 'object' && userAnswer !== null) {
+                    const allCorrect = q.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
+                    if (allCorrect) {
+                        currentScore++;
+                    }
                 }
             }
         });
@@ -143,6 +150,10 @@ function QuizResultsContent() {
                     isCorrect = userAnswer === question.correctAnswer;
                 } else if (question.type === 'fill_in_blank') {
                     isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
+                } else if (question.type === 'match') {
+                     if (typeof userAnswer === 'object' && userAnswer !== null) {
+                        isCorrect = question.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
+                    }
                 }
 
                 return (
@@ -192,14 +203,46 @@ function QuizResultsContent() {
 
                             {question.type === 'fill_in_blank' && (
                                 <div className="space-y-2">
-                                     <div className={cn("flex items-center gap-3 p-3 rounded-md border bg-red-100 border-red-300")}>
-                                        <XCircle className="h-5 w-5 text-red-600"/>
+                                     <div className={cn("flex items-center gap-3 p-3 rounded-md border", !isCorrect && "bg-red-100 border-red-300")}>
+                                        {isCorrect ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : <XCircle className="h-5 w-5 text-red-600"/>}
                                         <span className="flex-1">Your Answer: <span className="font-mono">{userAnswer as string || '""'}</span></span>
                                      </div>
                                       <div className={cn("flex items-center gap-3 p-3 rounded-md border bg-green-100 border-green-300")}>
                                         <CheckCircle2 className="h-5 w-5 text-green-600"/>
                                         <span className="flex-1">Correct Answer: <span className="font-mono">{question.answerText}</span></span>
                                      </div>
+                                </div>
+                            )}
+
+                             {question.type === 'match' && (
+                                <div className="space-y-2">
+                                    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 font-semibold text-center text-sm">
+                                        <div>Your Answer</div>
+                                        <div></div>
+                                        <div>Correct Answer</div>
+                                    </div>
+                                    {question.matchOptions.map(opt => {
+                                        const studentAnswer = (userAnswer as any)?.[opt.id];
+                                        const isPairCorrect = studentAnswer === opt.answer;
+                                        return (
+                                            <div key={opt.id} className={cn("grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-2 rounded-md border", isPairCorrect ? "bg-green-100/60" : "bg-red-100/60")}>
+                                                <div className="text-center">{opt.question}</div>
+                                                <ArrowRight className="h-4 w-4 text-muted-foreground"/>
+                                                <div className="text-center">
+                                                    {isPairCorrect ? (
+                                                        <span className="flex items-center justify-center gap-2 text-green-700">
+                                                            <CheckCircle2 className="h-4 w-4"/> {studentAnswer}
+                                                        </span>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="line-through text-red-700">{studentAnswer || '(No answer)'}</span>
+                                                            <span className="text-green-700">{opt.answer}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
 

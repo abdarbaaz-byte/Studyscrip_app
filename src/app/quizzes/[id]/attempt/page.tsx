@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt, type Question } from "@/lib/data";
+import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt, type Question, type MatchOption } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -21,11 +21,65 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
-type AnswersState = { [questionId: string]: number | string };
+type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
-const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question, answer: number | string, onAnswerChange: (questionId: string, value: number | string) => void }) => {
+// Helper function to shuffle an array
+const shuffleArray = (array: any[]) => {
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+};
+
+const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question, answer: any, onAnswerChange: (questionId: string, value: any) => void }) => {
+    
+    // Memoize the shuffled options for matching questions
+    const shuffledAnswers = useMemo(() => {
+        if (question.type === 'match' && question.matchOptions) {
+            return shuffleArray([...question.matchOptions.map(opt => opt.answer)]);
+        }
+        return [];
+    }, [question]);
+
     switch (question.type) {
+        case 'match':
+            return (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 font-semibold text-center border-b pb-2">
+                        <div>Column A (Question)</div>
+                        <div>Column B (Answer)</div>
+                    </div>
+                    {question.matchOptions.map((matchOpt) => (
+                        <div key={matchOpt.id} className="grid grid-cols-2 gap-4 items-center">
+                            <div className="p-3 bg-secondary rounded-md text-sm">{matchOpt.question}</div>
+                            <Select
+                                value={answer?.[matchOpt.id] || ""}
+                                onValueChange={(value) => {
+                                    const newMatchAnswers = { ...(answer || {}), [matchOpt.id]: value };
+                                    onAnswerChange(question.id, newMatchAnswers);
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an answer..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {shuffledAnswers.map((shuffledAns, index) => (
+                                        <SelectItem key={index} value={shuffledAns}>
+                                            {shuffledAns}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    ))}
+                </div>
+            );
         case 'true_false':
             return (
                  <RadioGroup 
@@ -119,6 +173,15 @@ function QuizAttemptContent() {
         } else if (q.type === 'fill_in_blank') {
             if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
                 score++;
+            }
+        } else if (q.type === 'match') {
+            if (typeof userAnswer === 'object' && userAnswer !== null) {
+                const correctMatches = q.matchOptions.every(
+                    (opt) => (userAnswer as any)[opt.id] === opt.answer
+                );
+                if (correctMatches) {
+                    score++;
+                }
             }
         }
     });
@@ -247,7 +310,7 @@ function QuizAttemptContent() {
   }, [quiz, answers]);
 
   
-  const handleAnswerChange = (questionId: string, value: number | string) => {
+  const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
