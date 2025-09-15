@@ -276,7 +276,7 @@ export function SiteHeader() {
                 </Button>
             </div>
           ) : (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="md:flex items-center gap-2">
               <Button asChild variant="ghost">
                 <Link href="/login">
                   Login
