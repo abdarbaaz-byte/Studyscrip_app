@@ -285,7 +285,7 @@ export function SiteHeader() {
               <Button asChild>
                 <Link href="/signup">
                   Sign Up
-                </Link>
+                </Button>
               </Button>
             </div>
           )}
