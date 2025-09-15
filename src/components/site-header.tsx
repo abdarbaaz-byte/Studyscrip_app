@@ -73,7 +73,6 @@ export function SiteHeader() {
     }
   };
 
-
   const handleShare = async () => {
     const shareData = {
       title: 'StudyScript',
@@ -106,7 +105,7 @@ export function SiteHeader() {
     { href: "/contact", label: "Contact" },
     { href: "/about", label: "About" },
     { href: "/privacy", label: "Privacy Policy" },
-    { href: "/disclaimer", label: "Disclaimer" },
+    { href: "/disclaimer", label: "Disclaimer" }
   ];
   
   const handleLinkClick = () => {
