@@ -34,23 +34,8 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   sw: 'sw.js',
-  // swSrc is removed to let next-pwa handle manifest injection.
-  // We will instead import our custom logic into the generated sw.
+  swSrc: './src/sw.js', // Use our custom service worker as the source
   disable: process.env.NODE_ENV === 'development',
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'firestore-cache',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-        networkTimeoutSeconds: 10,
-      },
-    },
-  ],
 });
 
 

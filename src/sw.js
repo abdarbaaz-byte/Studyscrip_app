@@ -2,22 +2,21 @@
 // Import OneSignal's Service Worker script
 importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
 
-// Import the workbox-sw library
+// This file is required to be in the public folder.
+// This is the standard service worker logic for next-pwa
 if (typeof importScripts === 'function') {
   importScripts(
     'https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js'
   );
 }
 
-// This is the standard service worker logic for next-pwa
 if (workbox) {
   console.log(`Workbox is loaded`);
 
   // Ensure self.__WB_MANIFEST is defined. next-pwa will inject it.
   self.__WB_MANIFEST = self.__WB_MANIFEST || [];
-
+  
   // Precache all the assets in the manifest.
-  // The `next-pwa` plugin will automatically inject the manifest here.
   workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
 
   // Example of a runtime caching route
@@ -35,6 +34,20 @@ if (workbox) {
       ],
     })
   );
+
+   workbox.routing.registerRoute(
+    /^https:\/\/firestore\.googleapis\.com\/.*/,
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'firestore-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        }),
+      ],
+    })
+  );
+
 
 } else {
   console.log(`Workbox didn't load`);
