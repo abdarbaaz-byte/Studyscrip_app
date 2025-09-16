@@ -194,7 +194,7 @@ export function SiteHeader() {
                     onClick={handleLinkClick}
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
-                    Student Feedback Form
+                    Feedback Form
                   </Link>
                   <Button
                     variant="ghost"
