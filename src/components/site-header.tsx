@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut, Share2 } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -188,6 +188,16 @@ export function SiteHeader() {
                     Dashboard
                   </Link>
                  )}
+                  <a
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSeCCWptdyHiXdAB0CbtuD7RT73XrRvtGQ88_w9wIoOVLmN7Cg/viewform?usp=header"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
+                  >
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    Student Feedback Form
+                  </a>
                   <Button
                     variant="ghost"
                     className="text-foreground/70 transition-colors hover:text-foreground justify-start p-0"
