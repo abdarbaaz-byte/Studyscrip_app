@@ -189,11 +189,24 @@ export function SiteHeader() {
                  )}
                   <Link
                     href="/feedback"
-                    className="flex items-center text-foreground/70 transition-colors hover:text-foreground"
+                    className="text-foreground/70 transition-colors hover:text-foreground"
                     onClick={handleLinkClick}
                   >
-                    <ClipboardList className="mr-2 h-4 w-4" />
                     Feedback Form
+                  </Link>
+                   <Link
+                    href="/privacy"
+                    className="text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/disclaimer"
+                    className="text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
+                  >
+                    Disclaimer
                   </Link>
                   <Button
                     variant="ghost"
@@ -203,22 +216,6 @@ export function SiteHeader() {
                     <Share2 className="mr-2 h-4 w-4" />
                     Share App
                   </Button>
-                   <Link
-                    href="/privacy"
-                    className="flex items-center text-foreground/70 transition-colors hover:text-foreground"
-                    onClick={handleLinkClick}
-                  >
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Privacy Policy
-                  </Link>
-                  <Link
-                    href="/disclaimer"
-                    className="flex items-center text-foreground/70 transition-colors hover:text-foreground"
-                    onClick={handleLinkClick}
-                  >
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    Disclaimer
-                  </Link>
               </div>
             </div>
 
