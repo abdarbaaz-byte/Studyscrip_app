@@ -1,3 +1,4 @@
+
 // Import OneSignal's Service Worker script
 importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
 
@@ -15,7 +16,8 @@ if (workbox) {
   // Ensure self.__WB_MANIFEST is defined. next-pwa will inject it.
   self.__WB_MANIFEST = self.__WB_MANIFEST || [];
 
-  // Precache all the assets in the manifest
+  // Precache all the assets in the manifest.
+  // The `next-pwa` plugin will automatically inject the manifest here.
   workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
 
   // Example of a runtime caching route
