@@ -13,10 +13,7 @@ if (typeof importScripts === 'function') {
 if (workbox) {
   console.log(`Workbox is loaded`);
 
-  // Ensure self.__WB_MANIFEST is defined. next-pwa will inject it.
-  self.__WB_MANIFEST = self.__WB_MANIFEST || [];
-  
-  // Precache all the assets in the manifest.
+  // next-pwa will inject the manifest here.
   workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
 
   // Example of a runtime caching route
