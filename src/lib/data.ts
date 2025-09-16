@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import type { Course } from './courses';
@@ -833,15 +834,16 @@ export async function saveBannerSettings(settings: BannerSettings): Promise<void
 export async function getReviews(status: 'approved' | 'pending' | 'all' = 'approved'): Promise<Review[]> {
     const reviewsCol = collection(db, 'reviews');
     // Fetch all reviews first
-    const snapshot = await getDocs(reviewsCol);
+    const q = query(reviewsCol, orderBy('submittedAt', 'desc'));
+    const snapshot = await getDocs(q);
     let allReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
 
-    // Then filter and sort in code
+    // Then filter in code
     if (status !== 'all') {
         allReviews = allReviews.filter(review => review.status === status);
     }
 
-    return allReviews.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
+    return allReviews;
 }
 
 export async function submitReview(reviewData: { name: string; className: string; comment: string; }): Promise<void> {

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -99,8 +100,6 @@ export function SiteHeader() {
     { href: "/faq", label: "FAQs" },
     { href: "/contact", label: "Contact" },
     { href: "/about", label: "About" },
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/disclaimer", label: "Disclaimer" },
   ];
 
   if (isAuthPage) {
