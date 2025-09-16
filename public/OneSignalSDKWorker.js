@@ -1,4 +1,3 @@
-
-// This file is required for OneSignal push notifications to work.
-// It is imported by the OneSignal SDK.
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+// This file is required for OneSignal service worker.
+// It will be populated by OneSignal SDK at runtime.
+// Do not modify this file.

@@ -33,7 +33,8 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  sw: 'sw.js', // Use our custom service worker
+  sw: 'sw.js',
+  swSrc: './src/sw.js', // Use our custom service worker as the source
   disable: process.env.NODE_ENV === 'development',
 });
 
