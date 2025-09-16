@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut, Share2, ClipboardList } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2, ClipboardList, ShieldCheck, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -203,6 +203,22 @@ export function SiteHeader() {
                     <Share2 className="mr-2 h-4 w-4" />
                     Share App
                   </Button>
+                   <Link
+                    href="/privacy"
+                    className="flex items-center text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
+                  >
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/disclaimer"
+                    className="flex items-center text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Disclaimer
+                  </Link>
               </div>
             </div>
 
