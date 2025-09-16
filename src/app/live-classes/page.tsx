@@ -119,7 +119,7 @@ export default function LiveClassesPage() {
                         </div>
                          <div className="flex items-center space-x-2">
                             <RadioGroupItem value="professional" id="professional" />
-                            <Label htmlFor="professional">Professional Skills (e.g., Web Development)</Label>
+                            <Label htmlFor="professional">Professional Skills (e.g., Communication, English Spoken)</Label>
                         </div>
                     </RadioGroup>
                 </div>
