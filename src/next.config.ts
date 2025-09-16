@@ -5,20 +5,9 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
+  swSrc: 'src/sw.js',
+  swDest: 'public/sw.js',
   disable: process.env.NODE_ENV === 'development',
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 200,
-        },
-      },
-    },
-  ],
-  importScripts: ['/OneSignalSDKWorker.js'], // Import OneSignal worker
 });
 
 const nextConfig: NextConfig = {
