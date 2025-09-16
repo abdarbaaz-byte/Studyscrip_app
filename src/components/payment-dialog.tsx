@@ -182,6 +182,13 @@ export function PaymentDialog({
     }
     setIsSubmittingUpi(false);
   }
+  
+  const getQrCodeUrl = () => {
+    if (!UPI_ID) return "";
+    const upiData = `upi://pay?pa=${UPI_ID}&pn=StudyScript&am=${itemPrice}`;
+    const encodedUpiData = encodeURIComponent(upiData);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodedUpiData}`;
+  };
 
   const totalProcessing = isProcessing || isPaying || isSubmittingUpi;
 
@@ -228,7 +235,7 @@ export function PaymentDialog({
                         <div className="text-center p-4 bg-secondary rounded-lg">
                             <p className="text-sm font-medium">1. Scan QR or use UPI ID</p>
                             <div className="flex justify-center my-2">
-                                <Image src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${UPI_ID}&pn=StudyScript&am=${itemPrice}`} alt="UPI QR Code" width={150} height={150} />
+                                <Image src={getQrCodeUrl()} alt="UPI QR Code" width={150} height={150} />
                             </div>
                              <p className="text-sm font-semibold">
                                 UPI ID: <span className="font-mono p-1 rounded bg-background">{UPI_ID}</span>
