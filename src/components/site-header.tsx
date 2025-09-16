@@ -188,16 +188,14 @@ export function SiteHeader() {
                     Dashboard
                   </Link>
                  )}
-                  <a
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSeCCWptdyHiXdAB0CbtuD7RT73XrRvtGQ88_w9wIoOVLmN7Cg/viewform?usp=header"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href="/feedback"
                     className="flex items-center text-foreground/70 transition-colors hover:text-foreground"
                     onClick={handleLinkClick}
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
                     Student Feedback Form
-                  </a>
+                  </Link>
                   <Button
                     variant="ghost"
                     className="text-foreground/70 transition-colors hover:text-foreground justify-start p-0"
