@@ -15,14 +15,13 @@ import { BottomNavigation } from "@/components/bottom-navigation";
 export const metadata: Metadata = {
   title: "StudyScript - E-Learning for Academic & Professional Courses",
   description: "Join StudyScript, a modern e-learning platform for academic classes (9th, 10th) and professional courses in web development, data science, and more. Start learning today!",
-  manifest: "/manifest.json",
   keywords: ["e-learning", "online courses", "academic classes", "9th class", "10th class", "professional courses", "online education", "StudyScript"],
   authors: [{ name: "StudyScript" }],
   robots: "index, follow",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#5062B5",
+  themeColor: "#227447",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -41,6 +40,8 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png"></link>
       </head>
       <body className="min-h-screen font-body antialiased">
         <AuthProvider>

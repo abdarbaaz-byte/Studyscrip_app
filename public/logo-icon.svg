@@ -1,0 +1,18 @@
+<svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background shape -->
+  <path d="M10 20 C10 10 20 10 20 10 L80 10 C90 10 90 20 90 20 L90 80 C90 90 80 90 80 90 L20 90 C10 90 10 80 10 80 Z" fill="hsl(var(--primary))" />
+  
+  <!-- 'S' shape -->
+  <path d="M60,30 C40,30 40,45 60,45 M40,65 C60,65 60,80 40,80" 
+        stroke="hsl(var(--primary-foreground))" 
+        stroke-width="12" 
+        stroke-linecap="round" 
+        fill="none" />
+  
+  <!-- Vertical line connecting the 'S' -->
+  <path d="M60,45 Q60,55 40,65" 
+        stroke="hsl(var(--primary-foreground))" 
+        stroke-width="12" 
+        stroke-linecap="round" 
+        fill="none" />
+</svg>
