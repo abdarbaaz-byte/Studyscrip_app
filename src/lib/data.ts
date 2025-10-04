@@ -87,9 +87,16 @@ export async function getCourse(docId: string): Promise<Course | null> {
 
   if (courseSnap.exists()) {
     const data = courseSnap.data();
+    
+    // Serialize Firestore Timestamp to a plain string
+    const sanitizedData = {
+      ...data,
+      createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate().toISOString() : null,
+    };
+
     // Ensure nested content array is properly serialized for Next.js server components
-    const content = data.content ? JSON.parse(JSON.stringify(data.content)) : [];
-    return { docId: courseSnap.id, ...data, content } as Course;
+    const content = sanitizedData.content ? JSON.parse(JSON.stringify(sanitizedData.content)) : [];
+    return { docId: courseSnap.id, ...sanitizedData, content } as Course;
   } else {
     return null;
   }
