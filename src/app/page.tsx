@@ -148,8 +148,9 @@ export default function Home() {
                             src={getGoogleDriveImageUrl(banner.imageUrl)}
                             alt="Promotional Banner"
                             fill
-                            className="object-cover"
+                            className="object-cover prevent-long-press"
                             data-ai-hint="advertisement banner"
+                            onContextMenu={(e) => e.preventDefault()}
                           />
                         </Link>
                       ) : (
@@ -157,8 +158,9 @@ export default function Home() {
                             src={getGoogleDriveImageUrl(banner.imageUrl)}
                             alt="Promotional Banner"
                             fill
-                            className="object-cover"
+                            className="object-cover prevent-long-press"
                             data-ai-hint="advertisement banner"
+                            onContextMenu={(e) => e.preventDefault()}
                           />
                       )}
                     </div>
