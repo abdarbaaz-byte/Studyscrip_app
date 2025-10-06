@@ -16,6 +16,7 @@ import { checkUserPurchase, createPurchase } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { PaymentDialog } from "@/components/payment-dialog";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 
 export default function CourseDetailClientPage({ course }: { course: Course }) {
@@ -200,22 +201,37 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                 <CardTitle className="font-headline text-2xl">Course Content</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-4">
-                  {course.content.map((item, index) => (
-                    <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
-                      <div className="flex items-center gap-4">
-                        {getContentIcon(item.type)}
-                        <span className="font-medium">{item.title}</span>
-                        <Badge variant={item.type === 'pdf' ? 'secondary' : 'default'} className="capitalize">{item.type}</Badge>
-                      </div>
-                      {isPurchased ? (
-                          <Button variant="ghost" size="sm" onClick={() => handleViewContent(item)}>View</Button>
-                      ) : (
-                        <Lock className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </li>
+                <Accordion type="single" collapsible className="w-full space-y-3">
+                  {(course.folders || []).map((folder) => (
+                    <AccordionItem value={folder.id} key={folder.id} className="border rounded-md px-4 bg-secondary/50">
+                      <AccordionTrigger className="hover:no-underline text-lg font-medium">{folder.name}</AccordionTrigger>
+                      <AccordionContent className="pt-2">
+                        <ul className="space-y-3">
+                          {folder.content.map((item) => (
+                            <li key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-background">
+                              <div className="flex items-center gap-4">
+                                {getContentIcon(item.type)}
+                                <span className="font-medium">{item.title}</span>
+                                <Badge variant={item.type === 'pdf' ? 'secondary' : 'default'} className="capitalize">{item.type}</Badge>
+                              </div>
+                              {isPurchased ? (
+                                  <Button variant="ghost" size="sm" onClick={() => handleViewContent(item)}>View</Button>
+                              ) : (
+                                <Lock className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </li>
+                          ))}
+                          {folder.content.length === 0 && (
+                            <p className="text-center text-sm text-muted-foreground py-4">No content in this folder yet.</p>
+                          )}
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </ul>
+                </Accordion>
+                {(course.folders || []).length === 0 && (
+                  <p className="text-center text-muted-foreground py-8">No content available for this course yet.</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -276,7 +292,3 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
     </>
   );
 }
-
-    
-
-    

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Course, CourseContent } from "@/lib/courses";
+import type { Course, CourseFolder, CourseContent } from "@/lib/courses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, PlusCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AdminCourseFormProps {
   course: Course | null;
@@ -23,8 +35,10 @@ const emptyCourse: Omit<Course, "id" | "docId"> = {
   longDescription: "",
   thumbnail: "https://placehold.co/600x400.png",
   price: 0,
-  content: [],
+  folders: [],
 };
+
+const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
 export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormProps) {
   const [formData, setFormData] = useState<Omit<Course, "id" | "docId">>(emptyCourse);
@@ -37,7 +51,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
         longDescription: course.longDescription,
         thumbnail: course.thumbnail,
         price: course.price,
-        content: course.content,
+        folders: course.folders || [],
       });
     } else {
        setFormData(emptyCourse);
@@ -49,22 +63,42 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
     setFormData((prev) => ({ ...prev, [name]: name === 'price' ? parseFloat(value) || 0 : value }));
   };
 
-  const handleContentChange = (index: number, field: keyof CourseContent, value: string) => {
-    const newContent = [...formData.content];
-    newContent[index] = { ...newContent[index], [field]: value };
-    setFormData(prev => ({ ...prev, content: newContent }));
+  const handleFolderChange = (index: number, value: string) => {
+    const newFolders = [...formData.folders];
+    newFolders[index].name = value;
+    setFormData(prev => ({ ...prev, folders: newFolders }));
   };
 
-  const addContentItem = () => {
+  const addFolder = () => {
     setFormData(prev => ({
       ...prev,
-      content: [...prev.content, { type: 'pdf', title: '', url: '' }]
+      folders: [...prev.folders, { id: generateId('folder'), name: 'New Folder', content: [] }]
     }));
   };
 
-  const removeContentItem = (index: number) => {
-    const newContent = formData.content.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, content: newContent }));
+  const removeFolder = (index: number) => {
+    const newFolders = formData.folders.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, folders: newFolders }));
+  };
+  
+  const handleContentChange = (folderIndex: number, contentIndex: number, field: keyof CourseContent, value: string) => {
+    const newFolders = [...formData.folders];
+    const newContent = [...newFolders[folderIndex].content];
+    (newContent[contentIndex] as any)[field] = value;
+    newFolders[folderIndex].content = newContent;
+    setFormData(prev => ({...prev, folders: newFolders }));
+  };
+  
+  const addContentItem = (folderIndex: number) => {
+    const newFolders = [...formData.folders];
+    newFolders[folderIndex].content.push({ id: generateId('content'), type: 'pdf', title: '', url: '' });
+    setFormData(prev => ({ ...prev, folders: newFolders }));
+  };
+
+  const removeContentItem = (folderIndex: number, contentIndex: number) => {
+    const newFolders = [...formData.folders];
+    newFolders[folderIndex].content = newFolders[folderIndex].content.filter((_, i) => i !== contentIndex);
+    setFormData(prev => ({...prev, folders: newFolders}));
   };
 
 
@@ -106,63 +140,102 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
 
       <div>
         <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Course Content</h3>
-            <Button type="button" variant="outline" size="sm" onClick={addContentItem}>
+            <h3 className="text-lg font-medium">Course Content Folders</h3>
+            <Button type="button" variant="outline" size="sm" onClick={addFolder}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Content
+                Add Folder
             </Button>
         </div>
-        <div className="space-y-4">
-          {formData.content.map((item, index) => (
-            <div key={index} className="p-4 border rounded-md space-y-3 relative bg-secondary/50">
-               <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 text-destructive" onClick={() => removeContentItem(index)}>
-                  <Trash2 className="h-4 w-4" />
-               </Button>
-               <div className="grid grid-cols-6 gap-4 items-end">
-                <div className="space-y-2 col-span-3">
-                  <Label htmlFor={`content-title-${index}`}>Title</Label>
-                  <Input 
-                    id={`content-title-${index}`} 
-                    value={item.title} 
-                    onChange={e => handleContentChange(index, 'title', e.target.value)} 
-                    placeholder="e.g., Chapter 1: Introduction"
-                    required
-                  />
+        <Accordion type="single" collapsible className="w-full space-y-3">
+          {formData.folders.map((folder, folderIndex) => (
+            <AccordionItem value={folder.id} key={folder.id} className="border rounded-md px-4 bg-secondary/50">
+               <div className="flex items-center w-full">
+                    <AccordionTrigger className="flex-grow hover:no-underline py-3">
+                        <Input value={folder.name} onClick={(e) => e.stopPropagation()} onChange={e => handleFolderChange(folderIndex, e.target.value)} className="font-medium" />
+                    </AccordionTrigger>
+                     <div className="flex items-center gap-3 ml-4">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete "{folder.name}"?</AlertDialogTitle>
+                                    <AlertDialogDescription>This will permanently delete the folder and all its content.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => removeFolder(folderIndex)}>Continue</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
                 </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor={`content-url-${index}`}>Content URL</Label>
-                   <Input 
-                    id={`content-url-${index}`}
-                    type="text"
-                    value={item.url}
-                    onChange={(e) => handleContentChange(index, 'url', e.target.value)}
-                    placeholder="https://example.com/file.pdf"
-                    required
-                  />
-                </div>
-                <div className="space-y-2 col-span-1">
-                  <Label htmlFor={`content-type-${index}`}>Type</Label>
-                  <Select 
-                    value={item.type}
-                    onValueChange={(value: 'pdf' | 'video' | 'image') => handleContentChange(index, 'type', value)}
-                  >
-                    <SelectTrigger id={`content-type-${index}`}>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pdf">PDF</SelectItem>
-                      <SelectItem value="video">Video</SelectItem>
-                      <SelectItem value="image">Image</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
+
+                <AccordionContent>
+                  <div className="space-y-4 p-2 border-t mt-3">
+                     <div className="flex justify-between items-center">
+                        <h4 className="font-semibold">Folder Content</h4>
+                        <Button type="button" variant="outline" size="sm" onClick={() => addContentItem(folderIndex)}>
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add Content
+                        </Button>
+                      </div>
+                      {folder.content.map((item, contentIndex) => (
+                         <div key={item.id} className="p-4 border rounded-md space-y-3 relative bg-background">
+                            <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 text-destructive" onClick={() => removeContentItem(folderIndex, contentIndex)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                             <div className="grid grid-cols-6 gap-4 items-end">
+                                <div className="space-y-2 col-span-3">
+                                  <Label htmlFor={`content-title-${folderIndex}-${contentIndex}`}>Title</Label>
+                                  <Input 
+                                    id={`content-title-${folderIndex}-${contentIndex}`} 
+                                    value={item.title} 
+                                    onChange={e => handleContentChange(folderIndex, contentIndex, 'title', e.target.value)} 
+                                    placeholder="e.g., Introduction PDF"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2 col-span-2">
+                                  <Label htmlFor={`content-url-${folderIndex}-${contentIndex}`}>Content URL</Label>
+                                  <Input 
+                                    id={`content-url-${folderIndex}-${contentIndex}`}
+                                    type="text"
+                                    placeholder="https://example.com/file.pdf"
+                                    value={item.url}
+                                    onChange={(e) => handleContentChange(folderIndex, contentIndex, 'url', e.target.value)}
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2 col-span-1">
+                                  <Label htmlFor={`content-type-${folderIndex}-${contentIndex}`}>Type</Label>
+                                  <Select 
+                                    value={item.type}
+                                    onValueChange={(value: 'pdf' | 'video' | 'image') => handleContentChange(folderIndex, contentIndex, 'type', value)}
+                                  >
+                                    <SelectTrigger id={`content-type-${folderIndex}-${contentIndex}`}>
+                                      <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pdf">PDF</SelectItem>
+                                      <SelectItem value="video">Video</SelectItem>
+                                      <SelectItem value="image">Image</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                         </div>
+                      ))}
+                      {folder.content.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No content items in this folder yet.</p>}
+                  </div>
+                </AccordionContent>
+            </AccordionItem>
           ))}
-          {formData.content.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No content items yet. Click "Add Content" to get started.</p>
-          )}
-        </div>
+        </Accordion>
+        
+        {formData.folders.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">No folders yet. Click "Add Folder" to get started.</p>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
