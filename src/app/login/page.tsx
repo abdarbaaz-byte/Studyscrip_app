@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +49,24 @@ export default function LoginPage() {
                   <Button variant="link" className="px-0 h-auto text-sm">Forgot password?</Button>
                 </Link>
               </div>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                 <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
             <Button type="submit" className="w-full mt-2" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
