@@ -244,8 +244,9 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                   alt={course.title}
                   width={600}
                   height={400}
-                  className="w-full h-auto rounded-t-lg"
+                  className="w-full h-auto rounded-t-lg prevent-long-press"
                   data-ai-hint="online course"
+                  onContextMenu={(e) => e.preventDefault()}
                 />
                 <div className="p-6">
                   <div className="text-3xl font-bold mb-4">Rs. {course.price}</div>

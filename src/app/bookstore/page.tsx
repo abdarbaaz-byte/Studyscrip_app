@@ -72,7 +72,8 @@ export default function BookstorePage() {
                           alt={item.title}
                           width={600}
                           height={800}
-                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 prevent-long-press"
+                          onContextMenu={(e) => e.preventDefault()}
                         />
                       </a>
                     </CardHeader>
