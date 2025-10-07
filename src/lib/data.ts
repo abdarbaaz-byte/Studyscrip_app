@@ -886,7 +886,16 @@ export type LiveClass = {
 
 export async function saveLiveClass(liveClass: Omit<LiveClass, 'id'>): Promise<void> {
     const liveClassesCol = collection(db, 'liveClasses');
-    await addDoc(liveClassesCol, liveClass);
+    
+    // Create a new object to avoid mutating the original
+    const dataToSave: { [key: string]: any } = { ...liveClass };
+
+    // Remove classId if it's undefined to prevent Firestore error
+    if (dataToSave.classId === undefined) {
+        delete dataToSave.classId;
+    }
+
+    await addDoc(liveClassesCol, dataToSave);
 }
 
 export async function getLiveClass(id: string): Promise<LiveClass | null> {
@@ -910,3 +919,4 @@ export async function deleteLiveClass(id: string): Promise<void> {
     await deleteDoc(docRef);
 }
     
+
