@@ -1,7 +1,7 @@
 
 
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit } from 'firebase/firestore';
 import type { Course } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
@@ -936,3 +936,4 @@ export async function deleteLiveClass(id: string): Promise<void> {
     await deleteDoc(docRef);
 }
     
+
