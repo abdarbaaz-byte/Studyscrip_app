@@ -45,7 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, BannerItem } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -67,6 +67,7 @@ type SelectableItem = {
     id: string;
     name: string;
     type: 'course' | 'subject';
+    classId?: string; // For subjects
 };
 
 
@@ -84,6 +85,7 @@ export default function AdminDashboardPage() {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [liveSurveys, setLiveSurveys] = useState<LiveClassSurvey[]>([]);
   const [pendingReviews, setPendingReviews] = useState<Review[]>([]);
+  const [liveClasses, setLiveClasses] = useState<LiveClass[]>([]);
   const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
@@ -119,6 +121,14 @@ export default function AdminDashboardPage() {
 
   // State for deleting quiz attempts
   const [attemptToDelete, setAttemptToDelete] = useState<QuizAttempt | null>(null);
+
+  // State for Live Classes
+  const [liveClassTitle, setLiveClassTitle] = useState('');
+  const [liveClassStartTime, setLiveClassStartTime] = useState<Date | undefined>();
+  const [liveClassEndTime, setLiveClassEndTime] = useState<Date | undefined>();
+  const [liveClassAssociatedItem, setLiveClassAssociatedItem] = useState<string>('');
+  const [isSavingLiveClass, setIsSavingLiveClass] = useState(false);
+  const [liveClassToDelete, setLiveClassToDelete] = useState<LiveClass | null>(null);
 
 
   useEffect(() => {
@@ -158,9 +168,11 @@ export default function AdminDashboardPage() {
           if (hasPermission('view_live_class_surveys')) promises.push(getLiveClassSurveys()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_site_settings')) promises.push(getBannerSettings()); else promises.push(Promise.resolve(null));
           if (hasPermission('manage_reviews')) promises.push(getReviews('pending')); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_live_classes')) promises.push(getLiveClasses()); else promises.push(Promise.resolve([]));
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
+          
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, liveClassesData, employeesData] = await Promise.all(promises);
           
           setAcademicClasses(academicsData as AcademicClass[]);
           setCourses(coursesData as Course[]);
@@ -172,14 +184,15 @@ export default function AdminDashboardPage() {
           setQuizAttempts(quizAttemptsData as QuizAttempt[]);
           setLiveSurveys(surveysData as LiveClassSurvey[]);
           setPendingReviews(reviewsData as Review[]);
+          setLiveClasses(liveClassesData as LiveClass[]);
           setEmployees(employeesData as EmployeeData[]);
           if(bannerData) setBannerSettings(bannerData as BannerSettings);
 
-          // Populate selectable items for manual access
-          if (hasPermission('manage_manual_access')) {
+          // Populate selectable items for manual access & live classes
+          if (hasPermission('manage_manual_access') || hasPermission('manage_live_classes')) {
             const courseItems: SelectableItem[] = (coursesData as Course[]).map(c => ({ id: c.docId!, name: `(Course) ${c.title}`, type: 'course' }));
             const subjectItems: SelectableItem[] = (academicsData as AcademicClass[]).flatMap(ac => 
-                ac.subjects.map(s => ({ id: s.id, name: `(${ac.name}) ${s.name}`, type: 'subject' }))
+                ac.subjects.map(s => ({ id: s.id, name: `(${ac.name}) ${s.name}`, type: 'subject', classId: ac.id }))
             );
             setSelectableItems([...courseItems, ...subjectItems]);
           }
@@ -296,6 +309,63 @@ export default function AdminDashboardPage() {
       console.error("Failed to delete quiz:", error);
       toast({ variant: "destructive", title: "Failed to delete Quiz" });
     }
+  };
+
+  const handleSaveLiveClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!liveClassTitle || !liveClassStartTime || !liveClassEndTime || !liveClassAssociatedItem) {
+        toast({ variant: "destructive", title: "Please fill all fields for the live class." });
+        return;
+    }
+
+    const selectedItem = selectableItems.find(item => item.id === liveClassAssociatedItem);
+    if (!selectedItem) {
+        toast({ variant: "destructive", title: "Associated item not found." });
+        return;
+    }
+
+    const liveClassData = {
+        title: liveClassTitle,
+        startTime: liveClassStartTime,
+        endTime: liveClassEndTime,
+        associatedItemId: selectedItem.id,
+        itemType: selectedItem.type,
+        associatedItemName: selectedItem.name,
+        classId: selectedItem.classId, // Will be undefined for courses
+    };
+
+    setIsSavingLiveClass(true);
+    try {
+        await saveLiveClass(liveClassData);
+        toast({ title: "Live Class Scheduled!" });
+        setLiveClassTitle('');
+        setLiveClassStartTime(undefined);
+        setLiveClassEndTime(undefined);
+        setLiveClassAssociatedItem('');
+        loadAdminData(); // Refresh the list
+    } catch (error) {
+        console.error("Failed to save live class:", error);
+        toast({ variant: "destructive", title: "Failed to schedule class." });
+    }
+    setIsSavingLiveClass(false);
+  };
+
+  const handleDeleteLiveClassClick = (liveClass: LiveClass) => {
+    setLiveClassToDelete(liveClass);
+  };
+  
+  const confirmDeleteLiveClass = async () => {
+      if (liveClassToDelete) {
+          try {
+              await deleteLiveClass(liveClassToDelete.id);
+              toast({ title: "Live Class Deleted" });
+              setLiveClassToDelete(null);
+              loadAdminData();
+          } catch (error) {
+              console.error("Failed to delete live class:", error);
+              toast({ variant: "destructive", title: "Failed to delete class." });
+          }
+      }
   };
 
   const handleDeleteClass = async (classId: string) => {
@@ -731,6 +801,102 @@ export default function AdminDashboardPage() {
           onSave={handleSaveQuiz}
           onDelete={handleDeleteQuiz}
         />
+      </CardContent>
+    </Card>
+  );
+
+  const renderLiveClassManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Live Class Management</CardTitle>
+        <CardDescription>Schedule and manage live classes for your courses and subjects.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSaveLiveClass} className="space-y-6 bg-secondary/50 p-6 rounded-lg border">
+            <h3 className="text-lg font-medium">Schedule a New Live Class</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="live-class-title">Class Title</Label>
+                    <Input id="live-class-title" value={liveClassTitle} onChange={(e) => setLiveClassTitle(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="live-class-item">Associated Course/Subject</Label>
+                    <Select value={liveClassAssociatedItem} onValueChange={setLiveClassAssociatedItem} required>
+                        <SelectTrigger id="live-class-item">
+                            <SelectValue placeholder="Select an item..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                             {selectableItems.map(item => (
+                                 <SelectItem key={`${item.type}-${item.id}`} value={item.id}>
+                                    {item.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Start Time</Label>
+                    <Popover>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><CalendarIcon className="mr-2"/>{liveClassStartTime ? format(liveClassStartTime, "PPP p") : "Select start time"}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={liveClassStartTime} onSelect={setLiveClassStartTime}/></PopoverContent>
+                    </Popover>
+                </div>
+                <div className="space-y-2">
+                    <Label>End Time</Label>
+                    <Popover>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><CalendarIcon className="mr-2"/>{liveClassEndTime ? format(liveClassEndTime, "PPP p") : "Select end time"}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={liveClassEndTime} onSelect={setLiveClassEndTime}/></PopoverContent>
+                    </Popover>
+                </div>
+             </div>
+             <Button type="submit" disabled={isSavingLiveClass}>
+                {isSavingLiveClass ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                Schedule Class
+            </Button>
+        </form>
+
+        <div className="mt-8">
+            <h3 className="text-lg font-medium mb-4">Scheduled Classes</h3>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Associated Item</TableHead>
+                        <TableHead>Start Time</TableHead>
+                        <TableHead>End Time</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {liveClasses.map(lc => (
+                        <TableRow key={lc.id}>
+                            <TableCell>{lc.title}</TableCell>
+                            <TableCell>{lc.associatedItemName}</TableCell>
+                            <TableCell>{format(lc.startTime.toDate(), "PPP p")}</TableCell>
+                            <TableCell>{format(lc.endTime.toDate(), "PPP p")}</TableCell>
+                            <TableCell className="text-right">
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleDeleteLiveClassClick(lc)}><Trash2 className="h-4 w-4 text-destructive"/></Button></AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete "{liveClassToDelete?.title}"?</AlertDialogTitle>
+                                            <AlertDialogDescription>This action cannot be undone and will remove the scheduled live class.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel onClick={() => setLiveClassToDelete(null)}>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={confirmDeleteLiveClass}>Confirm</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                    {liveClasses.length === 0 && (
+                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No live classes scheduled.</TableCell></TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </div>
       </CardContent>
     </Card>
   );
@@ -1231,6 +1397,9 @@ export default function AdminDashboardPage() {
             {hasPermission('manage_quizzes') && <Button variant={activeTab === 'quizzes' ? 'default' : 'outline'} onClick={() => setActiveTab('quizzes')}>
                 <BrainCircuit className="mr-2 h-4 w-4" /> Quizzes
             </Button>}
+            {hasPermission('manage_live_classes') && <Button variant={activeTab === 'live-classes' ? 'default' : 'outline'} onClick={() => setActiveTab('live-classes')}>
+                <Radio className="mr-2 h-4 w-4" /> Live Classes
+            </Button>}
             {hasPermission('view_quiz_attempts') && <Button variant={activeTab === 'quiz-attempts' ? 'default' : 'outline'} onClick={() => setActiveTab('quiz-attempts')}>
                 <BarChart3 className="mr-2 h-4 w-4" /> Quiz Attempts
             </Button>}
@@ -1267,6 +1436,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'free-notes' && hasPermission('manage_free_notes') && renderFreeNotesManagement()}
         {activeTab === 'bookstore' && hasPermission('manage_bookstore') && renderBookstoreManagement()}
         {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
+        {activeTab === 'live-classes' && hasPermission('manage_live_classes') && renderLiveClassManagement()}
         {activeTab === 'quiz-attempts' && hasPermission('view_quiz_attempts') && renderQuizAttempts()}
         {activeTab === 'live-surveys' && hasPermission('view_live_class_surveys') && renderLiveSurveys()}
         {activeTab === 'reviews' && hasPermission('manage_reviews') && renderReviewManagement()}
@@ -1510,9 +1680,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
