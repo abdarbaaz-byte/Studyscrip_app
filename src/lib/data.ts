@@ -94,9 +94,9 @@ export async function getCourse(docId: string): Promise<Course | null> {
       createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate().toISOString() : null,
     };
 
-    // Ensure nested content array is properly serialized for Next.js server components
-    const content = sanitizedData.content ? JSON.parse(JSON.stringify(sanitizedData.content)) : [];
-    return { docId: courseSnap.id, ...sanitizedData, content } as Course;
+    // Ensure nested folders and content arrays are properly serialized for Next.js server components
+    const folders = sanitizedData.folders ? JSON.parse(JSON.stringify(sanitizedData.folders)) : [];
+    return { docId: courseSnap.id, ...sanitizedData, folders } as Course;
   } else {
     return null;
   }
@@ -872,4 +872,41 @@ export async function deleteReview(id: string): Promise<void> {
     await deleteDoc(reviewDocRef);
 }
 
+// --- LIVE CLASSES ---
+export type LiveClass = {
+    id: string; // docId
+    title: string;
+    startTime: Timestamp;
+    endTime: Timestamp;
+    associatedItemId: string; // course or subject id
+    itemType: 'course' | 'subject';
+    associatedItemName: string; // denormalized for display
+    classId?: string; // only for subjects
+};
+
+export async function saveLiveClass(liveClass: Omit<LiveClass, 'id'>): Promise<void> {
+    const liveClassesCol = collection(db, 'liveClasses');
+    await addDoc(liveClassesCol, liveClass);
+}
+
+export async function getLiveClass(id: string): Promise<LiveClass | null> {
+    const docRef = doc(db, 'liveClasses', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as LiveClass;
+    }
+    return null;
+}
+
+export async function getLiveClasses(): Promise<LiveClass[]> {
+    const liveClassesCol = collection(db, 'liveClasses');
+    const q = query(liveClassesCol, orderBy('startTime', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LiveClass));
+}
+
+export async function deleteLiveClass(id: string): Promise<void> {
+    const docRef = doc(db, 'liveClasses', id);
+    await deleteDoc(docRef);
+}
     

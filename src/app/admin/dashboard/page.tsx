@@ -336,7 +336,7 @@ export default function AdminDashboardPage() {
 
     setIsSavingLiveClass(true);
     try {
-        await saveLiveClass(liveClassData);
+        await saveLiveClass(liveClassData as any);
         toast({ title: "Live Class Scheduled!" });
         setLiveClassTitle('');
         setLiveClassStartTime(undefined);
@@ -720,7 +720,7 @@ export default function AdminDashboardPage() {
                 <TableCell className="font-medium">{course.title}</TableCell>
                 <TableCell>Rs. {course.price}</TableCell>
                 <TableCell>
-                  <Badge variant="outline">{course.content.length}</Badge>
+                  <Badge variant="outline">{course.folders.reduce((acc, folder) => acc + folder.content.length, 0)}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(course)}>
