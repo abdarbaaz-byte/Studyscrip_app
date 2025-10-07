@@ -914,9 +914,25 @@ export async function getLiveClasses(): Promise<LiveClass[]> {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LiveClass));
 }
 
+export async function getScheduledLiveClassesForItem(itemId: string): Promise<LiveClass | null> {
+    const now = new Date();
+    const liveClassesCol = collection(db, 'liveClasses');
+    const q = query(
+        liveClassesCol, 
+        where('associatedItemId', '==', itemId),
+        where('endTime', '>', Timestamp.fromDate(now)),
+        orderBy('endTime', 'asc'),
+        limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return null;
+    }
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as LiveClass;
+}
+
 export async function deleteLiveClass(id: string): Promise<void> {
     const docRef = doc(db, 'liveClasses', id);
     await deleteDoc(docRef);
 }
     
-

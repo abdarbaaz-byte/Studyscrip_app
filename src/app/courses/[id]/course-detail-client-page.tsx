@@ -4,19 +4,21 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { type Course, type CourseContent } from "@/lib/courses";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon } from "lucide-react";
+import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { checkUserPurchase, createPurchase } from "@/lib/data";
+import { checkUserPurchase, createPurchase, getScheduledLiveClassesForItem, type LiveClass } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { PaymentDialog } from "@/components/payment-dialog";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { format } from "date-fns";
 
 
 export default function CourseDetailClientPage({ course }: { course: Course }) {
@@ -25,21 +27,28 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   const [loadingPurchase, setLoadingPurchase] = useState(true);
   const [isBuying, setIsBuying] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [liveClass, setLiveClass] = useState<LiveClass | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
 
 
   useEffect(() => {
-    async function checkPurchase() {
-      if (user && course.docId) {
+    async function checkAccessAndLiveClasses() {
+      if (course.docId) {
         setLoadingPurchase(true);
-        const hasAccess = await checkUserPurchase(user.uid, course.docId);
-        setIsPurchased(hasAccess);
+        const scheduledClass = await getScheduledLiveClassesForItem(course.docId);
+        if (scheduledClass) {
+          setLiveClass(scheduledClass);
+        }
+        if (user) {
+          const hasAccess = await checkUserPurchase(user.uid, course.docId);
+          setIsPurchased(hasAccess);
+        }
       }
       setLoadingPurchase(false);
     }
-    checkPurchase();
+    checkAccessAndLiveClasses();
   }, [user, course.docId]);
 
   const handleBuyClick = () => {
@@ -186,7 +195,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   };
 
   const thumbnailUrl = getGoogleDriveImageUrl(course.thumbnail);
-
+  const isLiveClassActive = liveClass && new Date() >= liveClass.startTime.toDate() && new Date() <= liveClass.endTime.toDate();
 
   return (
     <>
@@ -251,17 +260,36 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                 <div className="p-6">
                   <div className="text-3xl font-bold mb-4">Rs. {course.price}</div>
                   {loadingPurchase && <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
+                  
+                  {showPurchasedMessage && (
+                    <div className="text-center font-semibold text-green-600 p-2 rounded-md bg-green-100 mb-4">
+                      You have access to this course!
+                    </div>
+                  )}
+
+                  {isLiveClassActive && (
+                    <Button asChild size="lg" className="w-full mb-2 bg-red-600 hover:bg-red-700 animate-pulse">
+                      <Link href={`/live-class/${liveClass!.id}`}>
+                        <Radio className="mr-2 h-4 w-4"/> Join Live Now
+                      </Link>
+                    </Button>
+                  )}
+
                   {showPurchaseButton && (
                     <Button size="lg" className="w-full" onClick={handleBuyClick} disabled={isBuying}>
                       {isBuying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Unlock className="mr-2 h-4 w-4" />}
                       {isBuying ? "Processing..." : "Buy Now"}
                     </Button>
                   )}
-                  {showPurchasedMessage && (
-                    <div className="text-center font-semibold text-green-600 p-2 rounded-md bg-green-100">
-                      You have access to this course!
+                  
+                   {liveClass && !isLiveClassActive && (
+                     <div className="mt-4 text-center text-sm text-muted-foreground p-3 bg-secondary rounded-lg">
+                        <p className="font-semibold">Upcoming Live Class:</p>
+                        <p>{liveClass.title}</p>
+                        <p>on {format(liveClass.startTime.toDate(), "PPP p")}</p>
                     </div>
                   )}
+
                 </div>
               </CardContent>
             </Card>
