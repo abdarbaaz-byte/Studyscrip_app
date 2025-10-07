@@ -41,7 +41,8 @@ export type UserPermission =
   | 'view_quiz_attempts'
   | 'manage_site_settings'
   | 'view_live_class_surveys'
-  | 'manage_reviews';
+  | 'manage_reviews'
+  | 'manage_live_classes';
 
 interface AuthContextType {
   user: User | null;
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'manage_bookstore', 'manage_payment_requests', 'manage_manual_access', 
             'view_purchases', 'view_payments', 'send_notifications', 'view_messages',
             'manage_quizzes', 'view_quiz_attempts', 'manage_site_settings',
-            'view_live_class_surveys', 'manage_reviews'
+            'view_live_class_surveys', 'manage_reviews', 'manage_live_classes'
           ]);
           setLoading(false);
           return;
