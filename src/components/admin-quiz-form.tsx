@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -183,7 +184,10 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
   };
 
   const handleTimeChange = (date: Date | undefined, timeString: string, setter: (d: Date | undefined) => void) => {
-    if (!timeString) return;
+    if (!timeString) {
+        setter(date);
+        return;
+    };
     const newDate = date ? new Date(date) : new Date();
     const [hours, minutes] = timeString.split(':').map(Number);
     newDate.setHours(hours, minutes, 0, 0);

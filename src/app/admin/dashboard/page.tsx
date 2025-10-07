@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -152,7 +152,7 @@ export default function AdminDashboardPage() {
     }
   }, [authLoading, isAdmin, hasPermission]);
 
-  const loadAdminData = async () => {
+  const loadAdminData = useCallback(async () => {
       if (!isAdmin) return;
       setLoading(true);
       try {
@@ -202,13 +202,13 @@ export default function AdminDashboardPage() {
           toast({ variant: "destructive", title: "Failed to load data" });
       }
       setLoading(false);
-  }
+  }, [isAdmin, hasPermission, userRole, toast]);
 
   useEffect(() => {
     if (!authLoading && isAdmin) {
       loadAdminData();
     }
-  }, [authLoading, isAdmin, hasPermission, userRole]); // Rerun if permissions change
+  }, [authLoading, isAdmin, loadAdminData]);
 
 
   useEffect(() => {
@@ -310,6 +310,18 @@ export default function AdminDashboardPage() {
       toast({ variant: "destructive", title: "Failed to delete Quiz" });
     }
   };
+
+  const handleLiveClassTimeChange = (date: Date | undefined, timeString: string, setter: (d: Date | undefined) => void) => {
+    if (!timeString) { // If time is cleared, just update the date part
+      setter(date);
+      return;
+    };
+    const newDate = date ? new Date(date) : new Date();
+    const [hours, minutes] = timeString.split(':').map(Number);
+    newDate.setHours(hours, minutes, 0, 0);
+    setter(newDate);
+  };
+
 
   const handleSaveLiveClass = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -815,11 +827,11 @@ export default function AdminDashboardPage() {
         <form onSubmit={handleSaveLiveClass} className="space-y-6 bg-secondary/50 p-6 rounded-lg border">
             <h3 className="text-lg font-medium">Schedule a New Live Class</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="live-class-title">Class Title</Label>
                     <Input id="live-class-title" value={liveClassTitle} onChange={(e) => setLiveClassTitle(e.target.value)} required />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="live-class-item">Associated Course/Subject</Label>
                     <Select value={liveClassAssociatedItem} onValueChange={setLiveClassAssociatedItem} required>
                         <SelectTrigger id="live-class-item">
@@ -836,19 +848,47 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="space-y-2">
                     <Label>Start Time</Label>
-                    <Popover>
-                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><CalendarIcon className="mr-2"/>{liveClassStartTime ? format(liveClassStartTime, "PPP p") : "Select start time"}</Button></PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={liveClassStartTime} onSelect={setLiveClassStartTime}/></PopoverContent>
-                    </Popover>
+                    <div className="flex gap-2">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("flex-1 justify-start text-left font-normal", !liveClassStartTime && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {liveClassStartTime ? format(liveClassStartTime, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={liveClassStartTime} onSelect={setLiveClassStartTime} initialFocus /></PopoverContent>
+                        </Popover>
+                        <Input 
+                            type="time" 
+                            value={liveClassStartTime ? format(liveClassStartTime, "HH:mm") : ""}
+                            onChange={(e) => handleLiveClassTimeChange(liveClassStartTime, e.target.value, setLiveClassStartTime)}
+                            className="w-[120px]"
+                        />
+                    </div>
                 </div>
-                <div className="space-y-2">
+                 <div className="space-y-2">
                     <Label>End Time</Label>
-                    <Popover>
-                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><CalendarIcon className="mr-2"/>{liveClassEndTime ? format(liveClassEndTime, "PPP p") : "Select end time"}</Button></PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={liveClassEndTime} onSelect={setLiveClassEndTime}/></PopoverContent>
-                    </Popover>
+                     <div className="flex gap-2">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("flex-1 justify-start text-left font-normal", !liveClassEndTime && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {liveClassEndTime ? format(liveClassEndTime, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={liveClassEndTime} onSelect={setLiveClassEndTime} initialFocus /></PopoverContent>
+                        </Popover>
+                        <Input 
+                            type="time" 
+                            value={liveClassEndTime ? format(liveClassEndTime, "HH:mm") : ""}
+                            onChange={(e) => handleLiveClassTimeChange(liveClassEndTime, e.target.value, setLiveClassEndTime)}
+                            className="w-[120px]"
+                        />
+                    </div>
                 </div>
              </div>
+             <div className="text-center text-muted-foreground text-sm pt-2">Selected Start: {liveClassStartTime ? format(liveClassStartTime, "PPP p") : "Not set"}</div>
+             <div className="text-center text-muted-foreground text-sm">Selected End: {liveClassEndTime ? format(liveClassEndTime, "PPP p") : "Not set"}</div>
              <Button type="submit" disabled={isSavingLiveClass}>
                 {isSavingLiveClass ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                 Schedule Class
