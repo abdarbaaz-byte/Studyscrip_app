@@ -887,10 +887,8 @@ export type LiveClass = {
 export async function saveLiveClass(liveClass: Omit<LiveClass, 'id'>): Promise<void> {
     const liveClassesCol = collection(db, 'liveClasses');
     
-    // Create a new object to avoid mutating the original
     const dataToSave: { [key: string]: any } = { ...liveClass };
 
-    // Remove classId if it's undefined to prevent Firestore error
     if (dataToSave.classId === undefined) {
         delete dataToSave.classId;
     }
@@ -921,7 +919,6 @@ export async function getScheduledLiveClassesForItem(itemId: string): Promise<Li
         liveClassesCol, 
         where('associatedItemId', '==', itemId),
         where('endTime', '>', Timestamp.fromDate(now)),
-        orderBy('endTime', 'asc'),
         limit(1)
     );
     const snapshot = await getDocs(q);
@@ -936,4 +933,3 @@ export async function deleteLiveClass(id: string): Promise<void> {
     await deleteDoc(docRef);
 }
     
-
