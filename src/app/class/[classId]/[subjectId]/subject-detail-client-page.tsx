@@ -13,7 +13,7 @@ import { useParams, notFound, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { checkUserPurchase, createPurchase, getScheduledLiveClassesForItem, type LiveClass } from "@/lib/data";
 import { PaymentDialog } from "@/components/payment-dialog";
-import { format }s from "date-fns";
+import { format } from "date-fns";
 
 export default function SubjectDetailClientPage() {
   const params = useParams();
