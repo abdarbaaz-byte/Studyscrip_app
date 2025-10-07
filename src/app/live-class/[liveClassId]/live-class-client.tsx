@@ -36,11 +36,10 @@ export default function LiveClassClient({ liveClassId, className }: LiveClassCli
           height: "100%",
           parentNode: jitsiContainerRef.current,
           interfaceConfigOverwrite: {
-            // Your interface customizations
             SHOW_CHROME_EXTENSION_BANNER: false,
           },
           configOverwrite: {
-            // Your config customizations
+            prejoinPageEnabled: false, // Bypass the "Ready to join?" screen
             startWithAudioMuted: true,
             startWithVideoMuted: true,
           },
