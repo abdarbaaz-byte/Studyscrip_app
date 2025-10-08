@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -42,8 +43,9 @@ function QuizStartPageContent() {
       if (quizType === 'live') {
         const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
         if (hasAttempted) {
-            const savedData = JSON.parse(localStorage.getItem(`quiz-data-${quizId}`) || '{}');
-            if (savedData.answers) { 
+            const savedDataString = localStorage.getItem(`quiz-data-${quizId}`);
+            if (savedDataString) {
+                const savedData = JSON.parse(savedDataString);
                 toast({
                     title: "Quiz Already Attempted",
                     description: "Redirecting to your results...",
@@ -52,9 +54,6 @@ function QuizStartPageContent() {
                     type: 'live',
                     answers: savedData.answers, 
                     name: savedData.name || 'Anonymous',
-                    school: savedData.school || '',
-                    class: savedData.class || '',
-                    place: savedData.place || ''
                 }).toString();
                 router.replace(`/quizzes/${quizId}/results?${queryParams}`);
                 return;

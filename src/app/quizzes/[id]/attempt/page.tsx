@@ -223,6 +223,8 @@ function QuizAttemptContent() {
         }
     });
 
+    const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
+
     if (quizType === 'live') {
         const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
           quizId,
@@ -241,17 +243,18 @@ function QuizAttemptContent() {
         
         try {
             await saveQuizAttempt(attemptData);
+            // Store attempt flag and data in localStorage for redirection
+            localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
+            const dataToSave = { answers: encodedAnswers, name, school, class: userClass, place };
+            localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify(dataToSave));
         } catch(error) {
             console.error("Failed to save quiz attempt:", error);
             toast({ variant: "destructive", title: "Error saving results. Please try again."})
             hasSubmittedRef.current = false; // Allow retry if saving fails
             return;
         }
-
-        localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
     }
-
-    const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
+    
     const queryParams = new URLSearchParams({
         type: quizType,
         answers: encodedAnswers,
