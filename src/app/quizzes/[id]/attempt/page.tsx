@@ -39,22 +39,23 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
     
     // State for re-orderable list
     const [orderedAnswers, setOrderedAnswers] = useState<MatchOption[]>([]);
+    const initialAnswerSetRef = useRef(false);
 
     useEffect(() => {
-        if (question.type === 'match' && question.matchOptions) {
-            // If answers are already present, order them, else shuffle.
-            if (answer && Object.keys(answer).length === question.matchOptions.length) {
-                 const currentAnswerOrder = question.matchOptions.map(qOpt => {
-                    const answerText = (answer as any)[qOpt.id];
-                    // Find the original match option that has this answer text
-                    return question.matchOptions.find(aOpt => aOpt.answer === answerText)!;
-                });
-                setOrderedAnswers(currentAnswerOrder);
-            } else {
-                 setOrderedAnswers(shuffleArray([...question.matchOptions]));
-            }
+        if (question.type === 'match' && question.matchOptions && !initialAnswerSetRef.current) {
+            const initialOrder = shuffleArray([...question.matchOptions]);
+            setOrderedAnswers(initialOrder);
+
+            // IMPORTANT FIX: Immediately set the initial shuffled order as the answer.
+            // This ensures an answer is recorded even if the user doesn't interact.
+            const initialAnswerObject: { [matchId: string]: string } = {};
+            question.matchOptions.forEach((qOpt, idx) => {
+                initialAnswerObject[qOpt.id] = initialOrder[idx].answer;
+            });
+            onAnswerChange(question.id, initialAnswerObject);
+            initialAnswerSetRef.current = true; // Mark as set to prevent re-shuffling on re-renders
         }
-    }, [question, answer]);
+    }, [question, onAnswerChange]);
 
     const handleReorder = (index: number, direction: 'up' | 'down') => {
         const newIndex = direction === 'up' ? index - 1 : index + 1;
