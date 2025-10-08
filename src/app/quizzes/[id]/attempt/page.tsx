@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
@@ -194,7 +195,7 @@ function QuizAttemptContent() {
   const userId = searchParams.get('userId');
   const userEmail = searchParams.get('userEmail');
 
-  const handleSubmit = useCallback((currentAnswers: AnswersState) => {
+  const handleSubmit = useCallback(async (currentAnswers: AnswersState) => {
     if (!quiz || hasSubmittedRef.current) return;
     hasSubmittedRef.current = true;
     
@@ -239,7 +240,7 @@ function QuizAttemptContent() {
         };
         
         try {
-            saveQuizAttempt(attemptData);
+            await saveQuizAttempt(attemptData);
         } catch(error) {
             console.error("Failed to save quiz attempt:", error);
             toast({ variant: "destructive", title: "Error saving results. Please try again."})
@@ -247,15 +248,7 @@ function QuizAttemptContent() {
             return;
         }
 
-        const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
         localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
-        localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({
-            answers: encodedAnswers,
-            name,
-            school,
-            class: userClass,
-            place
-        }));
     }
 
     const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
@@ -263,9 +256,6 @@ function QuizAttemptContent() {
         type: quizType,
         answers: encodedAnswers,
         name: name,
-        school: school || '',
-        class: userClass || '',
-        place: place || ''
     }).toString();
     
     router.replace(`/quizzes/${quizId}/results?${queryParams}`);

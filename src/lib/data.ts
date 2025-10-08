@@ -730,6 +730,13 @@ export async function getQuizAttempts(): Promise<QuizAttempt[]> {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
 }
 
+export async function getQuizAttemptsForQuiz(quizId: string): Promise<QuizAttempt[]> {
+    const attemptsCol = collection(db, 'quizAttempts');
+    const q = query(attemptsCol, where('quizId', '==', quizId), orderBy('score', 'desc'), orderBy('submittedAt', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+}
+
 export async function deleteQuizAttempt(id: string): Promise<void> {
     if (!id) return;
     await deleteDoc(doc(db, 'quizAttempts', id));

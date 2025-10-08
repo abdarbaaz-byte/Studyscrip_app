@@ -1,16 +1,18 @@
 
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { getQuiz, type Quiz } from "@/lib/data";
+import { getQuiz, type Quiz, getQuizAttemptsForQuiz, type QuizAttempt } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap, Clock, ArrowRight } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, FileQuestion, GraduationCap, Clock, ArrowRight, Trophy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
 
 type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
@@ -19,6 +21,7 @@ function QuizResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const quizId = params.id as string;
   const quizType = searchParams.get('type') || 'practice';
@@ -30,6 +33,8 @@ function QuizResultsContent() {
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [canShowAnalysis, setCanShowAnalysis] = useState(quizType === 'practice');
+  const [allAttempts, setAllAttempts] = useState<QuizAttempt[]>([]);
+  const [userRank, setUserRank] = useState<number | null>(null);
 
   useEffect(() => {
     if (!answersString) {
@@ -46,7 +51,7 @@ function QuizResultsContent() {
   }, [answersString, quizId, router, toast, quizType]);
 
   useEffect(() => {
-    async function loadQuizAndCalculateScore() {
+    async function loadQuizAndResults() {
       if (!quizId || Object.keys(answers).length === 0) return;
       setLoading(true);
 
@@ -55,14 +60,25 @@ function QuizResultsContent() {
       if (loadedQuiz) {
         setQuiz(loadedQuiz);
 
-        // For live quizzes, check if the end time has passed
+        let showAnalysis = quizType === 'practice';
         if (quizType === 'live') {
             const now = new Date();
             const endTime = loadedQuiz.endTime?.toDate();
             if (!endTime || now > endTime) {
-                setCanShowAnalysis(true);
+                showAnalysis = true;
+            }
+            
+            if (showAnalysis) {
+                // Fetch all attempts for ranking only if analysis can be shown
+                const attempts = await getQuizAttemptsForQuiz(quizId);
+                setAllAttempts(attempts);
+                
+                // Find current user's rank
+                const rank = attempts.findIndex(attempt => attempt.userId === user?.uid) + 1;
+                setUserRank(rank > 0 ? rank : null);
             }
         }
+        setCanShowAnalysis(showAnalysis);
 
         let currentScore = 0;
         loadedQuiz.questions.forEach(q => {
@@ -93,10 +109,10 @@ function QuizResultsContent() {
     }
 
     if (Object.keys(answers).length > 0) {
-      loadQuizAndCalculateScore();
+      loadQuizAndResults();
     }
   
-  }, [quizId, answers, toast, quizType]);
+  }, [quizId, answers, toast, quizType, user]);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -108,6 +124,14 @@ function QuizResultsContent() {
 
   const scorePercentage = (score / quiz.questions.length) * 100;
   const isPractice = quizType === 'practice';
+  const topThree = allAttempts.slice(0, 3);
+  
+  const getRankColor = (rank: number) => {
+    if (rank === 1) return "text-yellow-500";
+    if (rank === 2) return "text-gray-400";
+    if (rank === 3) return "text-yellow-700";
+    return "text-muted-foreground";
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -127,6 +151,13 @@ function QuizResultsContent() {
                  <Progress value={scorePercentage} className="h-4" />
             </div>
             <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Correct</p>
+
+            {quizType === 'live' && userRank && (
+                <div className="font-bold text-2xl p-4 bg-secondary rounded-lg">
+                    Your Rank: <span className={cn("font-extrabold", getRankColor(userRank))}>{userRank}</span>
+                </div>
+            )}
+
              <div className="flex gap-4">
                 {isPractice && (
                     <Button onClick={() => router.push(`/quizzes/${quizId}?type=practice`)}>
@@ -139,6 +170,37 @@ function QuizResultsContent() {
             </div>
         </CardContent>
       </Card>
+
+      {quizType === 'live' && canShowAnalysis && topThree.length > 0 && (
+          <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-100 dark:from-yellow-900/20 dark:to-orange-900/20">
+              <CardHeader className="text-center">
+                   <div className="flex justify-center mb-4">
+                        <Trophy className="h-16 w-16 text-yellow-500" />
+                    </div>
+                  <CardTitle className="font-headline text-3xl text-yellow-600">Congratulations to the Top 3!</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <div className="space-y-4">
+                      {topThree.map((attempt, index) => (
+                           <div key={attempt.id} className="flex items-center justify-between p-4 rounded-lg bg-background shadow-sm">
+                              <div className="flex items-center gap-4">
+                                <div className={cn("text-2xl font-bold w-8 text-center", getRankColor(index + 1))}>
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <p className="font-bold">{attempt.userName}</p>
+                                  <p className="text-sm text-muted-foreground">{attempt.userSchool}, {attempt.userPlace}</p>
+                                </div>
+                              </div>
+                               <div className="text-lg font-bold">
+                                    {attempt.score} / {attempt.totalQuestions}
+                               </div>
+                           </div>
+                      ))}
+                  </div>
+              </CardContent>
+          </Card>
+      )}
       
       {canShowAnalysis ? (
         <div className="space-y-6">
