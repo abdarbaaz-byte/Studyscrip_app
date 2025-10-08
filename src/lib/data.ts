@@ -545,6 +545,11 @@ export function listenToChat(chatId: string, callback: (chat: Chat | null) => vo
   });
 }
 
+export async function deleteChat(chatId: string): Promise<void> {
+    const chatDocRef = doc(db, 'chats', chatId);
+    await deleteDoc(chatDocRef);
+}
+
 // --- NOTIFICATIONS ---
 
 export async function sendNotification(title: string, description: string) {
@@ -957,3 +962,6 @@ export async function updateUserProfile(userId: string, data: Partial<{ displayN
   await updateDoc(userDocRef, data);
 }
 
+
+
+    
