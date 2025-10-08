@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { sendMessage, listenToChat } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { usePathname } from "next/navigation";
+import { ChatMessageRenderer } from "@/components/chat-message-renderer";
 
 
 const adminProfile: AdminProfile = {
@@ -286,7 +287,9 @@ export function ChatWidget() {
                               {msg.attachment?.type === 'image' ? (
                                 <img src={msg.attachment.url} alt="attachment" className="rounded-md max-w-full h-auto" />
                               ) : (
-                                <p className="text-sm">{msg.text}</p>
+                                <div className="text-sm whitespace-pre-wrap">
+                                  <ChatMessageRenderer text={msg.text} />
+                                </div>
                               )}
                               <p className={`text-xs mt-1 ${
                                 msg.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'

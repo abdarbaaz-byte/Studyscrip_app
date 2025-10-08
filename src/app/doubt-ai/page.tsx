@@ -10,21 +10,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, User, Bot, BrainCircuit, Loader2 } from "lucide-react";
 import { chat } from "@/ai/flows/chat-flow";
 import { useAuth } from "@/hooks/use-auth";
+import { ChatMessageRenderer } from "@/components/chat-message-renderer";
 
 interface Message {
     role: "user" | "model";
     content: {text: string}[];
-}
-
-// Simple component to render markdown-like text
-function MarkdownRenderer({ text }: { text: string }) {
-  const html = text
-    // Bold: **text**
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Italic: *text* (if needed in future)
-    // .replace(/\*(.*?)\*/g, '<em>$1</em>');
-  
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 export default function DoubtAiPage() {
@@ -108,7 +98,7 @@ export default function DoubtAiPage() {
                                     )}
                                     <div className={`max-w-[80%] rounded-lg px-4 py-3 ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
                                        <div className="text-sm whitespace-pre-wrap">
-                                            <MarkdownRenderer text={msg.content[0].text} />
+                                            <ChatMessageRenderer text={msg.content[0].text} />
                                        </div>
                                     </div>
                                     {msg.role === 'user' && (
