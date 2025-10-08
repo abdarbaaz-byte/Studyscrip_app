@@ -21,12 +21,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // This is to ensure that the pdf.worker.js file is copied to the public directory
-    // so that react-pdf can find it.
-    config.resolve.alias['pdfjs-dist'] = 'pdfjs-dist/build/pdf';
-    return config;
-  },
 };
 
 const withPWA = require('next-pwa')({

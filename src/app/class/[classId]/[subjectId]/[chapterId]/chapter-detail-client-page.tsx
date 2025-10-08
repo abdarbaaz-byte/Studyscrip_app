@@ -15,6 +15,13 @@ import { checkUserPurchase } from "@/lib/data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+
 export default function ChapterDetailClientPage() {
   const params = useParams();
   const router = useRouter();
@@ -102,6 +109,7 @@ export default function ChapterDetailClientPage() {
     if (!contentToView) return null;
 
     const { type, url, title } = contentToView;
+    const [numPages, setNumPages] = useState<number>();
     
     const getYouTubeId = (youtubeUrl: string) => {
       const patterns = [
@@ -122,13 +130,11 @@ export default function ChapterDetailClientPage() {
     }
 
     let contentUrl = url;
-    let isIframe = false;
 
     if (type === 'video') {
         const youtubeId = getYouTubeId(url);
         if (youtubeId) {
             contentUrl = `https://www.youtube.com/embed/${youtubeId}?rel=0&showinfo=0&iv_load_policy=3`;
-            isIframe = true;
         } else {
             const driveId = getGoogleDriveFileId(url);
             if (driveId) {
@@ -136,32 +142,28 @@ export default function ChapterDetailClientPage() {
             } else {
                 contentUrl = url;
             }
-            isIframe = true;
         }
+        return (
+             <iframe 
+                src={contentUrl} 
+                className="w-full h-full border-0" 
+                title={title} 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+            ></iframe>
+        );
     }
 
     if (type === 'pdf') {
-       const driveId = getGoogleDriveFileId(url);
-       if (driveId) {
-           contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-       } else {
-           contentUrl = `${url}#toolbar=0`;
-       }
-       isIframe = true;
-    }
-    
-    if (isIframe) {
-        return (
-            <div className="w-full h-full">
-                <iframe 
-                    src={contentUrl} 
-                    className="w-full h-full border-0" 
-                    title={title} 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                ></iframe>
-            </div>
-        );
+       return (
+        <div className="w-full h-full overflow-auto bg-gray-200 flex justify-center">
+            <Document file={url} onLoadSuccess={({numPages}) => setNumPages(numPages)} loading={<Loader2 className="h-8 w-8 animate-spin" />}>
+                {Array.from(new Array(numPages), (el, index) => (
+                    <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false}/>
+                ))}
+            </Document>
+        </div>
+       );
     }
     
     if (type === 'image') {

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,6 +18,12 @@ import { PaymentDialog } from "@/components/payment-dialog";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format } from "date-fns";
+
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 
 export default function CourseDetailClientPage({ course }: { course: Course }) {
@@ -120,6 +125,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   const renderContentInDialog = () => {
     if (!contentToView) return null;
 
+    const [numPages, setNumPages] = useState<number>();
     const { type, url, title } = contentToView;
     
     const getYouTubeId = (youtubeUrl: string) => {
@@ -141,13 +147,11 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
     }
     
     let contentUrl = url;
-    let isIframe = false;
 
     if (type === 'video') {
         const youtubeId = getYouTubeId(url);
         if (youtubeId) {
             contentUrl = `https://www.youtube.com/embed/${youtubeId}?rel=0&showinfo=0&iv_load_policy=3`;
-            isIframe = true;
         } else {
             const driveId = getGoogleDriveFileId(url);
             if (driveId) {
@@ -155,32 +159,28 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
             } else {
                 contentUrl = url;
             }
-            isIframe = true;
         }
-    }
-
-    if (type === 'pdf') {
-       const driveId = getGoogleDriveFileId(url);
-       if (driveId) {
-           contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-       } else {
-           contentUrl = `${url}#toolbar=0`;
-       }
-       isIframe = true;
+        return (
+            <iframe
+                src={contentUrl}
+                className="w-full h-full border-0"
+                title={title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+            ></iframe>
+        );
     }
     
-    if (isIframe) {
-      return (
-        <div className="w-full h-full overflow-auto">
-          <iframe
-            src={contentUrl}
-            className="w-full h-full border-0"
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
+    if (type === 'pdf') {
+       return (
+        <div className="w-full h-full overflow-auto bg-gray-200 flex justify-center">
+            <Document file={url} onLoadSuccess={({numPages}) => setNumPages(numPages)} loading={<Loader2 className="h-8 w-8 animate-spin" />}>
+                {Array.from(new Array(numPages), (el, index) => (
+                    <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false} />
+                ))}
+            </Document>
         </div>
-      );
+       );
     }
     
     if (type === 'image') {
