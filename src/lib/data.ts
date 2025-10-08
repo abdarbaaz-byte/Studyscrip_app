@@ -233,16 +233,13 @@ export async function grantManualAccess(
   expiryDate: Date
 ): Promise<void> {
   // 1. Find user by email
-  const usersCol = collection(db, 'users');
-  const q = query(usersCol, where('email', '==', userEmail));
-  const userSnapshot = await getDocs(q);
+  const user = await findUserByEmail(userEmail);
 
-  if (userSnapshot.empty) {
+  if (!user) {
     throw new Error(`No user found with email: ${userEmail}`);
   }
 
-  const userDoc = userSnapshot.docs[0];
-  const userId = userDoc.id;
+  const userId = user.uid;
 
   // 2. Create a purchase record for the user
   const purchasesCol = collection(db, 'purchases');
@@ -803,7 +800,7 @@ export async function updateEmployeePermissions(uid: string, data: Partial<Emplo
 
 export async function findUserByEmail(email: string): Promise<{uid: string, email: string} | null> {
     const usersCol = collection(db, 'users');
-    const q = query(usersCol, where('email', '==', email));
+    const q = query(usersCol, where('email', '==', email), limit(1));
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
         return null;
@@ -959,3 +956,4 @@ export async function updateUserProfile(userId: string, data: Partial<{ displayN
   const userDocRef = doc(db, 'users', userId);
   await updateDoc(userDocRef, data);
 }
+

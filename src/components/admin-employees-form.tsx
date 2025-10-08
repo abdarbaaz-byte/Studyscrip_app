@@ -41,9 +41,11 @@ const allPermissions: { id: UserPermission, label: string }[] = [
     { id: 'view_purchases', label: 'View Purchases' },
     { id: 'view_payments', label: 'View Payments' },
     { id: 'send_notifications', label: 'Send Notifications' },
-    { id: 'view_messages', label: 'View Messages' },
+    { id: 'manage_chat', label: 'Manage Chat' },
     { id: 'manage_site_settings', label: 'Manage Site Settings' },
     { id: 'view_live_class_surveys', label: 'View Live Surveys' },
+    { id: 'manage_reviews', label: 'Manage Reviews' },
+    { id: 'manage_live_classes', label: 'Manage Live Classes' },
 ];
 
 export function AdminEmployeesForm({ employees, onSave }: AdminEmployeesFormProps) {
@@ -186,3 +188,4 @@ export function AdminEmployeesForm({ employees, onSave }: AdminEmployeesFormProp
     </div>
   );
 }
+

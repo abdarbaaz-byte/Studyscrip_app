@@ -36,7 +36,7 @@ export type UserPermission =
   | 'view_purchases'
   | 'view_payments'
   | 'send_notifications'
-  | 'view_messages'
+  | 'manage_chat'
   | 'manage_quizzes'
   | 'view_quiz_attempts'
   | 'manage_site_settings'
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setPermissions([
             'manage_academics', 'manage_courses', 'manage_free_notes', 
             'manage_bookstore', 'manage_payment_requests', 'manage_manual_access', 
-            'view_purchases', 'view_payments', 'send_notifications', 'view_messages',
+            'view_purchases', 'view_payments', 'send_notifications', 'manage_chat',
             'manage_quizzes', 'view_quiz_attempts', 'manage_site_settings',
             'view_live_class_surveys', 'manage_reviews', 'manage_live_classes'
           ]);
@@ -326,3 +326,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

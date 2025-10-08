@@ -36,7 +36,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -130,6 +130,10 @@ export default function AdminDashboardPage() {
   const [isSavingLiveClass, setIsSavingLiveClass] = useState(false);
   const [liveClassToDelete, setLiveClassToDelete] = useState<LiveClass | null>(null);
 
+  // State for initiating chat
+  const [chatSearchEmail, setChatSearchEmail] = useState('');
+  const [isSearchingChat, setIsSearchingChat] = useState(false);
+
 
   useEffect(() => {
     // Redirect non-admin/employee users
@@ -140,7 +144,7 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (!authLoading && isAdmin) {
-      const unsubscribeChats = hasPermission('view_messages') ? listenToAllChats((liveChats) => setChats(liveChats)) : () => {};
+      const unsubscribeChats = hasPermission('manage_chat') ? listenToAllChats((liveChats) => setChats(liveChats)) : () => {};
       const unsubscribeNotifications = hasPermission('send_notifications') ? listenToNotifications((liveNotifications) => setNotifications(liveNotifications)) : () => {};
       const unsubscribePaymentRequests = hasPermission('manage_payment_requests') ? listenToPaymentRequests((requests) => setPaymentRequests(requests)) : () => {};
       
@@ -336,15 +340,17 @@ export default function AdminDashboardPage() {
         return;
     }
 
-    const liveClassData = {
+    const liveClassData: Partial<LiveClass> = {
         title: liveClassTitle,
-        startTime: liveClassStartTime,
-        endTime: liveClassEndTime,
+        startTime: liveClassStartTime as any,
+        endTime: liveClassEndTime as any,
         associatedItemId: selectedItem.id,
         itemType: selectedItem.type,
         associatedItemName: selectedItem.name,
-        classId: selectedItem.classId, // Will be undefined for courses
     };
+    if (selectedItem.classId) {
+        liveClassData.classId = selectedItem.classId;
+    }
 
     setIsSavingLiveClass(true);
     try {
@@ -440,6 +446,45 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error("Failed to send reply:", error);
       toast({ variant: "destructive", title: "Failed to send reply" });
+    }
+  };
+
+  const handleInitiateChat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatSearchEmail.trim()) {
+        toast({ variant: "destructive", title: "Please enter an email." });
+        return;
+    }
+    setIsSearchingChat(true);
+    try {
+        const foundUser = await findUserByEmail(chatSearchEmail);
+        if (!foundUser) {
+            throw new Error("User not found.");
+        }
+        
+        // Listen to the chat to get its data or create it if it doesn't exist
+        listenToChat(foundUser.uid, (chatData) => {
+            if (chatData) {
+                setSelectedChat(chatData);
+            } else {
+                // If chat doesn't exist, create a new one to show in the dialog
+                const newChat: Chat = {
+                    id: foundUser.uid,
+                    userId: foundUser.uid,
+                    userName: foundUser.email,
+                    messages: [],
+                    admin: { id: 'admin-1', name: 'StudyScript Support', avatar: '/logo-icon.svg' },
+                    lastMessageTimestamp: new Date().toISOString()
+                };
+                setSelectedChat(newChat);
+            }
+            setIsChatDialogOpen(true);
+            setChatSearchEmail('');
+        });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Chat Error", description: error.message });
+    } finally {
+        setIsSearchingChat(false);
     }
   };
 
@@ -1623,12 +1668,31 @@ export default function AdminDashboardPage() {
           </Card>}
         </>}
 
-        {hasPermission('view_messages') && <Card>
+        {hasPermission('manage_chat') && <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">User Messages</CardTitle>
-            <CardDescription>View user support requests.</CardDescription>
+            <CardTitle className="font-headline text-2xl">Chat Management</CardTitle>
+            <CardDescription>Start chats or view support requests.</CardDescription>
           </CardHeader>
           <CardContent>
+            <form onSubmit={handleInitiateChat} className="space-y-3 mb-6 p-4 border rounded-lg bg-secondary/50">
+              <Label htmlFor="chat-search" className="font-semibold">Start New Chat</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="chat-search"
+                  type="email"
+                  placeholder="user@example.com"
+                  value={chatSearchEmail}
+                  onChange={(e) => setChatSearchEmail(e.target.value)}
+                  disabled={isSearchingChat}
+                  required
+                />
+                <Button type="submit" disabled={isSearchingChat}>
+                  {isSearchingChat ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <span className="sr-only">Find & Chat</span>
+                </Button>
+              </div>
+            </form>
+
             <ScrollArea className="h-[400px]">
               <Table>
                 <TableHeader>
@@ -1660,7 +1724,7 @@ export default function AdminDashboardPage() {
                   {chats.length === 0 && (
                     <TableRow>
                         <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                            No messages found.
+                            No active chats. Start one by searching for a user.
                         </TableCell>
                     </TableRow>
                   )}
@@ -1720,3 +1784,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
