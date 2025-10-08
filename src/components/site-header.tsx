@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut, Share2, ClipboardList, ShieldCheck, AlertTriangle, Radio } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -169,6 +169,15 @@ export function SiteHeader() {
             
             <div className="flex-grow my-4 pl-6 overflow-y-auto">
               <div className="flex flex-col space-y-3">
+                {user && (
+                    <Link
+                        href="/my-profile"
+                        className="text-foreground/70 transition-colors hover:text-foreground"
+                        onClick={handleLinkClick}
+                    >
+                        My Profile
+                    </Link>
+                )}
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -285,6 +294,12 @@ export function SiteHeader() {
           
           {user ? (
              <div className="hidden md:flex items-center gap-2">
+                <Button asChild variant="secondary">
+                  <Link href="/my-profile">
+                      <User className="mr-2 h-4 w-4" />
+                      My Profile
+                  </Link>
+                </Button>
                 <Button onClick={logOut} variant="outline">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout

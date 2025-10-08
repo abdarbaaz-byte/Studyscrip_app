@@ -180,6 +180,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           readNotifications: [],
           role: null,
           permissions: [],
+          school: "",
+          userClass: "",
           activeSessionToken: null, // Session token will be set on first verified login
       });
 
@@ -234,6 +236,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: loggedInUser.displayName, // Carry over display name
             createdAt: new Date().toISOString(),
             readNotifications: [],
+            school: "",
+            userClass: "",
             ...userData
          });
       } else {

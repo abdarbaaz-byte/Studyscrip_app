@@ -71,6 +71,14 @@ export type Review = {
     submittedAt: Timestamp;
 };
 
+// --- USER PROFILE ---
+export type UserProfile = {
+    uid: string;
+    email: string;
+    displayName: string;
+    school?: string;
+    userClass?: string;
+};
 
 // COURSES
 export async function getCourses(): Promise<Course[]> {
@@ -937,3 +945,17 @@ export async function deleteLiveClass(id: string): Promise<void> {
     await deleteDoc(docRef);
 }
     
+// --- USER PROFILE ---
+export async function getUserProfile(userId: string): Promise<Partial<UserProfile> | null> {
+  const userDocRef = doc(db, 'users', userId);
+  const docSnap = await getDoc(userDocRef);
+  if (docSnap.exists()) {
+    return docSnap.data() as Partial<UserProfile>;
+  }
+  return null;
+}
+
+export async function updateUserProfile(userId: string, data: Partial<{ displayName: string; school: string; userClass: string; }>): Promise<void> {
+  const userDocRef = doc(db, 'users', userId);
+  await updateDoc(userDocRef, data);
+}
