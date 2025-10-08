@@ -119,7 +119,7 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
             return (
                  <RadioGroup 
                     value={answer?.toString()} 
-                    onValueChange={(value) => onAnswerChange(question.id, value)}
+                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
                     className="space-y-4"
                 >
                     <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">

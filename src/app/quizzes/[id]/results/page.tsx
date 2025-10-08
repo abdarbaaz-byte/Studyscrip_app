@@ -68,7 +68,7 @@ function QuizResultsContent() {
         loadedQuiz.questions.forEach(q => {
             const userAnswer = answers[q.id];
             if (q.type === 'mcq' || q.type === 'true_false') {
-                if (userAnswer === q.correctAnswer) {
+                if (parseInt(userAnswer?.toString() || '-1') === q.correctAnswer) {
                     currentScore++;
                 }
             } else if (q.type === 'fill_in_blank') {
@@ -76,7 +76,7 @@ function QuizResultsContent() {
                     currentScore++;
                 }
             } else if (q.type === 'match') {
-                if (typeof userAnswer === 'object' && userAnswer !== null) {
+                 if (typeof userAnswer === 'object' && userAnswer !== null) {
                     const allCorrect = q.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
                     if (allCorrect) {
                         currentScore++;
@@ -147,7 +147,7 @@ function QuizResultsContent() {
                 const userAnswer = answers[question.id];
                 let isCorrect = false;
                 if(question.type === 'mcq' || question.type === 'true_false') {
-                    isCorrect = userAnswer === question.correctAnswer;
+                    isCorrect = parseInt(userAnswer?.toString() || '-1') === question.correctAnswer;
                 } else if (question.type === 'fill_in_blank') {
                     isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
                 } else if (question.type === 'match') {
@@ -166,7 +166,7 @@ function QuizResultsContent() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {question.type === 'mcq' && question.options.map((option, optIndex) => {
-                                const isUserAnswer = userAnswer === optIndex;
+                                const isUserAnswer = parseInt(userAnswer?.toString() || '-1') === optIndex;
                                 const isCorrectAnswer = question.correctAnswer === optIndex;
                                 return (
                                     <div
@@ -184,7 +184,7 @@ function QuizResultsContent() {
                             })}
 
                              {question.type === 'true_false' && ['True', 'False'].map((option, optIndex) => {
-                                const isUserAnswer = userAnswer === optIndex;
+                                const isUserAnswer = parseInt(userAnswer?.toString() || '-1') === optIndex;
                                 const isCorrectAnswer = question.correctAnswer === optIndex;
                                 return (
                                     <div
