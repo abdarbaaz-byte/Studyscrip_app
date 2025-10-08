@@ -732,9 +732,19 @@ export async function getQuizAttempts(): Promise<QuizAttempt[]> {
 
 export async function getQuizAttemptsForQuiz(quizId: string): Promise<QuizAttempt[]> {
     const attemptsCol = collection(db, 'quizAttempts');
-    const q = query(attemptsCol, where('quizId', '==', quizId), orderBy('score', 'desc'), orderBy('submittedAt', 'asc'));
+    // Simplified query to avoid composite index
+    const q = query(attemptsCol, where('quizId', '==', quizId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+    const attempts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+    
+    // Sort in code instead of in the query
+    return attempts.sort((a, b) => {
+        if (b.score !== a.score) {
+            return b.score - a.score; // Higher score first
+        }
+        // If scores are equal, sort by submission time (earlier first)
+        return a.submittedAt.toMillis() - b.submittedAt.toMillis();
+    });
 }
 
 export async function deleteQuizAttempt(id: string): Promise<void> {
