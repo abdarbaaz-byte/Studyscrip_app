@@ -1,20 +1,23 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { getUserProfile, updateUserProfile, getUserPayments, type Payment } from "@/lib/data";
-import { Loader2, User, Save, Edit, X, Wallet } from "lucide-react";
+import { getUserProfile, updateUserProfile, getUserPayments, type Payment, type UserCertificate } from "@/lib/data";
+import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getGoogleDriveImageUrl } from "@/lib/utils";
 
 
 export default function MyProfilePage() {
@@ -28,6 +31,7 @@ export default function MyProfilePage() {
   const [userClass, setUserClass] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
+  const [certificates, setCertificates] = useState<UserCertificate[]>([]);
   
   const [isSaving, setIsSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -47,6 +51,7 @@ export default function MyProfilePage() {
       setSchool(profile.school || "");
       setUserClass(profile.userClass || "");
       setMobileNumber(profile.mobileNumber || "");
+      setCertificates(profile.certificates || []);
     }
 
     setPaymentHistory(payments);
@@ -81,6 +86,48 @@ export default function MyProfilePage() {
       toast({ variant: "destructive", title: "Update Failed", description: "Could not save your profile." });
     }
     setIsSaving(false);
+  };
+
+  const handleShareCertificate = async (cert: UserCertificate) => {
+    const shareData = {
+      title: 'My Certificate!',
+      text: `I just earned a certificate for "${cert.title}" from StudyScript!`,
+      url: cert.url
+    };
+
+    if (navigator.share && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        console.error('Error sharing certificate:', error);
+        toast({ variant: 'destructive', title: 'Could not share', description: 'There was an error trying to share your certificate.'})
+      }
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        try {
+            await navigator.clipboard.writeText(cert.url);
+            toast({ title: 'Link Copied!', description: 'Certificate URL copied to clipboard.' });
+        } catch (error) {
+             toast({ variant: 'destructive', title: 'Could not copy link' });
+        }
+    }
+  };
+
+  const handleDownloadCertificate = async (certUrl: string, certTitle: string) => {
+    try {
+        const response = await fetch(certUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${certTitle.replace(/ /g, '_')}.jpg`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode?.removeChild(link);
+    } catch (error) {
+        console.error("Download failed", error);
+        toast({ variant: 'destructive', title: 'Download Failed', description: 'Could not download the certificate image.' });
+    }
   };
   
   const totalLoading = authLoading || loadingProfile;
@@ -182,6 +229,7 @@ export default function MyProfilePage() {
         </Card>
 
         {!totalLoading && (
+           <>
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline text-2xl flex items-center gap-2">
@@ -237,6 +285,51 @@ export default function MyProfilePage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <Card>
+                 <CardHeader>
+                    <CardTitle className="font-headline text-2xl flex items-center gap-2">
+                        <Award /> My Certificates
+                    </CardTitle>
+                    <CardDescription>All your earned certificates in one place.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {certificates.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">
+                            You have not earned any certificates yet. Keep learning!
+                        </p>
+                    ) : (
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {certificates.map((cert) => (
+                                <Card key={cert.id} className="overflow-hidden">
+                                    <CardHeader className="p-0">
+                                        <div className="aspect-video relative">
+                                            <Image
+                                                src={getGoogleDriveImageUrl(cert.url)}
+                                                alt={cert.title}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="p-4">
+                                        <p className="font-semibold truncate">{cert.title}</p>
+                                        <div className="flex gap-2 mt-3">
+                                            <Button size="sm" className="w-full" onClick={() => handleDownloadCertificate(getGoogleDriveImageUrl(cert.url), cert.title)}>
+                                                <Download className="mr-2 h-4 w-4"/> Download
+                                            </Button>
+                                             <Button size="sm" variant="outline" className="w-full" onClick={() => handleShareCertificate(cert)}>
+                                                <Share2 className="mr-2 h-4 w-4"/> Share
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+           </>
         )}
       </div>
     </div>

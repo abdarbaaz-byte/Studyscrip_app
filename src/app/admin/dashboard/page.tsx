@@ -36,7 +36,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -134,6 +134,13 @@ export default function AdminDashboardPage() {
   // State for initiating chat
   const [chatSearchEmail, setChatSearchEmail] = useState('');
   const [isSearchingChat, setIsSearchingChat] = useState(false);
+
+  // State for Certificates
+  const [certSearchEmail, setCertSearchEmail] = useState('');
+  const [isSearchingCertUser, setIsSearchingCertUser] = useState(false);
+  const [certUser, setCertUser] = useState<{ uid: string, email: string } | null>(null);
+  const [userCertificates, setUserCertificates] = useState<UserCertificate[]>([]);
+  const [isSavingCerts, setIsSavingCerts] = useState(false);
 
 
   useEffect(() => {
@@ -706,6 +713,63 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Certificate Handlers
+  const handleSearchCertificateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!certSearchEmail) return;
+    setIsSearchingCertUser(true);
+    setCertUser(null);
+    setUserCertificates([]);
+
+    try {
+        const foundUser = await findUserByEmail(certSearchEmail);
+        if (!foundUser) {
+            throw new Error("User not found.");
+        }
+        setCertUser(foundUser);
+        const userProfile = await getUserProfile(foundUser.uid);
+        setUserCertificates(userProfile?.certificates || []);
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+        setIsSearchingCertUser(false);
+    }
+  };
+
+  const handleAddCertificate = () => {
+      const newCert: UserCertificate = {
+          id: `cert-${Date.now()}`,
+          title: '',
+          url: ''
+      };
+      setUserCertificates(prev => [...prev, newCert]);
+  };
+
+  const handleUpdateCertificate = (index: number, field: 'title' | 'url', value: string) => {
+      setUserCertificates(prev => {
+          const newCerts = [...prev];
+          newCerts[index][field] = value;
+          return newCerts;
+      });
+  };
+
+  const handleDeleteCertificate = (id: string) => {
+      setUserCertificates(prev => prev.filter(c => c.id !== id));
+  };
+  
+  const handleSaveCertificates = async () => {
+    if (!certUser) return;
+    setIsSavingCerts(true);
+    try {
+        await updateUserCertificates(certUser.uid, userCertificates);
+        toast({ title: 'Success', description: `Certificates for ${certUser.email} have been updated.`});
+    } catch (error) {
+        console.error("Failed to save certificates:", error);
+        toast({ variant: "destructive", title: "Failed to save certificates" });
+    } finally {
+        setIsSavingCerts(false);
+    }
+  };
 
 
   if (loading || authLoading) {
@@ -1410,6 +1474,79 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderCertificateManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Certificate Management</CardTitle>
+        <CardDescription>Assign and manage certificates for your users.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSearchCertificateUser} className="mb-6 flex gap-2">
+            <Input 
+                type="email"
+                placeholder="Search user by email..."
+                value={certSearchEmail}
+                onChange={(e) => setCertSearchEmail(e.target.value)}
+                required
+            />
+            <Button type="submit" disabled={isSearchingCertUser}>
+                {isSearchingCertUser ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
+            </Button>
+        </form>
+        
+        {certUser && (
+            <div className="space-y-4">
+                <h3 className="font-semibold">Certificates for <span className="text-primary">{certUser.email}</span></h3>
+                <div className="space-y-4">
+                    {userCertificates.map((cert, index) => (
+                        <div key={cert.id} className="p-4 border rounded-lg bg-secondary/50 relative">
+                             <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute top-2 right-2 h-7 w-7 text-destructive" 
+                                onClick={() => handleDeleteCertificate(cert.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                             </Button>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor={`cert-title-${index}`}>Certificate Title</Label>
+                                    <Input
+                                        id={`cert-title-${index}`}
+                                        value={cert.title}
+                                        onChange={(e) => handleUpdateCertificate(index, 'title', e.target.value)}
+                                        placeholder="e.g., Course Completion"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor={`cert-url-${index}`}>Image URL</Label>
+                                    <Input
+                                        id={`cert-url-${index}`}
+                                        value={cert.url}
+                                        onChange={(e) => handleUpdateCertificate(index, 'url', e.target.value)}
+                                        placeholder="https://example.com/cert.jpg"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                 <div className="flex justify-between items-center mt-4">
+                    <Button type="button" variant="outline" onClick={handleAddCertificate}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add Certificate
+                    </Button>
+                    <Button type="button" onClick={handleSaveCertificates} disabled={isSavingCerts}>
+                        {isSavingCerts ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                        Save Certificates
+                    </Button>
+                </div>
+            </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   const renderSiteSettings = () => (
     <Card>
       <CardHeader>
@@ -1503,6 +1640,9 @@ export default function AdminDashboardPage() {
             {hasPermission('manage_live_classes') && <Button variant={activeTab === 'live-classes' ? 'default' : 'outline'} onClick={() => setActiveTab('live-classes')}>
                 <Radio className="mr-2 h-4 w-4" /> Live Classes
             </Button>}
+            {hasPermission('manage_certificates') && <Button variant={activeTab === 'certificates' ? 'default' : 'outline'} onClick={() => setActiveTab('certificates')}>
+                <Award className="mr-2 h-4 w-4" /> Certificates
+            </Button>}
             {hasPermission('view_quiz_attempts') && <Button variant={activeTab === 'quiz-attempts' ? 'default' : 'outline'} onClick={() => setActiveTab('quiz-attempts')}>
                 <BarChart3 className="mr-2 h-4 w-4" /> Quiz Attempts
             </Button>}
@@ -1540,6 +1680,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'bookstore' && hasPermission('manage_bookstore') && renderBookstoreManagement()}
         {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
         {activeTab === 'live-classes' && hasPermission('manage_live_classes') && renderLiveClassManagement()}
+        {activeTab === 'certificates' && hasPermission('manage_certificates') && renderCertificateManagement()}
         {activeTab === 'quiz-attempts' && hasPermission('view_quiz_attempts') && renderQuizAttempts()}
         {activeTab === 'live-surveys' && hasPermission('view_live_class_surveys') && renderLiveSurveys()}
         {activeTab === 'reviews' && hasPermission('manage_reviews') && renderReviewManagement()}

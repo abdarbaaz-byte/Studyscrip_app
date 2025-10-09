@@ -72,6 +72,12 @@ export type Review = {
 };
 
 // --- USER PROFILE ---
+export type UserCertificate = {
+    id: string;
+    title: string;
+    url: string;
+};
+
 export type UserProfile = {
     uid: string;
     email: string;
@@ -79,6 +85,7 @@ export type UserProfile = {
     school?: string;
     userClass?: string;
     mobileNumber?: string;
+    certificates?: UserCertificate[];
 };
 
 // COURSES
@@ -974,7 +981,7 @@ export async function deleteLiveClass(id: string): Promise<void> {
     await deleteDoc(docRef);
 }
     
-// --- USER PROFILE ---
+// --- USER PROFILE & CERTIFICATES ---
 export async function getUserProfile(userId: string): Promise<Partial<UserProfile> | null> {
   const userDocRef = doc(db, 'users', userId);
   const docSnap = await getDoc(userDocRef);
@@ -989,7 +996,10 @@ export async function updateUserProfile(userId: string, data: Partial<{ displayN
   await updateDoc(userDocRef, data);
 }
 
-
-
+export async function updateUserCertificates(userId: string, certificates: UserCertificate[]): Promise<void> {
+    const userDocRef = doc(db, 'users', userId);
+    await updateDoc(userDocRef, { certificates });
+}
     
+
 

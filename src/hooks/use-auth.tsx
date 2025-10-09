@@ -42,7 +42,8 @@ export type UserPermission =
   | 'manage_site_settings'
   | 'view_live_class_surveys'
   | 'manage_reviews'
-  | 'manage_live_classes';
+  | 'manage_live_classes'
+  | 'manage_certificates';
 
 interface AuthContextType {
   user: User | null;
@@ -99,7 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'manage_bookstore', 'manage_payment_requests', 'manage_manual_access', 
             'view_purchases', 'view_payments', 'send_notifications', 'manage_chat',
             'manage_quizzes', 'view_quiz_attempts', 'manage_site_settings',
-            'view_live_class_surveys', 'manage_reviews', 'manage_live_classes'
+            'view_live_class_surveys', 'manage_reviews', 'manage_live_classes',
+            'manage_certificates'
           ]);
           setLoading(false);
           return;
@@ -183,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           school: "",
           userClass: "",
           mobileNumber: "",
+          certificates: [],
           activeSessionToken: null, // Session token will be set on first verified login
       });
 
@@ -240,6 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             school: "",
             userClass: "",
             mobileNumber: "",
+            certificates: [],
             ...userData
          });
       } else {
