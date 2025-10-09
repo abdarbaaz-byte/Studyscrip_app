@@ -182,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           permissions: [],
           school: "",
           userClass: "",
+          mobileNumber: "",
           activeSessionToken: null, // Session token will be set on first verified login
       });
 
@@ -238,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             readNotifications: [],
             school: "",
             userClass: "",
+            mobileNumber: "",
             ...userData
          });
       } else {
@@ -326,4 +328,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

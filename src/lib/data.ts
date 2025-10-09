@@ -78,6 +78,7 @@ export type UserProfile = {
     displayName: string;
     school?: string;
     userClass?: string;
+    mobileNumber?: string;
 };
 
 // COURSES
@@ -974,7 +975,7 @@ export async function getUserProfile(userId: string): Promise<Partial<UserProfil
   return null;
 }
 
-export async function updateUserProfile(userId: string, data: Partial<{ displayName: string; school: string; userClass: string; }>): Promise<void> {
+export async function updateUserProfile(userId: string, data: Partial<{ displayName: string; school: string; userClass: string; mobileNumber: string; }>): Promise<void> {
   const userDocRef = doc(db, 'users', userId);
   await updateDoc(userDocRef, data);
 }
