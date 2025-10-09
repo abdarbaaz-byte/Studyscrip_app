@@ -31,6 +31,9 @@ export default function DisclaimerPage() {
                             <strong>Personal Responsibility:</strong> You are responsible for your own learning and the application of knowledge. We are not liable for any academic or career outcomes. The results from quizzes and courses are for self-assessment and do not guarantee success in formal examinations.
                         </li>
                         <li>
+                            <strong>For Minors (Under 18):</strong> If you are a minor, you must use our Service under the supervision and with the consent of a parent or legal guardian. Please do not provide any personal information without their permission and guidance.
+                        </li>
+                        <li>
                             <strong>External Links:</strong> Our application may contain links to external websites that are not provided or maintained by or in any way affiliated with us. Please note that we do not guarantee the accuracy, relevance, timeliness, or completeness of any information on these external websites.
                         </li>
                          <li>
@@ -53,6 +56,9 @@ export default function DisclaimerPage() {
                         </li>
                         <li>
                             <strong>व्यक्तिगत जिम्मेदारी:</strong> आप अपने सीखने और ज्ञान के उपयोग के लिए स्वयं जिम्मेदार हैं। हम किसी भी अकादमिक या करियर परिणाम के लिए उत्तरदायी नहीं हैं। क्विज़ और पाठ्यक्रमों के परिणाम स्व-मूल्यांकन के लिए हैं और औपचारिक परीक्षाओं में सफलता की गारंटी नहीं देते हैं।
+                        </li>
+                        <li>
+                            <strong>नाबालिगों के लिए (18 वर्ष से कम):</strong> यदि आप नाबालिग हैं, तो आपको हमारी सेवा का उपयोग माता-पिता या कानूनी अभिभावक की देखरेख और सहमति से ही करना चाहिए। कृपया उनकी अनुमति और मार्गदर्शन के बिना कोई भी व्यक्तिगत जानकारी प्रदान न करें।
                         </li>
                         <li>
                             <strong>बाहरी लिंक:</strong> हमारे आवेदन में बाहरी वेबसाइटों के लिंक हो सकते हैं जो हमारे द्वारा प्रदान या अनुरक्षित नहीं हैं और न ही किसी भी तरह से हमसे संबद्ध हैं। कृपया ध्यान दें कि हम इन बाहरी वेबसाइटों पर किसी भी जानकारी की सटीकता, प्रासंगिकता, समयबद्धता, या पूर्णता की गारंटी नहीं देते हैं।
