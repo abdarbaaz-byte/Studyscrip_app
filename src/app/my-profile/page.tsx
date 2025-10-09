@@ -296,7 +296,7 @@ export default function MyProfilePage() {
                                                 src={getGoogleDriveImageUrl(cert.url)}
                                                 alt={cert.title}
                                                 fill
-                                                className="object-contain"
+                                                className="object-cover"
                                             />
                                         </div>
                                     </CardHeader>
@@ -323,5 +323,3 @@ export default function MyProfilePage() {
     </div>
   );
 }
-
-    
