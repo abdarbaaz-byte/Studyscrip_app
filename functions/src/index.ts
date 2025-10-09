@@ -23,6 +23,13 @@ export const sendPushNotifications = functions.firestore
         body: notificationData.description,
         icon: "/icons/icon-192x192.png", // The icon that will be shown
       },
+      webpush: {
+        fcmOptions: {
+          // If a link is provided in the notification data, set it here.
+          // This makes the entire notification clickable, opening the link.
+          link: notificationData.link || "/",
+        },
+      },
     };
 
     try {

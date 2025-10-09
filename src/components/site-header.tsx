@@ -3,13 +3,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut, Share2, User } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2, User, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAdmin, logOut } = useAuth();
   const { toast } = useToast();
   const isAuthPage = ["/login", "/signup", "/forgot-password", "/verify-email"].includes(pathname);
@@ -51,9 +52,12 @@ export function SiteHeader() {
     }
   }, [user]);
 
-  const handleMarkAsRead = (id: string) => {
+  const handleMarkAsRead = (id: string, link?: string) => {
     if (user && !readNotificationIds.includes(id)) {
       markNotificationAsRead(user.uid, id);
+    }
+    if(link) {
+      router.push(link);
     }
   };
 
@@ -273,13 +277,18 @@ export function SiteHeader() {
                       return (
                        <div 
                          key={notif.id} 
-                         className="p-4 border-b flex gap-3 items-start hover:bg-secondary cursor-pointer"
-                         onClick={() => handleMarkAsRead(notif.id)}
+                         className={cn("p-4 border-b flex gap-3 items-start hover:bg-secondary", notif.link && "cursor-pointer")}
+                         onClick={() => handleMarkAsRead(notif.id, notif.link)}
                         >
                         {!isRead && <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary flex-shrink-0" />}
                         <div className={cn("flex-1 min-w-0", isRead && "pl-5")}>
                           <p className="font-semibold break-words">{notif.title}</p>
                           <p className="text-sm text-muted-foreground break-words">{notif.description}</p>
+                           {notif.link && (
+                              <div className="text-xs text-blue-500 hover:underline break-all flex items-center gap-1 mt-1">
+                                <LinkIcon className="h-3 w-3"/> Click to view
+                              </div>
+                           )}
                           <p className="text-xs text-muted-foreground mt-1">{new Date(notif.timestamp).toLocaleString()}</p>
                         </div>
                        </div>

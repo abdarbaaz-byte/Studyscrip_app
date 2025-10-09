@@ -6,6 +6,7 @@ export type Notification = {
   title: string;
   description: string;
   timestamp: string; // ISO String
+  link?: string; // Optional link
   read?: boolean; // Optional: this will be determined on the client
 };
 

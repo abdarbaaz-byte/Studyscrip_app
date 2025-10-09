@@ -36,7 +36,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -91,6 +91,7 @@ export default function AdminDashboardPage() {
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationLink, setNotificationLink] = useState("");
   const [formattedPayments, setFormattedPayments] = useState<FormattedPayment[]>([]);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
@@ -518,13 +519,14 @@ export default function AdminDashboardPage() {
     if (!notificationTitle || !notificationMessage) return;
 
     try {
-        await sendNotification(notificationTitle, notificationMessage);
+        await sendNotification(notificationTitle, notificationMessage, notificationLink);
         toast({
             title: "Notification Sent!",
             description: "Your notification has been sent to all users.",
         });
         setNotificationTitle("");
         setNotificationMessage("");
+        setNotificationLink("");
     } catch (error) {
         console.error("Failed to send notification:", error);
         toast({ variant: "destructive", title: "Failed to send notification." });
@@ -1771,6 +1773,14 @@ export default function AdminDashboardPage() {
                     rows={4}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Input 
+                    type="url"
+                    placeholder="Link URL (Optional)" 
+                    value={notificationLink}
+                    onChange={(e) => setNotificationLink(e.target.value)}
+                  />
+                </div>
                 <Button type="submit" className="w-full">
                   <Send className="mr-2 h-4 w-4" />
                   Send Notification
@@ -1813,6 +1823,11 @@ export default function AdminDashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold break-words">{notif.title}</p>
                         <p className="text-sm text-muted-foreground break-words">{notif.description}</p>
+                        {notif.link && (
+                            <a href={notif.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline break-all flex items-center gap-1">
+                                <LinkIcon className="h-3 w-3"/> {notif.link}
+                            </a>
+                        )}
                         <p className="text-xs text-muted-foreground mt-1">{new Date(notif.timestamp).toLocaleString()}</p>
                       </div>
                     </div>

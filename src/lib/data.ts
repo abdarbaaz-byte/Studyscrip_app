@@ -569,13 +569,17 @@ export async function deleteChat(chatId: string): Promise<void> {
 
 // --- NOTIFICATIONS ---
 
-export async function sendNotification(title: string, description: string) {
+export async function sendNotification(title: string, description: string, link?: string) {
     const notificationsCol = collection(db, 'notifications');
-    await addDoc(notificationsCol, {
+    const notificationData: { title: string; description: string; timestamp: string; link?: string } = {
         title,
         description,
         timestamp: new Date().toISOString(),
-    });
+    };
+    if (link) {
+        notificationData.link = link;
+    }
+    await addDoc(notificationsCol, notificationData);
 }
 
 export function listenToNotifications(callback: (notifications: Notification[]) => void) {
@@ -590,6 +594,7 @@ export function listenToNotifications(callback: (notifications: Notification[]) 
                 title: data.title,
                 description: data.description,
                 timestamp: data.timestamp, // Keep as ISO string
+                link: data.link,
             } as Notification;
         });
         callback(notifications);
