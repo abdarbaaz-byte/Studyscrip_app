@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -113,20 +112,28 @@ export default function MyProfilePage() {
     }
   };
 
-  const handleDownloadCertificate = async (certUrl: string, certTitle: string) => {
+  const handleDownloadCertificate = (certUrl: string, certTitle: string) => {
     try {
-        const response = await fetch(certUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${certTitle.replace(/ /g, '_')}.jpg`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode?.removeChild(link);
+      // Create a link element
+      const link = document.createElement('a');
+      link.href = certUrl;
+      
+      // We can suggest a filename, but browsers might ignore it for cross-origin downloads.
+      // The main goal is to trigger the download.
+      link.setAttribute('download', `${certTitle.replace(/ /g, '_')}.jpg`);
+      
+      // This is crucial for cross-origin downloads to work in some browsers.
+      // It tells the browser to download the linked resource instead of navigating to it.
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+
+      // Append to the document, click it, and then remove it
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
     } catch (error) {
-        console.error("Download failed", error);
-        toast({ variant: 'destructive', title: 'Download Failed', description: 'Could not download the certificate image.' });
+        console.error("Download initiation failed", error);
+        toast({ variant: 'destructive', title: 'Download Failed', description: 'Could not start the certificate download.' });
     }
   };
   
@@ -335,3 +342,5 @@ export default function MyProfilePage() {
     </div>
   );
 }
+
+    
