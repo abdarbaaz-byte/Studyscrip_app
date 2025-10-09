@@ -291,12 +291,12 @@ export default function MyProfilePage() {
                             {certificates.map((cert) => (
                                 <Card key={cert.id} className="overflow-hidden">
                                     <CardHeader className="p-0">
-                                        <div className="aspect-video relative">
+                                        <div className="aspect-video relative bg-secondary">
                                             <Image
                                                 src={getGoogleDriveImageUrl(cert.url)}
                                                 alt={cert.title}
                                                 fill
-                                                className="object-cover"
+                                                className="object-contain"
                                             />
                                         </div>
                                     </CardHeader>
@@ -323,3 +323,5 @@ export default function MyProfilePage() {
     </div>
   );
 }
+
+    
