@@ -45,7 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -138,7 +138,7 @@ export default function AdminDashboardPage() {
   // State for Certificates
   const [certSearchEmail, setCertSearchEmail] = useState('');
   const [isSearchingCertUser, setIsSearchingCertUser] = useState(false);
-  const [certUser, setCertUser] = useState<{ uid: string, email: string } | null>(null);
+  const [certUser, setCertUser] = useState<Partial<UserProfile> | null>(null);
   const [userCertificates, setUserCertificates] = useState<UserCertificate[]>([]);
   const [isSavingCerts, setIsSavingCerts] = useState(false);
 
@@ -727,8 +727,7 @@ export default function AdminDashboardPage() {
             throw new Error("User not found.");
         }
         setCertUser(foundUser);
-        const userProfile = await getUserProfile(foundUser.uid);
-        setUserCertificates(userProfile?.certificates || []);
+        setUserCertificates(foundUser.certificates || []);
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
@@ -758,7 +757,7 @@ export default function AdminDashboardPage() {
   };
   
   const handleSaveCertificates = async () => {
-    if (!certUser) return;
+    if (!certUser || !certUser.uid) return;
     setIsSavingCerts(true);
     try {
         await updateUserCertificates(certUser.uid, userCertificates);
@@ -1964,5 +1963,7 @@ export default function AdminDashboardPage() {
 }
 
 
+
+    
 
     

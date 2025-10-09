@@ -112,28 +112,33 @@ export default function MyProfilePage() {
     }
   };
 
-  const handleDownloadCertificate = (certUrl: string, certTitle: string) => {
+  const handleDownloadCertificate = async (certUrl: string, certTitle: string) => {
     try {
-      // Create a link element
-      const link = document.createElement('a');
-      link.href = certUrl;
+      // Use fetch with 'no-cors' mode which is less restrictive for simple GET requests
+      // This helps in scenarios where direct fetch is blocked by CORS.
+      const response = await fetch(certUrl, { mode: 'no-cors' });
       
-      // We can suggest a filename, but browsers might ignore it for cross-origin downloads.
-      // The main goal is to trigger the download.
+      // Since we can't read the response in no-cors mode, we can't be 100% sure it succeeded,
+      // but we proceed assuming it will work for a download link. This is a common workaround.
+      
+      const blob = await fetch(certUrl).then(r => r.blob());
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
       link.setAttribute('download', `${certTitle.replace(/ /g, '_')}.jpg`);
       
-      // This is crucial for cross-origin downloads to work in some browsers.
-      // It tells the browser to download the linked resource instead of navigating to it.
-      link.setAttribute('target', '_blank');
-      link.setAttribute('rel', 'noopener noreferrer');
-
-      // Append to the document, click it, and then remove it
       document.body.appendChild(link);
       link.click();
+      
       link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
     } catch (error) {
         console.error("Download initiation failed", error);
-        toast({ variant: 'destructive', title: 'Download Failed', description: 'Could not start the certificate download.' });
+        // Fallback to opening in new tab if fetch fails.
+        window.open(certUrl, '_blank');
+        toast({ title: 'Opening Image', description: 'Could not download directly. Opening image in a new tab for you to save.' });
     }
   };
   
@@ -342,5 +347,7 @@ export default function MyProfilePage() {
     </div>
   );
 }
+
+    
 
     

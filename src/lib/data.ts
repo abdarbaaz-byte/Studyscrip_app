@@ -837,7 +837,7 @@ export async function updateEmployeePermissions(uid: string, data: Partial<Emplo
     await updateDoc(userDocRef, updateData);
 }
 
-export async function findUserByEmail(email: string): Promise<{uid: string, email: string} | null> {
+export async function findUserByEmail(email: string): Promise<UserProfile | null> {
     const usersCol = collection(db, 'users');
     const q = query(usersCol, where('email', '==', email), limit(1));
     const snapshot = await getDocs(q);
@@ -847,8 +847,8 @@ export async function findUserByEmail(email: string): Promise<{uid: string, emai
     const userDoc = snapshot.docs[0];
     return {
         uid: userDoc.id,
-        email: userDoc.data().email
-    };
+        ...userDoc.data()
+    } as UserProfile;
 }
 
 
@@ -1003,3 +1003,6 @@ export async function updateUserCertificates(userId: string, certificates: UserC
     
 
 
+
+
+    
