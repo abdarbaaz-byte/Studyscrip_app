@@ -112,34 +112,11 @@ export default function MyProfilePage() {
     }
   };
 
-  const handleDownloadCertificate = async (certUrl: string, certTitle: string) => {
-    try {
-      // Use fetch with 'no-cors' mode which is less restrictive for simple GET requests
-      // This helps in scenarios where direct fetch is blocked by CORS.
-      const response = await fetch(certUrl, { mode: 'no-cors' });
-      
-      // Since we can't read the response in no-cors mode, we can't be 100% sure it succeeded,
-      // but we proceed assuming it will work for a download link. This is a common workaround.
-      
-      const blob = await fetch(certUrl).then(r => r.blob());
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${certTitle.replace(/ /g, '_')}.jpg`);
-      
-      document.body.appendChild(link);
-      link.click();
-      
-      link.parentNode?.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-    } catch (error) {
-        console.error("Download initiation failed", error);
-        // Fallback to opening in new tab if fetch fails.
-        window.open(certUrl, '_blank');
-        toast({ title: 'Opening Image', description: 'Could not download directly. Opening image in a new tab for you to save.' });
-    }
+  const handleDownloadCertificate = (certUrl: string, certTitle: string) => {
+    // Open the image in a new tab. The user can then save it from there.
+    // This is the most reliable way to bypass CORS issues with resources like Google Drive.
+    window.open(certUrl, '_blank');
+    toast({ title: 'Opening Image', description: 'You can now save the image from the new tab.' });
   };
   
   const totalLoading = authLoading || loadingProfile;
@@ -347,7 +324,3 @@ export default function MyProfilePage() {
     </div>
   );
 }
-
-    
-
-    
