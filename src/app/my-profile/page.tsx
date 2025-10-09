@@ -7,10 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { getUserProfile, updateUserProfile } from "@/lib/data";
-import { Loader2, User, Save, Edit, X } from "lucide-react";
+import { getUserProfile, updateUserProfile, getUserPayments, type Payment } from "@/lib/data";
+import { Loader2, User, Save, Edit, X, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
 
 export default function MyProfilePage() {
   const { user, loading: authLoading } = useAuth();
@@ -22,6 +27,7 @@ export default function MyProfilePage() {
   const [school, setSchool] = useState("");
   const [userClass, setUserClass] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
   
   const [isSaving, setIsSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -30,7 +36,11 @@ export default function MyProfilePage() {
   const loadProfile = useCallback(async () => {
     if (!user) return;
     setLoadingProfile(true);
-    const profile = await getUserProfile(user.uid);
+    const [profile, payments] = await Promise.all([
+        getUserProfile(user.uid),
+        getUserPayments(user.uid)
+    ]);
+    
     if (profile) {
       setName(profile.displayName || user.displayName || "");
       setEmail(profile.email || user.email || "");
@@ -38,6 +48,8 @@ export default function MyProfilePage() {
       setUserClass(profile.userClass || "");
       setMobileNumber(profile.mobileNumber || "");
     }
+
+    setPaymentHistory(payments);
     setLoadingProfile(false);
   }, [user]);
 
@@ -147,7 +159,7 @@ export default function MyProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-8">
         <Card className="shadow-lg">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -168,6 +180,64 @@ export default function MyProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {!totalLoading && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-2xl flex items-center gap-2">
+                        <Wallet /> Payment History
+                    </CardTitle>
+                    <CardDescription>A record of all your transactions on StudyScript.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Item Name</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {paymentHistory.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                        You have not made any payments yet.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                paymentHistory.map((payment) => (
+                                    <TableRow key={payment.id}>
+                                        <TableCell className="font-medium">{payment.itemTitle}</TableCell>
+                                        <TableCell>Rs. {payment.amount}</TableCell>
+                                        <TableCell>{format(payment.paymentDate.toDate(), "PPP")}</TableCell>
+                                        <TableCell className="text-right">
+                                             <Badge
+                                                variant={
+                                                payment.status === 'succeeded'
+                                                    ? 'default'
+                                                    : payment.status === 'pending'
+                                                    ? 'secondary'
+                                                    : 'destructive'
+                                                }
+                                                className={cn(
+                                                "capitalize",
+                                                payment.status === 'succeeded' && "bg-green-600",
+                                                payment.status === 'pending' && "bg-orange-500",
+                                                )}
+                                            >
+                                                {payment.status}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
       </div>
     </div>
   );

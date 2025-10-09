@@ -293,6 +293,13 @@ export async function getPayments(): Promise<Payment[]> {
     return paymentList;
 }
 
+export async function getUserPayments(userId: string): Promise<Payment[]> {
+    const paymentsCol = collection(db, 'payments');
+    const q = query(paymentsCol, where('userId', '==', userId), orderBy('paymentDate', 'desc'));
+    const paymentSnapshot = await getDocs(q);
+    return paymentSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Payment));
+}
+
 
 export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
     const purchasesCol = collection(db, 'purchases');
