@@ -113,10 +113,9 @@ export default function MyProfilePage() {
   };
 
   const handleDownloadCertificate = (certUrl: string, certTitle: string) => {
-    // Open the image in a new tab. The user can then save it from there.
-    // This is the most reliable way to bypass CORS issues with resources like Google Drive.
-    window.open(certUrl, '_blank');
-    toast({ title: 'Opening Image', description: 'You can now save the image from the new tab.' });
+    // We use our API proxy to handle the download and bypass CORS.
+    const downloadUrl = `/api/download?url=${encodeURIComponent(getGoogleDriveImageUrl(certUrl))}&name=${encodeURIComponent(certTitle)}.jpg`;
+    window.location.href = downloadUrl;
   };
   
   const totalLoading = authLoading || loadingProfile;
@@ -304,7 +303,7 @@ export default function MyProfilePage() {
                                     <CardContent className="p-4">
                                         <p className="font-semibold truncate">{cert.title}</p>
                                         <div className="flex gap-2 mt-3">
-                                            <Button size="sm" className="w-full" onClick={() => handleDownloadCertificate(getGoogleDriveImageUrl(cert.url), cert.title)}>
+                                            <Button size="sm" className="w-full" onClick={() => handleDownloadCertificate(cert.url, cert.title)}>
                                                 <Download className="mr-2 h-4 w-4"/> Download
                                             </Button>
                                              <Button size="sm" variant="outline" className="w-full" onClick={() => handleShareCertificate(cert)}>
