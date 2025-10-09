@@ -859,7 +859,7 @@ export default function AdminDashboardPage() {
                 <TableCell className="font-medium">{course.title}</TableCell>
                 <TableCell>Rs. {course.price}</TableCell>
                 <TableCell>
-                  <Badge variant="outline">{course.folders.reduce((acc, folder) => acc + folder.content.length, 0)}</Badge>
+                  <Badge variant="outline">{(course.folders || []).reduce((acc, folder) => acc + folder.content.length, 0)}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(course)}>
