@@ -227,6 +227,11 @@ export function ChatWidget() {
   
   if (!isMounted) return null;
 
+  const authPages = ["/login", "/signup", "/forgot-password", "/verify-email"];
+  if (authPages.includes(pathname)) {
+    return null;
+  }
+
   return (
     <div ref={chatWidgetRef}>
       <div className="fixed bottom-20 right-4 z-50 md:bottom-4">
