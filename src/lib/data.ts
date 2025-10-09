@@ -295,9 +295,11 @@ export async function getPayments(): Promise<Payment[]> {
 
 export async function getUserPayments(userId: string): Promise<Payment[]> {
     const paymentsCol = collection(db, 'payments');
-    const q = query(paymentsCol, where('userId', '==', userId), orderBy('paymentDate', 'desc'));
+    const q = query(paymentsCol, where('userId', '==', userId));
     const paymentSnapshot = await getDocs(q);
-    return paymentSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Payment));
+    const payments = paymentSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Payment));
+    // Sort in code to avoid composite index
+    return payments.sort((a, b) => b.paymentDate.toMillis() - a.paymentDate.toMillis());
 }
 
 
@@ -990,3 +992,4 @@ export async function updateUserProfile(userId: string, data: Partial<{ displayN
 
 
     
+
