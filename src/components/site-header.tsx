@@ -101,7 +101,6 @@ export function SiteHeader() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/#courses", label: "Courses" },
-    { href: "/live-classes", label: "Live Classes Survey" },
     { href: "/faq", label: "FAQs" },
     { href: "/contact", label: "Contact" },
     { href: "/about", label: "About" },
