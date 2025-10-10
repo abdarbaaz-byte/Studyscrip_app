@@ -25,6 +25,26 @@ const faqs = [
         answer: "Hum Razorpay ke through Card, Netbanking, aur Wallet payments accept karte hain. Saath hi, aap UPI ke through bhi payment kar sakte hain. UPI payment verification mein 24 ghante tak lag sakte hain."
     },
     {
+        question: "Quizzes kaise kaam karte hain? Kya live quizzes mein rank aati hai?",
+        answer: "Humare paas do tarah ke quizzes hain: Practice aur Live. Practice quizzes aap kabhi bhi de sakte hain apni taiyari check karne ke liye. Live quizzes ek fix time par hote hain aur sabhi students ek saath hissa lete hain. Live quiz ke baad aapki rank bhi list mein dikhai jaati hai."
+    },
+    {
+        question: "'AI Doubt Solver' kya hai?",
+        answer: "Yeh aapka personal AI study partner hai. Aap padhai se juda koi bhi sawaal (kisi bhi subject ka) isse pooch sakte hain aur yeh aapko aasan bhasha mein samjhane ki koshish karega. Yeh 24/7 aapki madad ke liye uplabdh hai."
+    },
+    {
+        question: "'Free Notes' aur 'Bookstore' structured courses se kaise alag hain?",
+        answer: "Courses mein chapter-wise video, PDF, aur images hote hain. 'Free Notes' section mein extra study material hota hai jo courses ka hissa nahi hai. 'Bookstore' ek free digital library hai jahan se aap PDF books download kar sakte hain."
+    },
+    {
+        question: "Live Classes kya hain aur main unhe kaise join kar sakta hoon?",
+        answer: "Yeh real-time interactive classes hain jo hum schedule karte hain. Agar aapne koi aisa course ya subject khareeda hai jiske liye live class hai, to class shuru hone par aapko join karne ka button dikhega. Aap 'Live Classes' survey form bhar kar bhi bata sakte hain ki aap kis topic par live class chahte hain."
+    },
+    {
+        question: "Course poora karne ke baad kya mujhe certificate milega?",
+        answer: "Haan! Kai courses poora karne par aapko certificate milta hai. Admin aapke liye certificate assign kar sakte hain. Aap apne saare certificates 'My Profile' page par dekh aur download kar sakte hain."
+    },
+    {
         question: "Kya StudyScript Google Play Store ya Apple App Store par available hai?",
         answer: "Abhi nahi, lekin hum is par tezi se kaam kar rahe hain! Hamari team dedicatedly Play Store aur App Store ke liye kaam kar rahi hai. Jald hi aap wahan se bhi StudyScript download kar payenge. Tab tak, aap hamari website ko apne mobile browser mein kholkar 'Install App' button se App install kar sakte hain."
     },
