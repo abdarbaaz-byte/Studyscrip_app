@@ -566,7 +566,7 @@ export default function TeacherDashboardPage() {
             {testAttempts.map((attempt) => (
               <TableRow key={attempt.id}>
                 <TableCell>
-                    <div className="font-medium">{attempt.userName}</div>
+                    <div className="font-medium">{attempt.userName} ({attempt.userClass})</div>
                     <div className="text-sm text-muted-foreground">{attempt.userEmail}</div>
                 </TableCell>
                 <TableCell>{attempt.quizTitle}</TableCell>

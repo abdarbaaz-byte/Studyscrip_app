@@ -2,9 +2,9 @@
 
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { getQuiz, type Quiz, getUserProfile } from "@/lib/data";
+import { getQuiz, type Quiz, getSchool } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -29,99 +29,105 @@ function QuizStartPageContent() {
   const [loading, setLoading] = useState(true);
   const [quizStatus, setQuizStatus] = useState<'available' | 'expired' | 'upcoming'>('available');
   
-  // User details state - only for manual form
+  // User details state
   const [userName, setUserName] = useState('');
-  const [userSchool, setUserSchool] = useState('');
   const [userClass, setUserClass] = useState('');
 
-  useEffect(() => {
-    async function loadQuizAndUser() {
-      if (!quizId) return;
-      setLoading(true);
+  const loadQuizAndUser = useCallback(async () => {
+    if (!quizId) return;
+    setLoading(true);
 
-      // Check for previous attempt ONLY for live quizzes
-      if (quizType === 'live') {
-        const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
-        if (hasAttempted) {
-            const savedDataString = localStorage.getItem(`quiz-data-${quizId}`);
-            if (savedDataString) {
-                const savedData = JSON.parse(savedDataString);
-                toast({
-                    title: "Quiz Already Attempted",
-                    description: "Redirecting to your results...",
-                });
-                const queryParams = new URLSearchParams({
-                    type: 'live',
-                    answers: savedData.answers, 
-                    name: savedData.name || 'Anonymous',
-                    schoolId: schoolId || '',
-                }).toString();
-                router.replace(`/quizzes/${quizId}/results?${queryParams}`);
-                return;
-            }
+    if (quizType === 'live') {
+      const hasAttempted = localStorage.getItem(`quiz-attempted-${quizId}`);
+      if (hasAttempted) {
+        const savedDataString = localStorage.getItem(`quiz-data-${quizId}`);
+        if (savedDataString) {
+          const savedData = JSON.parse(savedDataString);
+          toast({
+            title: "Quiz Already Attempted",
+            description: "Redirecting to your results...",
+          });
+          const queryParams = new URLSearchParams({
+            type: 'live',
+            answers: savedData.answers,
+            name: savedData.name || 'Anonymous',
+            schoolId: schoolId || '',
+          }).toString();
+          router.replace(`/quizzes/${quizId}/results?${queryParams}`);
+          return;
         }
       }
-
-      const loadedQuiz = await getQuiz(quizId);
-      if (loadedQuiz) {
-        setQuiz(loadedQuiz);
-
-        // Pre-fill user details if they are logged in
-        if (user) {
-          const userProfile = await getUserProfile(user.uid);
-          if (userProfile) {
-            setUserName(userProfile.displayName || user.displayName || '');
-            setUserSchool(userProfile.school || '');
-            setUserClass(userProfile.userClass || '');
-          } else {
-             setUserName(user.displayName || '');
-          }
-        }
-
-        const now = new Date();
-        const startTime = loadedQuiz.startTime?.toDate();
-        const endTime = loadedQuiz.endTime?.toDate();
-
-        if (startTime && now < startTime) {
-          setQuizStatus('upcoming');
-        } else if (endTime && now > endTime) {
-          setQuizStatus('expired');
-        } else {
-           setQuizStatus('available');
-        }
-
-      } else {
-        toast({ variant: 'destructive', title: 'Quiz not found' });
-        router.push('/quizzes');
-      }
-      setLoading(false);
     }
-    loadQuizAndUser();
+
+    const loadedQuiz = await getQuiz(quizId);
+    if (loadedQuiz) {
+      setQuiz(loadedQuiz);
+
+      if (user) {
+        if (schoolId) {
+          // For school tests, get details from the school's student list
+          const schoolData = await getSchool(schoolId);
+          const studentInfo = schoolData?.students?.find(s => s.uid === user.uid);
+          if (studentInfo) {
+            setUserName(studentInfo.name);
+            setUserClass(studentInfo.userClass);
+          } else {
+            // This might happen if a teacher tries to take a test.
+            // We can block it or let them proceed with their profile name.
+            toast({
+                variant: 'destructive',
+                title: 'Access Error',
+                description: 'You are not enrolled as a student in this school.'
+            });
+            router.push('/');
+            return;
+          }
+        } else {
+          // For general quizzes, default to user's display name
+          setUserName(user.displayName || '');
+        }
+      }
+
+      const now = new Date();
+      const startTime = loadedQuiz.startTime?.toDate();
+      const endTime = loadedQuiz.endTime?.toDate();
+
+      if (startTime && now < startTime) {
+        setQuizStatus('upcoming');
+      } else if (endTime && now > endTime) {
+        setQuizStatus('expired');
+      } else {
+        setQuizStatus('available');
+      }
+
+    } else {
+      toast({ variant: 'destructive', title: 'Quiz not found' });
+      router.push('/quizzes');
+    }
+    setLoading(false);
   }, [quizId, router, toast, quizType, schoolId, user]);
+  
+  useEffect(() => {
+    loadQuizAndUser();
+  }, [loadQuizAndUser]);
 
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
         toast({ variant: 'destructive', title: 'Please Log In', description: 'You must be logged in to start a quiz.' });
-        router.push(`/login?redirect=/quizzes/${quizId}`);
+        router.push(`/login?redirect=/quizzes/${quizId}?type=${quizType}${schoolId ? `&schoolId=${schoolId}`:''}`);
         return;
     }
     
-    let quizData: any = { type: quizType };
-    
-    // For school tests, details are fetched automatically. For general live quizzes, they must be entered.
-    if (quizType === 'live' && !schoolId) {
-        if (!userName || !userSchool || !userClass) {
-            toast({ variant: 'destructive', title: 'Please fill all your details for the quiz.' });
-            return;
-        }
+    // For general live quizzes, the form is still needed
+    if (quizType === 'live' && !schoolId && (!userName || !userClass)) {
+        toast({ variant: 'destructive', title: 'Please fill all your details for the quiz.' });
+        return;
     }
     
-    // Pass user details to the attempt page
-    quizData = { 
-        ...quizData,
+    let quizData: any = { 
+        type: quizType,
         name: userName || user.displayName, 
-        school: userSchool, 
         class: userClass, 
         userId: user.uid,
         userEmail: user.email || ''
@@ -242,10 +248,6 @@ function QuizStartPageContent() {
                                 <div className="space-y-2">
                                     <Label htmlFor="name" className="flex items-center gap-2"><User className="h-4 w-4"/> Name</Label>
                                     <Input id="name" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Your full name" required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="school" className="flex items-center gap-2"><School className="h-4 w-4"/> School Name</Label>
-                                    <Input id="school" value={userSchool} onChange={(e) => setUserSchool(e.target.value)} placeholder="Your school name" required />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="class" className="flex items-center gap-2"><NotebookText className="h-4 w-4"/> Class</Label>

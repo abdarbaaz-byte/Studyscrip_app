@@ -1135,8 +1135,7 @@ export default function AdminDashboardPage() {
             {quizAttempts.map((attempt) => (
               <TableRow key={attempt.id}>
                 <TableCell>
-                    <div className="font-medium">{attempt.userName}</div>
-                    <div className="text-sm text-muted-foreground">{attempt.userSchool}, {attempt.userPlace} ({attempt.userClass})</div>
+                    <div className="font-medium">{attempt.userName} ({attempt.userClass})</div>
                     {attempt.userEmail && <div className="text-xs text-muted-foreground">{attempt.userEmail}</div>}
                 </TableCell>
                 <TableCell>{attempt.quizTitle}</TableCell>
@@ -2094,4 +2093,5 @@ export default function AdminDashboardPage() {
     
 
     
+
 

@@ -88,9 +88,7 @@ export type QuizAttempt = {
   userId: string | null;
   userEmail: string | null;
   userName: string;
-  userSchool: string;
   userClass: string;
-  userPlace: string;
   answers: { [questionId: string]: number | string | { [matchId: string]: string } };
   score: number;
   totalQuestions: number;
@@ -787,8 +785,20 @@ export async function deleteQuiz(id: string): Promise<void> {
 
 export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'>): Promise<string> {
     const attemptsCol = collection(db, 'quizAttempts');
+
+    const dataToSave = { ...attemptData };
+
+    if (dataToSave.schoolId && dataToSave.userId) {
+        const school = await getSchool(dataToSave.schoolId);
+        const studentInfo = school?.students?.find(s => s.uid === dataToSave.userId);
+        if (studentInfo) {
+            dataToSave.userName = studentInfo.name;
+            dataToSave.userClass = studentInfo.userClass;
+        }
+    }
+
     const docRef = await addDoc(attemptsCol, {
-        ...attemptData,
+        ...dataToSave,
         submittedAt: serverTimestamp(),
     });
     return docRef.id;
