@@ -4,12 +4,12 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { getQuiz, type Quiz } from "@/lib/data";
+import { getQuiz, type Quiz, getUserProfile } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, Timer, ListChecks, Info, User, School, MapPin, NotebookText, AlertTriangle, Clock } from "lucide-react";
+import { Loader2, Timer, ListChecks, Info, User, School, NotebookText, AlertTriangle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,21 +21,21 @@ function QuizStartPageContent() {
   const searchParams = useSearchParams();
   const quizId = params.id as string;
   const quizType = searchParams.get('type') || 'practice'; // Default to practice
-  const { user } = useAuth();
+  const schoolId = searchParams.get('schoolId');
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [quizStatus, setQuizStatus] = useState<'available' | 'expired' | 'upcoming'>('available');
   
-  // User details state
+  // User details state - only for manual form
   const [userName, setUserName] = useState('');
   const [userSchool, setUserSchool] = useState('');
   const [userClass, setUserClass] = useState('');
-  const [userPlace, setUserPlace] = useState('');
 
   useEffect(() => {
-    async function loadQuiz() {
+    async function loadQuizAndUser() {
       if (!quizId) return;
       setLoading(true);
 
@@ -54,6 +54,7 @@ function QuizStartPageContent() {
                     type: 'live',
                     answers: savedData.answers, 
                     name: savedData.name || 'Anonymous',
+                    schoolId: schoolId || '',
                 }).toString();
                 router.replace(`/quizzes/${quizId}/results?${queryParams}`);
                 return;
@@ -64,6 +65,18 @@ function QuizStartPageContent() {
       const loadedQuiz = await getQuiz(quizId);
       if (loadedQuiz) {
         setQuiz(loadedQuiz);
+
+        // Pre-fill user details if they are logged in
+        if (user) {
+          const userProfile = await getUserProfile(user.uid);
+          if (userProfile) {
+            setUserName(userProfile.displayName || user.displayName || '');
+            setUserSchool(userProfile.school || '');
+            setUserClass(userProfile.userClass || '');
+          } else {
+             setUserName(user.displayName || '');
+          }
+        }
 
         const now = new Date();
         const startTime = loadedQuiz.startTime?.toDate();
@@ -83,36 +96,39 @@ function QuizStartPageContent() {
       }
       setLoading(false);
     }
-    loadQuiz();
-  }, [quizId, router, toast, quizType]);
+    loadQuizAndUser();
+  }, [quizId, router, toast, quizType, schoolId, user]);
 
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
         toast({ variant: 'destructive', title: 'Please Log In', description: 'You must be logged in to start a quiz.' });
-        router.push('/login');
+        router.push(`/login?redirect=/quizzes/${quizId}`);
         return;
     }
     
     let quizData: any = { type: quizType };
-
-    if (quizType === 'live') {
-        if (!userName || !userSchool || !userClass || !userPlace) {
-            toast({ variant: 'destructive', title: 'Please fill all details for live quiz.' });
+    
+    // For school tests, details are fetched automatically. For general live quizzes, they must be entered.
+    if (quizType === 'live' && !schoolId) {
+        if (!userName || !userSchool || !userClass) {
+            toast({ variant: 'destructive', title: 'Please fill all your details for the quiz.' });
             return;
         }
-        quizData = { 
-            ...quizData,
-            name: userName, 
-            school: userSchool, 
-            class: userClass, 
-            place: userPlace,
-            userId: user.uid,
-            userEmail: user.email || ''
-        };
-    } else {
-        // For practice quiz, use user's email or a default name
-        quizData.name = user.email?.split('@')[0] || 'Student';
+    }
+    
+    // Pass user details to the attempt page
+    quizData = { 
+        ...quizData,
+        name: userName || user.displayName, 
+        school: userSchool, 
+        class: userClass, 
+        userId: user.uid,
+        userEmail: user.email || ''
+    };
+
+    if (schoolId) {
+        quizData.schoolId = schoolId;
     }
     
     const queryParams = new URLSearchParams(quizData).toString();
@@ -120,7 +136,7 @@ function QuizStartPageContent() {
     router.push(`/quizzes/${quizId}/attempt?${queryParams}`);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
 
@@ -151,7 +167,8 @@ function QuizStartPageContent() {
     return null;
   }
 
-  const isLiveQuizFormRequired = quizType === 'live' && quizStatus === 'available';
+  // Show form only for general live quizzes, not for school tests or practice tests.
+  const isFormRequired = quizType === 'live' && !schoolId;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -214,7 +231,7 @@ function QuizStartPageContent() {
             </div>
              <div>
                 {quizStatus === 'available' ? (
-                    isLiveQuizFormRequired ? (
+                    isFormRequired ? (
                      <Card>
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">Enter Your Details</CardTitle>
@@ -234,10 +251,6 @@ function QuizStartPageContent() {
                                     <Label htmlFor="class" className="flex items-center gap-2"><NotebookText className="h-4 w-4"/> Class</Label>
                                     <Input id="class" value={userClass} onChange={(e) => setUserClass(e.target.value)} placeholder="e.g., 10th, 12th" required />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="place" className="flex items-center gap-2"><MapPin className="h-4 w-4"/> Place</Label>
-                                    <Input id="place" value={userPlace} onChange={(e) => setUserPlace(e.target.value)} placeholder="Your city/village" required />
-                                </div>
                                 <Button type="submit" className="w-full" size="lg">Start Live Quiz</Button>
                             </form>
                         </CardContent>
@@ -245,12 +258,12 @@ function QuizStartPageContent() {
                     ) : (
                          <Card>
                             <CardHeader>
-                                <CardTitle className="font-headline text-2xl">Ready to Practice?</CardTitle>
-                                <CardDescription>Click below to start your practice session.</CardDescription>
+                                <CardTitle className="font-headline text-2xl">Ready to Start?</CardTitle>
+                                <CardDescription>Click below to begin the {quizType}.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleStartQuiz}>
-                                    <Button type="submit" className="w-full" size="lg">Start Practice Quiz</Button>
+                                    <Button type="submit" className="w-full" size="lg">Start {quizType === 'live' ? 'Test' : 'Practice'}</Button>
                                 </form>
                             </CardContent>
                         </Card>

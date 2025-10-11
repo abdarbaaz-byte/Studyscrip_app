@@ -6,9 +6,9 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { getSchool, type School, getSchoolNotes, type SchoolNote, type ContentItem, getSchoolTests, type Quiz } from "@/lib/data";
+import { getSchool, type School, getSchoolNotes, type SchoolNote, type ContentItem, getSchoolTests, type Quiz, getSchoolInformation, type SchoolInformation } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks, User } from "lucide-react";
+import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks, User, Megaphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { format } from "date-fns";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -26,6 +27,7 @@ export default function MySchoolPage() {
   const [school, setSchool] = useState<School | null>(null);
   const [notes, setNotes] = useState<SchoolNote[]>([]);
   const [tests, setTests] = useState<Quiz[]>([]);
+  const [information, setInformation] = useState<SchoolInformation[]>([]);
   const [userClass, setUserClass] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
@@ -52,17 +54,20 @@ export default function MySchoolPage() {
         const studentClass = studentInfo?.userClass || null;
         setUserClass(studentClass);
 
-        const [schoolNotes, schoolTests] = await Promise.all([
+        const [schoolNotes, schoolTests, schoolInfo] = await Promise.all([
             getSchoolNotes(userSchoolId!),
-            getSchoolTests(userSchoolId!)
+            getSchoolTests(userSchoolId!),
+            getSchoolInformation(userSchoolId!),
         ]);
 
         // Filter content based on student's class
         const visibleNotes = schoolNotes.filter(note => note.targetClass === 'all' || note.targetClass === studentClass);
         const visibleTests = schoolTests.filter(test => test.targetClass === 'all' || test.targetClass === studentClass);
+        const visibleInfo = schoolInfo.filter(info => info.targetClass === 'all' || info.targetClass === studentClass);
         
         setNotes(visibleNotes);
         setTests(visibleTests);
+        setInformation(visibleInfo);
 
       } catch (error) {
         console.error("Failed to load school data:", error);
@@ -190,7 +195,33 @@ export default function MySchoolPage() {
          {userClass && <div className="mt-2 inline-flex items-center gap-2 text-sm font-medium bg-secondary text-secondary-foreground py-1 px-3 rounded-full"><User className="h-4 w-4"/> Class: {userClass}</div>}
       </div>
 
-      <Accordion type="multiple" defaultValue={["notes", "tests"]} className="w-full max-w-4xl mx-auto space-y-4">
+      <Accordion type="multiple" defaultValue={["info", "notes", "tests"]} className="w-full max-w-4xl mx-auto space-y-4">
+         <AccordionItem value="info" className="border rounded-lg bg-card">
+          <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline">
+            <div className="flex items-center gap-4">
+                <Megaphone />
+                Information
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-6 pt-0">
+             {information.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">
+                    No information posted by your teacher yet.
+                </p>
+             ) : (
+                <div className="space-y-4">
+                    {information.map(info => (
+                         <div key={info.id} className="p-4 border rounded-md bg-secondary/50">
+                            <h4 className="font-semibold">{info.title}</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{info.message}</p>
+                            <p className="text-xs text-muted-foreground mt-2">Posted on: {format(info.createdAt.toDate(), "PPP")}</p>
+                         </div>
+                    ))}
+                </div>
+             )}
+          </AccordionContent>
+        </AccordionItem>
+
         <AccordionItem value="notes" className="border rounded-lg bg-card">
           <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline">
             <div className="flex items-center gap-4">

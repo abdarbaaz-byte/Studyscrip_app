@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, UserPlus, Users, FileText, BrainCircuit, BarChart3, Trash2 } from "lucide-react";
+import { Loader2, UserPlus, Users, FileText, BrainCircuit, BarChart3, Trash2, Megaphone, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   getSchool,
@@ -55,12 +55,20 @@ import {
   type QuizAttempt,
   deleteQuizAttempt,
   updateStudentDetails,
+  saveSchoolInformation,
+  getSchoolInformation,
+  deleteSchoolInformation,
+  type SchoolInformation,
 } from "@/lib/data";
 import { TeacherNotesForm } from "@/components/teacher-notes-form";
 import { AdminQuizForm } from "@/components/admin-quiz-form";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const CLASS_OPTIONS = ["all", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
 export default function TeacherDashboardPage() {
   const { user, userRole, userSchoolId, loading: authLoading } = useAuth();
@@ -72,6 +80,7 @@ export default function TeacherDashboardPage() {
   const [students, setStudents] = useState<SchoolStudent[]>([]);
   const [notes, setNotes] = useState<SchoolNote[]>([]);
   const [tests, setTests] = useState<Quiz[]>([]);
+  const [information, setInformation] = useState<SchoolInformation[]>([]);
   const [testAttempts, setTestAttempts] = useState<QuizAttempt[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   
@@ -81,6 +90,12 @@ export default function TeacherDashboardPage() {
   const [newStudentClass, setNewStudentClass] = useState("");
   const [isAddingStudent, setIsAddingStudent] = useState(false);
   
+  // Information form state
+  const [infoTitle, setInfoTitle] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
+  const [infoTargetClass, setInfoTargetClass] = useState("all");
+  const [isSendingInfo, setIsSendingInfo] = useState(false);
+
   const [studentToRemove, setStudentToRemove] = useState<SchoolStudent | null>(null);
   const [attemptToDelete, setAttemptToDelete] = useState<QuizAttempt | null>(null);
 
@@ -88,18 +103,20 @@ export default function TeacherDashboardPage() {
     if (!userSchoolId) return;
     setLoadingData(true);
     try {
-      const [schoolData, studentsData, notesData, testsData, attemptsData] = await Promise.all([
+      const [schoolData, studentsData, notesData, testsData, attemptsData, infoData] = await Promise.all([
         getSchool(userSchoolId),
         getStudentsForSchool(userSchoolId),
         getSchoolNotes(userSchoolId),
         getSchoolTests(userSchoolId),
         getTestAttemptsForSchool(userSchoolId),
+        getSchoolInformation(userSchoolId),
       ]);
       setSchool(schoolData);
       setStudents(studentsData);
       setNotes(notesData);
       setTests(testsData);
       setTestAttempts(attemptsData);
+      setInformation(infoData);
     } catch (error) {
       console.error("Failed to load teacher data:", error);
       toast({ variant: "destructive", title: "Failed to load data" });
@@ -196,6 +213,37 @@ export default function TeacherDashboardPage() {
     if (!userSchoolId) return;
     await deleteSchoolTest(userSchoolId, testId);
     toast({ title: "Test Deleted!" });
+    loadTeacherData();
+  };
+
+  const handleSendInformation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSchoolId || !infoTitle.trim() || !infoMessage.trim()) {
+        toast({variant: "destructive", title: "Please fill all fields."});
+        return;
+    }
+    setIsSendingInfo(true);
+    try {
+        await saveSchoolInformation(userSchoolId, {
+            title: infoTitle,
+            message: infoMessage,
+            targetClass: infoTargetClass
+        });
+        toast({ title: "Information Posted!" });
+        setInfoTitle("");
+        setInfoMessage("");
+        setInfoTargetClass("all");
+        loadTeacherData();
+    } catch (error: any) {
+        toast({variant: "destructive", title: "Failed to post information.", description: error.message});
+    }
+    setIsSendingInfo(false);
+  };
+
+  const handleDeleteInformation = async (infoId: string) => {
+    if (!userSchoolId) return;
+    await deleteSchoolInformation(userSchoolId, infoId);
+    toast({ title: "Information Deleted" });
     loadTeacherData();
   };
 
@@ -416,6 +464,84 @@ export default function TeacherDashboardPage() {
         </CardContent>
       </Card>
   );
+  
+  const renderInformationManagement = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Megaphone /> Post New Information</CardTitle>
+          <CardDescription>Send a message or announcement to your students.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSendInformation} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="info-title">Title</Label>
+              <Input id="info-title" value={infoTitle} onChange={(e) => setInfoTitle(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="info-message">Message</Label>
+              <Textarea id="info-message" value={infoMessage} onChange={(e) => setInfoMessage(e.target.value)} required rows={5}/>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="info-target-class">Target Class</Label>
+               <Select value={infoTargetClass} onValueChange={setInfoTargetClass}>
+                  <SelectTrigger id="info-target-class">
+                      <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {CLASS_OPTIONS.map(opt => (
+                          <SelectItem key={opt} value={opt}>{opt === 'all' ? 'For All Classes' : opt}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
+            <Button type="submit" disabled={isSendingInfo} className="w-full">
+              {isSendingInfo ? <Loader2 className="animate-spin mr-2"/> : <Send className="mr-2"/>}
+              Post Information
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      <Card>
+         <CardHeader>
+          <CardTitle>Posted Information</CardTitle>
+          <CardDescription>Messages you have sent to students.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {information.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No information posted yet.</p>
+            ) : (
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                    {information.map(info => (
+                        <div key={info.id} className="p-3 border rounded-md bg-secondary relative">
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                 <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+                                    <AlertDialogDescription>This will permanently delete the information post titled "{info.title}".</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteInformation(info.id)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                            <p className="font-semibold">{info.title}</p>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{info.message}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                For: {info.targetClass === 'all' ? 'All Classes' : info.targetClass} | Posted on: {format(info.createdAt.toDate(), "PPP")}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   const renderTestAttempts = () => (
     <Card>
@@ -501,6 +627,9 @@ export default function TeacherDashboardPage() {
           <Button variant={activeTab === 'students' ? 'default' : 'outline'} onClick={() => setActiveTab('students')}>
               <Users className="mr-2 h-4 w-4" /> Students
           </Button>
+           <Button variant={activeTab === 'info' ? 'default' : 'outline'} onClick={() => setActiveTab('info')}>
+              <Megaphone className="mr-2 h-4 w-4" /> Information
+          </Button>
           <Button variant={activeTab === 'notes' ? 'default' : 'outline'} onClick={() => setActiveTab('notes')}>
               <FileText className="mr-2 h-4 w-4" /> Notes
           </Button>
@@ -513,6 +642,7 @@ export default function TeacherDashboardPage() {
       </div>
       
       {activeTab === 'students' && renderStudentManagement()}
+      {activeTab === 'info' && renderInformationManagement()}
       {activeTab === 'notes' && renderNotesManagement()}
       {activeTab === 'tests' && renderTestManagement()}
       {activeTab === 'attempts' && renderTestAttempts()}

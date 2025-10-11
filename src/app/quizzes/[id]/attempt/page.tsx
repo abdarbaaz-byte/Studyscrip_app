@@ -194,9 +194,8 @@ function QuizAttemptContent() {
   const quizType = searchParams.get('type') || 'practice';
   const schoolId = searchParams.get('schoolId'); // For school tests
   const name = searchParams.get('name') || 'Anonymous';
-  const school = searchParams.get('school');
-  const userClass = searchParams.get('class');
-  const place = searchParams.get('place');
+  const school = searchParams.get('school') || 'N/A';
+  const userClass = searchParams.get('class') || 'N/A';
   const userId = searchParams.get('userId');
   const userEmail = searchParams.get('userEmail');
 
@@ -237,9 +236,9 @@ function QuizAttemptContent() {
           userId: userId,
           userEmail: userEmail,
           userName: name,
-          userSchool: school || 'N/A',
-          userClass: userClass || 'N/A',
-          userPlace: place || 'N/A',
+          userSchool: school,
+          userClass: userClass,
+          userPlace: '', // Removed from user input
           answers: currentAnswers,
           score: score,
           totalQuestions: quiz.questions.length,
@@ -251,7 +250,7 @@ function QuizAttemptContent() {
             await saveQuizAttempt(attemptData);
             // Store attempt flag and data in localStorage for redirection
             localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
-            const dataToSave = { answers: encodedAnswers, name, school, class: userClass, place };
+            const dataToSave = { answers: encodedAnswers, name, school, class: userClass };
             localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify(dataToSave));
         } catch(error) {
             console.error("Failed to save quiz attempt:", error);
@@ -271,7 +270,7 @@ function QuizAttemptContent() {
     }
     
     router.replace(`/quizzes/${quizId}/results?${queryParams.toString()}`);
-  }, [quiz, quizId, quizType, name, school, userClass, place, userId, userEmail, schoolId, router, toast]);
+  }, [quiz, quizId, quizType, name, school, userClass, userId, userEmail, schoolId, router, toast]);
 
   const triggerSubmit = useCallback(() => {
     handleSubmit(answers);
@@ -358,7 +357,7 @@ function QuizAttemptContent() {
 
   const handlePrev = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 

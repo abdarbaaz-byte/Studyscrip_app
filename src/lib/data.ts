@@ -40,6 +40,14 @@ export type SchoolNote = {
     targetClass: string; // e.g. '10th', '11th', 'all'
 };
 
+export type SchoolInformation = {
+  id: string;
+  title: string;
+  message: string;
+  targetClass: string;
+  createdAt: Timestamp;
+};
+
 // --- QUIZ ---
 export type QuestionType = 'mcq' | 'true_false' | 'fill_in_blank' | 'match';
 
@@ -1282,4 +1290,21 @@ export async function getTestAttemptsForSchool(schoolId: string): Promise<QuizAt
   const attempts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
   // Sort in code to avoid composite index
   return attempts.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
+}
+
+export async function getSchoolInformation(schoolId: string): Promise<SchoolInformation[]> {
+  const infoColRef = collection(db, 'schools', schoolId, 'information');
+  const q = query(infoColRef, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SchoolInformation));
+}
+
+export async function saveSchoolInformation(schoolId: string, info: Omit<SchoolInformation, 'id' | 'createdAt'>): Promise<void> {
+  const infoColRef = collection(db, 'schools', schoolId, 'information');
+  await addDoc(infoColRef, { ...info, createdAt: serverTimestamp() });
+}
+
+export async function deleteSchoolInformation(schoolId: string, infoId: string): Promise<void> {
+    const infoDocRef = doc(db, 'schools', schoolId, 'information', infoId);
+    await deleteDoc(infoDocRef);
 }
