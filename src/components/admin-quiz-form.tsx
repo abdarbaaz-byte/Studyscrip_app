@@ -27,7 +27,7 @@ import { Timestamp } from "firebase/firestore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
@@ -37,6 +37,8 @@ interface AdminQuizFormProps {
   onDelete: (id: string) => Promise<void>;
 }
 
+const CLASS_OPTIONS = ["all", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+
 const emptyQuiz: Omit<Quiz, 'id'> = {
   title: "",
   description: "",
@@ -44,6 +46,7 @@ const emptyQuiz: Omit<Quiz, 'id'> = {
   questions: [],
   startTime: undefined,
   endTime: undefined,
+  targetClass: 'all',
 };
 
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -133,6 +136,7 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                 <div className="flex justify-between text-sm text-muted-foreground">
                     <span>{quiz.questions.length} Questions</span>
                     <span>{quiz.duration ? `${quiz.duration} Minutes` : 'No time limit'}</span>
+                    <span className="font-semibold">For: {quiz.targetClass === 'all' ? 'All Classes' : quiz.targetClass}</span>
                 </div>
                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
@@ -154,13 +158,13 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
 }
 
 
-// Sub-component for the form itself
 function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onSave: (quiz: Quiz) => void, onCancel: () => void, isSaving: boolean }) {
   const [formData, setFormData] = useState<Omit<Quiz, 'id' | 'startTime' | 'endTime'>>({
       title: "",
       description: "",
       duration: 10,
       questions: [],
+      targetClass: 'all'
   });
   const [startTime, setStartTime] = useState<Date | undefined>();
   const [endTime, setEndTime] = useState<Date | undefined>();
@@ -168,7 +172,11 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
   useEffect(() => {
     if (quiz) {
         const { id, startTime: st, endTime: et, ...rest } = quiz;
-        setFormData(rest);
+        const initialData = { ...rest };
+        if (!initialData.targetClass) {
+            initialData.targetClass = 'all';
+        }
+        setFormData(initialData);
         setStartTime(st ? (st as Timestamp).toDate() : undefined);
         setEndTime(et ? (et as Timestamp).toDate() : undefined);
     } else {
@@ -181,6 +189,10 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: name === 'duration' ? parseInt(value) || 0 : value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleTimeChange = (date: Date | undefined, timeString: string, setter: (d: Date | undefined) => void) => {
@@ -324,7 +336,20 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                     />
                 </div>
           </div>
-          <div className="space-y-2 md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="targetClass">Target Class</Label>
+             <Select value={formData.targetClass} onValueChange={(value) => handleSelectChange('targetClass', value)}>
+                <SelectTrigger id="targetClass">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    {CLASS_OPTIONS.map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt === 'all' ? 'For All Classes' : opt}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" value={formData.description} onChange={handleChange} required />
           </div>

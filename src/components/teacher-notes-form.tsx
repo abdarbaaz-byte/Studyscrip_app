@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +7,6 @@ import type { SchoolNote, ContentItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Trash2, PlusCircle, Save, Loader2, Edit } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -19,9 +19,12 @@ interface TeacherNotesFormProps {
   onDelete: (id: string) => Promise<void>;
 }
 
+const CLASS_OPTIONS = ["all", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+
 const emptyNote: Omit<SchoolNote, 'id'> = {
   title: "",
   content: [],
+  targetClass: 'all',
 };
 
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -79,8 +82,11 @@ export function TeacherNotesForm({ initialNotes, onSave, onDelete }: TeacherNote
         {initialNotes.map(note => (
           <AccordionItem value={note.id} key={note.id} className="border rounded-md px-4 bg-secondary/50">
             <div className="flex items-center w-full">
-              <AccordionTrigger className="flex-grow hover:no-underline py-3 text-lg font-medium">
+              <AccordionTrigger className="flex-grow hover:no-underline py-3 text-lg font-medium text-left">
                 {note.title}
+                <span className="text-xs font-normal text-muted-foreground ml-2 rounded-full bg-background px-2 py-0.5">
+                  For: {note.targetClass === 'all' ? 'All Classes' : note.targetClass}
+                </span>
               </AccordionTrigger>
               <div className="flex items-center gap-3 ml-4">
                  <Button variant="outline" size="sm" onClick={() => handleEdit(note)}>
@@ -128,11 +134,20 @@ function NoteForm({ note, onSave, onCancel, isSaving }: { note: SchoolNote | nul
   const [formData, setFormData] = useState<Omit<SchoolNote, 'id'>>(note || emptyNote);
 
   useEffect(() => {
-    setFormData(note || emptyNote);
+    // Ensure targetClass has a default value
+    const initialData = note ? { ...note } : { ...emptyNote };
+    if (!initialData.targetClass) {
+        initialData.targetClass = 'all';
+    }
+    setFormData(initialData);
   }, [note]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
@@ -161,9 +176,24 @@ function NoteForm({ note, onSave, onCancel, isSaving }: { note: SchoolNote | nul
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Topic Title</Label>
-        <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Topic Title</Label>
+            <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="targetClass">Target Class</Label>
+             <Select value={formData.targetClass} onValueChange={(value) => handleSelectChange('targetClass', value)}>
+                <SelectTrigger id="targetClass">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    {CLASS_OPTIONS.map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt === 'all' ? 'For All Classes' : opt}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
       </div>
 
       <div className="space-y-4 pt-4">

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -31,7 +32,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Loader2, UserPlus, Users, FileText, BrainCircuit, BarChart3, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,7 @@ import {
   getTestAttemptsForSchool,
   type QuizAttempt,
   deleteQuizAttempt,
+  updateStudentDetails,
 } from "@/lib/data";
 import { TeacherNotesForm } from "@/components/teacher-notes-form";
 import { AdminQuizForm } from "@/components/admin-quiz-form";
@@ -72,8 +73,13 @@ export default function TeacherDashboardPage() {
   const [tests, setTests] = useState<Quiz[]>([]);
   const [testAttempts, setTestAttempts] = useState<QuizAttempt[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  
+  // Student form state
   const [newStudentEmail, setNewStudentEmail] = useState("");
+  const [newStudentName, setNewStudentName] = useState("");
+  const [newStudentClass, setNewStudentClass] = useState("");
   const [isAddingStudent, setIsAddingStudent] = useState(false);
+  
   const [studentToRemove, setStudentToRemove] = useState<SchoolStudent | null>(null);
   const [attemptToDelete, setAttemptToDelete] = useState<QuizAttempt | null>(null);
 
@@ -115,16 +121,21 @@ export default function TeacherDashboardPage() {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userSchoolId || !newStudentEmail.trim()) return;
+    if (!userSchoolId || !newStudentEmail.trim() || !newStudentName.trim() || !newStudentClass.trim()) {
+        toast({variant: "destructive", title: "Please fill all student details."})
+        return;
+    };
 
     setIsAddingStudent(true);
     try {
-      await addStudentToSchool(userSchoolId, newStudentEmail);
+      await addStudentToSchool(userSchoolId, newStudentEmail, newStudentName, newStudentClass);
       toast({
         title: "Student Added",
-        description: `${newStudentEmail} has been added to your school.`,
+        description: `${newStudentName} has been added to your school.`,
       });
       setNewStudentEmail("");
+      setNewStudentName("");
+      setNewStudentClass("");
       loadTeacherData(); // Refresh student list
     } catch (error: any) {
       toast({
@@ -146,7 +157,7 @@ export default function TeacherDashboardPage() {
       await removeStudentFromSchool(userSchoolId, studentToRemove.uid);
       toast({
         title: "Student Removed",
-        description: `${studentToRemove.email} has been removed.`,
+        description: `${studentToRemove.name} has been removed.`,
       });
       setStudentToRemove(null);
       loadTeacherData(); // Refresh student list
@@ -246,12 +257,10 @@ export default function TeacherDashboardPage() {
         <CardContent>
           <form
             onSubmit={handleAddStudent}
-            className="mb-6 flex items-center gap-4 rounded-lg border bg-secondary/50 p-4"
+            className="mb-6 grid grid-cols-1 md:grid-cols-4 items-end gap-4 rounded-lg border bg-secondary/50 p-4"
           >
-            <div className="flex-grow space-y-1">
-              <Label htmlFor="student-email" className="sr-only">
-                Student Email
-              </Label>
+            <div className="space-y-1">
+              <Label htmlFor="student-email">Student Email</Label>
               <Input
                 id="student-email"
                 type="email"
@@ -261,7 +270,29 @@ export default function TeacherDashboardPage() {
                 required
               />
             </div>
-            <Button type="submit" disabled={isAddingStudent}>
+             <div className="space-y-1">
+              <Label htmlFor="student-name">Student Name</Label>
+              <Input
+                id="student-name"
+                type="text"
+                placeholder="Full Name"
+                value={newStudentName}
+                onChange={(e) => setNewStudentName(e.target.value)}
+                required
+              />
+            </div>
+             <div className="space-y-1">
+              <Label htmlFor="student-class">Class</Label>
+              <Input
+                id="student-class"
+                type="text"
+                placeholder="e.g., 10th"
+                value={newStudentClass}
+                onChange={(e) => setNewStudentClass(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" disabled={isAddingStudent} className="w-full md:w-auto">
               {isAddingStudent ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -274,7 +305,9 @@ export default function TeacherDashboardPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Student Email</TableHead>
+                <TableHead>Student Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Class</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -282,7 +315,7 @@ export default function TeacherDashboardPage() {
               {students.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={2}
+                    colSpan={4}
                     className="h-24 text-center text-muted-foreground"
                   >
                     No students added yet.
@@ -292,7 +325,13 @@ export default function TeacherDashboardPage() {
                 students.map((student) => (
                   <TableRow key={student.uid}>
                     <TableCell className="font-medium">
+                      {student.name}
+                    </TableCell>
+                     <TableCell>
                       {student.email}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{student.userClass}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
@@ -308,7 +347,7 @@ export default function TeacherDashboardPage() {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>
-                              Remove {studentToRemove?.email}?
+                              Remove {studentToRemove?.name}?
                             </AlertDialogTitle>
                             <AlertDialogDescription>
                               This will remove the student's access to your

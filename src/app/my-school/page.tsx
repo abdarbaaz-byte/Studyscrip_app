@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +8,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { getSchool, type School, getSchoolNotes, type SchoolNote, type ContentItem, getSchoolTests, type Quiz } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks } from "lucide-react";
+import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export default function MySchoolPage() {
   const [school, setSchool] = useState<School | null>(null);
   const [notes, setNotes] = useState<SchoolNote[]>([]);
   const [tests, setTests] = useState<Quiz[]>([]);
+  const [userClass, setUserClass] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
   const [numPages, setNumPages] = useState<number | undefined>();
@@ -42,14 +44,26 @@ export default function MySchoolPage() {
 
     async function loadSchoolData() {
       try {
-        const [schoolData, schoolNotes, schoolTests] = await Promise.all([
-            getSchool(userSchoolId!),
+        const schoolData = await getSchool(userSchoolId!);
+        setSchool(schoolData);
+
+        // Find the current student's class from the school data
+        const studentInfo = schoolData?.students?.find(s => s.uid === user?.uid);
+        const studentClass = studentInfo?.userClass || null;
+        setUserClass(studentClass);
+
+        const [schoolNotes, schoolTests] = await Promise.all([
             getSchoolNotes(userSchoolId!),
             getSchoolTests(userSchoolId!)
         ]);
-        setSchool(schoolData);
-        setNotes(schoolNotes);
-        setTests(schoolTests);
+
+        // Filter content based on student's class
+        const visibleNotes = schoolNotes.filter(note => note.targetClass === 'all' || note.targetClass === studentClass);
+        const visibleTests = schoolTests.filter(test => test.targetClass === 'all' || test.targetClass === studentClass);
+        
+        setNotes(visibleNotes);
+        setTests(visibleTests);
+
       } catch (error) {
         console.error("Failed to load school data:", error);
       } finally {
@@ -68,7 +82,7 @@ export default function MySchoolPage() {
 
   const handleViewContent = (item: ContentItem) => {
     setContentToView(item);
-    setNumPages(undefined); // Reset page count when opening a new item
+    setNumPages(undefined);
   };
   
   const renderContentInDialog = () => {
@@ -173,6 +187,7 @@ export default function MySchoolPage() {
         <SchoolIcon className="h-16 w-16 mx-auto text-primary mb-4" />
         <h1 className="font-headline text-4xl font-bold">{school.name}</h1>
         <p className="text-xl text-muted-foreground">Your School Portal</p>
+         {userClass && <div className="mt-2 inline-flex items-center gap-2 text-sm font-medium bg-secondary text-secondary-foreground py-1 px-3 rounded-full"><User className="h-4 w-4"/> Class: {userClass}</div>}
       </div>
 
       <Accordion type="multiple" defaultValue={["notes", "tests"]} className="w-full max-w-4xl mx-auto space-y-4">
