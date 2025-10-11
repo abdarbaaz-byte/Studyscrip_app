@@ -1,5 +1,4 @@
 
-
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove } from 'firebase/firestore';
 import type { Course } from './courses';
@@ -30,6 +29,12 @@ export type SchoolStudent = {
     email: string;
 };
 
+// --- School Content ---
+export type SchoolNote = {
+    id: string;
+    title: string;
+    content: ContentItem[];
+};
 
 // --- QUIZ ---
 export type QuestionType = 'mcq' | 'true_false' | 'fill_in_blank' | 'match';
@@ -1163,10 +1168,31 @@ export async function getStudentsForSchool(schoolId: string): Promise<SchoolStud
 
 // --- SCHOOL CONTENT ---
 
-// Placeholder: These will be implemented in a future step.
-export async function getSchoolNotes(schoolId: string): Promise<any[]> {
-    console.log(`Fetching notes for school: ${schoolId}`);
-    return [];
+export async function saveSchoolNote(schoolId: string, note: SchoolNote): Promise<void> {
+    const { id, ...data } = note;
+    const notesCollectionRef = collection(db, 'schools', schoolId, 'notes');
+    
+    if (id) {
+        const noteDocRef = doc(notesCollectionRef, id);
+        await setDoc(noteDocRef, data, { merge: true });
+    } else {
+        await addDoc(notesCollectionRef, data);
+    }
+}
+
+export async function getSchoolNotes(schoolId: string): Promise<SchoolNote[]> {
+    const notesCollectionRef = collection(db, 'schools', schoolId, 'notes');
+    const q = query(notesCollectionRef, orderBy('title'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SchoolNote));
+}
+
+export async function deleteSchoolNote(schoolId: string, noteId: string): Promise<void> {
+    const noteDocRef = doc(db, 'schools', schoolId, 'notes', noteId);
+    await deleteDoc(noteDocRef);
 }
 
 // Placeholder: These will be implemented in a future step.

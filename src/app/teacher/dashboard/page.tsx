@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, PlusCircle, Trash2, UserPlus, Users } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, UserPlus, Users, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   getSchool,
@@ -42,7 +42,12 @@ import {
   removeStudentFromSchool,
   type School,
   type SchoolStudent,
+  type SchoolNote,
+  saveSchoolNote,
+  deleteSchoolNote,
+  getSchoolNotes
 } from "@/lib/data";
+import { TeacherNotesForm } from "@/components/teacher-notes-form";
 
 export default function TeacherDashboardPage() {
   const { user, userRole, userSchoolId, loading: authLoading } = useAuth();
@@ -51,6 +56,7 @@ export default function TeacherDashboardPage() {
 
   const [school, setSchool] = useState<School | null>(null);
   const [students, setStudents] = useState<SchoolStudent[]>([]);
+  const [notes, setNotes] = useState<SchoolNote[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [newStudentEmail, setNewStudentEmail] = useState("");
   const [isAddingStudent, setIsAddingStudent] = useState(false);
@@ -62,12 +68,14 @@ export default function TeacherDashboardPage() {
     if (!userSchoolId) return;
     setLoadingData(true);
     try {
-      const [schoolData, studentsData] = await Promise.all([
+      const [schoolData, studentsData, notesData] = await Promise.all([
         getSchool(userSchoolId),
         getStudentsForSchool(userSchoolId),
+        getSchoolNotes(userSchoolId),
       ]);
       setSchool(schoolData);
       setStudents(studentsData);
+      setNotes(notesData);
     } catch (error) {
       console.error("Failed to load teacher data:", error);
       toast({ variant: "destructive", title: "Failed to load data" });
@@ -134,6 +142,20 @@ export default function TeacherDashboardPage() {
     }
   };
 
+  const handleSaveNote = async (note: SchoolNote) => {
+    if (!userSchoolId) return;
+    await saveSchoolNote(userSchoolId, note);
+    toast({ title: "Note Saved!" });
+    loadTeacherData();
+  };
+  
+  const handleDeleteNote = async (noteId: string) => {
+    if (!userSchoolId) return;
+    await deleteSchoolNote(userSchoolId, noteId);
+    toast({ title: "Note Deleted!" });
+    loadTeacherData();
+  };
+
   if (authLoading || loadingData) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -169,6 +191,24 @@ export default function TeacherDashboardPage() {
         </h1>
         <p className="text-xl text-muted-foreground">{school.name}</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText /> Content Management
+          </CardTitle>
+          <CardDescription>
+            Add and manage notes for your students.
+          </CardDescription>
+        </CardHeader>
+         <CardContent>
+            <TeacherNotesForm
+              initialNotes={notes}
+              onSave={handleSaveNote}
+              onDelete={handleDeleteNote}
+            />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -272,18 +312,7 @@ export default function TeacherDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Placeholder for future sections */}
-      <Card>
-        <CardHeader>
-            <CardTitle>Content Management</CardTitle>
-            <CardDescription>Coming soon: Add notes and tests for your students here.</CardDescription>
-        </CardHeader>
-         <CardContent>
-            <div className="text-center text-muted-foreground py-8">
-                Feature under construction.
-            </div>
-        </CardContent>
-      </Card>
+      
     </div>
   );
 }
