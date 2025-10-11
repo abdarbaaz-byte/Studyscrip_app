@@ -715,13 +715,22 @@ export async function getQuiz(id: string): Promise<Quiz | null> {
     const quizSnap = await getDoc(quizDocRef);
     if (quizSnap.exists()) {
         const data = quizSnap.data();
-        // Manually convert Timestamps to Dates for client-side usage if needed
         return { 
             id: quizSnap.id, 
             ...data,
-            // No need to convert here, let components handle it if they need Date objects
         } as Quiz;
     }
+
+    // Fallback: Check if it's a school test
+    const schoolsSnapshot = await getDocs(collection(db, 'schools'));
+    for (const schoolDoc of schoolsSnapshot.docs) {
+        const testDocRef = doc(db, 'schools', schoolDoc.id, 'tests', id);
+        const testSnap = await getDoc(testDocRef);
+        if (testSnap.exists()) {
+            return { id: testSnap.id, ...testSnap.data() } as Quiz;
+        }
+    }
+    
     return null;
 }
 
@@ -944,7 +953,7 @@ export async function approveReview(id: string): Promise<void> {
 
 export async function deleteReview(id: string): Promise<void> {
     const reviewDocRef = doc(db, 'reviews', id);
-    await deleteDoc(reviewDocRef);
+await deleteDoc(reviewDocRef);
 }
 
 // --- LIVE CLASSES ---
@@ -1195,8 +1204,39 @@ export async function deleteSchoolNote(schoolId: string, noteId: string): Promis
     await deleteDoc(noteDocRef);
 }
 
-// Placeholder: These will be implemented in a future step.
-export async function getSchoolTests(schoolId:string): Promise<any[]> {
-    console.log(`Fetching tests for school: ${schoolId}`);
-    return [];
+
+export async function getSchoolTests(schoolId:string): Promise<Quiz[]> {
+    const testsCollectionRef = collection(db, 'schools', schoolId, 'tests');
+    const q = query(testsCollectionRef, orderBy('title'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+}
+
+
+export async function saveSchoolTest(schoolId: string, test: Quiz): Promise<void> {
+    const { id, ...data } = test;
+    const testsCollectionRef = collection(db, 'schools', schoolId, 'tests');
+
+    const dataToSave: { [key: string]: any } = { ...data };
+
+    if (data.startTime) dataToSave.startTime = data.startTime instanceof Timestamp ? data.startTime : Timestamp.fromDate(data.startTime as any);
+    else delete dataToSave.startTime;
+
+    if (data.endTime) dataToSave.endTime = data.endTime instanceof Timestamp ? data.endTime : Timestamp.fromDate(data.endTime as any);
+    else delete dataToSave.endTime;
+
+    if (id) {
+        const testDocRef = doc(testsCollectionRef, id);
+        await setDoc(testDocRef, dataToSave, { merge: true });
+    } else {
+        await addDoc(testsCollectionRef, dataToSave);
+    }
+}
+
+export async function deleteSchoolTest(schoolId: string, testId: string): Promise<void> {
+    const testDocRef = doc(db, 'schools', schoolId, 'tests', testId);
+    await deleteDoc(testDocRef);
 }

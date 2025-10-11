@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, PlusCircle, Trash2, UserPlus, Users, FileText } from "lucide-react";
+import { Loader2, UserPlus, Users, FileText, BrainCircuit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   getSchool,
@@ -45,18 +45,25 @@ import {
   type SchoolNote,
   saveSchoolNote,
   deleteSchoolNote,
-  getSchoolNotes
+  getSchoolNotes,
+  getSchoolTests,
+  saveSchoolTest,
+  deleteSchoolTest,
+  type Quiz,
 } from "@/lib/data";
 import { TeacherNotesForm } from "@/components/teacher-notes-form";
+import { AdminQuizForm } from "@/components/admin-quiz-form";
 
 export default function TeacherDashboardPage() {
   const { user, userRole, userSchoolId, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
+  const [activeTab, setActiveTab] = useState('students');
   const [school, setSchool] = useState<School | null>(null);
   const [students, setStudents] = useState<SchoolStudent[]>([]);
   const [notes, setNotes] = useState<SchoolNote[]>([]);
+  const [tests, setTests] = useState<Quiz[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [newStudentEmail, setNewStudentEmail] = useState("");
   const [isAddingStudent, setIsAddingStudent] = useState(false);
@@ -68,14 +75,16 @@ export default function TeacherDashboardPage() {
     if (!userSchoolId) return;
     setLoadingData(true);
     try {
-      const [schoolData, studentsData, notesData] = await Promise.all([
+      const [schoolData, studentsData, notesData, testsData] = await Promise.all([
         getSchool(userSchoolId),
         getStudentsForSchool(userSchoolId),
         getSchoolNotes(userSchoolId),
+        getSchoolTests(userSchoolId),
       ]);
       setSchool(schoolData);
       setStudents(studentsData);
       setNotes(notesData);
+      setTests(testsData);
     } catch (error) {
       console.error("Failed to load teacher data:", error);
       toast({ variant: "destructive", title: "Failed to load data" });
@@ -156,6 +165,21 @@ export default function TeacherDashboardPage() {
     loadTeacherData();
   };
 
+  const handleSaveTest = async (test: Quiz) => {
+    if (!userSchoolId) return;
+    await saveSchoolTest(userSchoolId, test);
+    toast({ title: "Test Saved!" });
+    loadTeacherData();
+  };
+
+  const handleDeleteTest = async (testId: string) => {
+    if (!userSchoolId) return;
+    await deleteSchoolTest(userSchoolId, testId);
+    toast({ title: "Test Deleted!" });
+    loadTeacherData();
+  };
+
+
   if (authLoading || loadingData) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -183,34 +207,8 @@ export default function TeacherDashboardPage() {
     );
   }
 
-  return (
-    <div className="container mx-auto py-10 space-y-8">
-      <div className="text-center">
-        <h1 className="font-headline text-4xl font-bold">
-          Teacher Dashboard
-        </h1>
-        <p className="text-xl text-muted-foreground">{school.name}</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText /> Content Management
-          </CardTitle>
-          <CardDescription>
-            Add and manage notes for your students.
-          </CardDescription>
-        </CardHeader>
-         <CardContent>
-            <TeacherNotesForm
-              initialNotes={notes}
-              onSave={handleSaveNote}
-              onDelete={handleDeleteNote}
-            />
-        </CardContent>
-      </Card>
-
-      <Card>
+  const renderStudentManagement = () => (
+    <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users /> Student Management
@@ -278,7 +276,7 @@ export default function TeacherDashboardPage() {
                             size="sm"
                             onClick={() => handleRemoveStudentClick(student)}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                            Remove
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -311,8 +309,74 @@ export default function TeacherDashboardPage() {
           </Table>
         </CardContent>
       </Card>
+  );
 
+  const renderNotesManagement = () => (
+     <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText /> Notes Management
+          </CardTitle>
+          <CardDescription>
+            Add and manage notes topics for your students.
+          </CardDescription>
+        </CardHeader>
+         <CardContent>
+            <TeacherNotesForm
+              initialNotes={notes}
+              onSave={handleSaveNote}
+              onDelete={handleDeleteNote}
+            />
+        </CardContent>
+      </Card>
+  );
+  
+  const renderTestManagement = () => (
+     <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BrainCircuit /> Test Management
+          </CardTitle>
+          <CardDescription>
+            Create and manage tests for your students.
+          </CardDescription>
+        </CardHeader>
+         <CardContent>
+            <AdminQuizForm
+              initialQuizzes={tests}
+              onSave={handleSaveTest}
+              onDelete={handleDeleteTest}
+            />
+        </CardContent>
+      </Card>
+  );
+
+
+  return (
+    <div className="container mx-auto py-10 space-y-8">
+      <div className="text-center">
+        <h1 className="font-headline text-4xl font-bold">
+          Teacher Dashboard
+        </h1>
+        <p className="text-xl text-muted-foreground">{school.name}</p>
+      </div>
+
+       <div className="flex items-center gap-2 flex-wrap">
+          <Button variant={activeTab === 'students' ? 'default' : 'outline'} onClick={() => setActiveTab('students')}>
+              <Users className="mr-2 h-4 w-4" /> Students
+          </Button>
+          <Button variant={activeTab === 'notes' ? 'default' : 'outline'} onClick={() => setActiveTab('notes')}>
+              <FileText className="mr-2 h-4 w-4" /> Notes
+          </Button>
+          <Button variant={activeTab === 'tests' ? 'default' : 'outline'} onClick={() => setActiveTab('tests')}>
+              <BrainCircuit className="mr-2 h-4 w-4" /> Tests
+          </Button>
+      </div>
       
+      {activeTab === 'students' && renderStudentManagement()}
+      {activeTab === 'notes' && renderNotesManagement()}
+      {activeTab === 'tests' && renderTestManagement()}
+
     </div>
   );
 }

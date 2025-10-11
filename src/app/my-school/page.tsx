@@ -3,10 +3,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { getSchool, type School, getSchoolNotes, type SchoolNote, type ContentItem } from "@/lib/data";
+import { getSchool, type School, getSchoolNotes, type SchoolNote, type ContentItem, getSchoolTests, type Quiz } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon } from "lucide-react";
+import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -18,20 +19,14 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-// Placeholder type for tests
-type SchoolTest = { id: string, title: string };
-
 export default function MySchoolPage() {
   const { user, userSchoolId, loading: authLoading } = useAuth();
   const router = useRouter();
   const [school, setSchool] = useState<School | null>(null);
   const [notes, setNotes] = useState<SchoolNote[]>([]);
-  const [tests, setTests] = useState<SchoolTest[]>([]);
+  const [tests, setTests] = useState<Quiz[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-
-  // State for viewing content
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
-  // FIX: Moved state from renderContentInDialog to the top level of the component.
   const [numPages, setNumPages] = useState<number | undefined>();
 
   useEffect(() => {
@@ -47,14 +42,14 @@ export default function MySchoolPage() {
 
     async function loadSchoolData() {
       try {
-        const [schoolData, schoolNotes] = await Promise.all([
+        const [schoolData, schoolNotes, schoolTests] = await Promise.all([
             getSchool(userSchoolId!),
-            getSchoolNotes(userSchoolId!)
+            getSchoolNotes(userSchoolId!),
+            getSchoolTests(userSchoolId!)
         ]);
         setSchool(schoolData);
         setNotes(schoolNotes);
-        // const schoolTests = await getSchoolTests(userSchoolId!);
-        // setTests(schoolTests);
+        setTests(schoolTests);
       } catch (error) {
         console.error("Failed to load school data:", error);
       } finally {
@@ -234,8 +229,24 @@ export default function MySchoolPage() {
                     No tests have been assigned yet.
                 </p>
              ) : (
-                <div className="space-y-2">
-                    {/* Map through tests here */}
+                <div className="space-y-4">
+                    {tests.map(test => (
+                        <Card key={test.id} className="flex flex-col sm:flex-row items-center justify-between p-4">
+                           <div>
+                            <CardTitle className="font-headline text-lg">{test.title}</CardTitle>
+                            <CardDescription>{test.description}</CardDescription>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                               <div className="flex items-center gap-1"><ListChecks className="h-3 w-3"/> {test.questions.length} Questions</div>
+                               <div className="flex items-center gap-1"><Timer className="h-3 w-3"/> {test.duration || 'N/A'} mins</div>
+                            </div>
+                           </div>
+                           <Button asChild className="mt-4 sm:mt-0">
+                                <Link href={`/quizzes/${test.id}?type=live`}>
+                                    Take Test <ArrowRight className="ml-2 h-4 w-4"/>
+                                </Link>
+                           </Button>
+                        </Card>
+                    ))}
                 </div>
              )}
           </AccordionContent>
