@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 import { doc, setDoc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 
 
-export type UserRole = 'admin' | 'employee' | null;
+export type UserRole = 'admin' | 'employee' | 'teacher' | null;
 export type UserPermission = 
   | 'manage_academics'
   | 'manage_courses'
@@ -44,12 +44,14 @@ export type UserPermission =
   | 'manage_reviews'
   | 'manage_live_classes'
   | 'manage_certificates'
-  | 'manage_schools';
+  | 'manage_schools'
+  | 'manage_students';
 
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
   userRole: UserRole;
+  userSchoolId: string | null;
   permissions: UserPermission[];
   loading: boolean;
   hasPermission: (permission: UserPermission) => boolean;
@@ -67,21 +69,21 @@ const SUPER_ADMIN_EMAIL = "abdarbaaz@gmail.com";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole>(null);
+  const [userSchoolId, setUserSchoolId] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
   
-  // This derived state is now based on userRole
   const isAdmin = userRole === 'admin' || userRole === 'employee';
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (!currentUser) {
-        // If user is logged out, clear roles and stop loading
         setUserRole(null);
         setPermissions([]);
+        setUserSchoolId(null);
         setLoading(false);
       }
     });
@@ -89,20 +91,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribeAuth();
   }, []);
   
-  // Effect to listen to user's role and permissions from Firestore
   useEffect(() => {
-    if (user && user.emailVerified) { // Only fetch roles for verified users
-      // Check for super admin first
+    if (user && user.emailVerified) {
       if (user.email === SUPER_ADMIN_EMAIL) {
           setUserRole('admin');
-          // Super admin has all permissions
           setPermissions([
             'manage_academics', 'manage_courses', 'manage_free_notes', 
             'manage_bookstore', 'manage_payment_requests', 'manage_manual_access', 
             'view_purchases', 'view_payments', 'send_notifications', 'manage_chat',
             'manage_quizzes', 'view_quiz_attempts', 'manage_site_settings',
             'view_live_class_surveys', 'manage_reviews', 'manage_live_classes',
-            'manage_certificates', 'manage_schools'
+            'manage_certificates', 'manage_schools', 'manage_students'
           ]);
           setLoading(false);
           return;
@@ -113,27 +112,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setUserRole(data.role || null);
-          setPermissions(data.permissions || []);
+          setUserSchoolId(data.schoolId || null);
+          // Teachers get student management permission by default
+          if (data.role === 'teacher') {
+            setPermissions(['manage_students']);
+          } else {
+            setPermissions(data.permissions || []);
+          }
         } else {
-          // If user doc doesn't exist for some reason
           setUserRole(null);
           setPermissions([]);
+          setUserSchoolId(null);
         }
         setLoading(false);
       });
       return () => unsubscribeFirestore();
     } else {
-      // No user or user not verified, clear role data
       setUserRole(null);
       setPermissions([]);
+      setUserSchoolId(null);
       if (user && !user.emailVerified) {
-        // If user is logged in but not verified, stop loading
         setLoading(false);
       }
     }
   }, [user]);
 
-  // Effect for single-device session management
    useEffect(() => {
     if (!user) return;
 
@@ -145,7 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedToken = localStorage.getItem('sessionToken');
         
         if (data.activeSessionToken && storedToken && data.activeSessionToken !== storedToken) {
-          // Tokens don't match, another device has logged in.
           signOut(auth).then(() => {
             localStorage.removeItem('sessionToken');
             toast({
@@ -167,10 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Update Firebase Auth user profile with display name
       await updateProfile(user, { displayName: name });
       
-      // Send verification email
       await sendEmailVerification(user);
 
       const userDocRef = doc(db, "users", user.uid);
@@ -187,7 +187,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userClass: "",
           mobileNumber: "",
           certificates: [],
-          activeSessionToken: null, // Session token will be set on first verified login
+          activeSessionToken: null,
+          schoolId: null,
       });
 
       toast({ 
@@ -195,7 +196,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "A verification link has been sent to your email."
       });
       
-      // Log the user out and redirect to verification page
       await signOut(auth);
       router.push("/verify-email");
 
@@ -212,13 +212,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const loggedInUser = userCredential.user;
 
       if (!loggedInUser.emailVerified) {
-          // DO NOT log them out. Keep them logged in so they can resend verification.
           toast({
               variant: "destructive",
               title: "Email Not Verified",
               description: "Please verify your email address before logging in.",
           });
-          router.push("/verify-email"); // Redirect to verification page
+          router.push("/verify-email");
           return false;
       }
 
@@ -229,7 +228,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('sessionToken', sessionToken);
 
       const userData: any = { activeSessionToken: sessionToken };
-      // On first login, check if this user should be the superadmin
       if (loggedInUser.email === SUPER_ADMIN_EMAIL && (!userDoc.exists() || !userDoc.data().role)) {
         userData.role = 'admin';
       }
@@ -238,7 +236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          await setDoc(userDocRef, {
             uid: loggedInUser.uid,
             email: loggedInUser.email,
-            displayName: loggedInUser.displayName, // Carry over display name
+            displayName: loggedInUser.displayName,
             createdAt: new Date().toISOString(),
             readNotifications: [],
             school: "",
@@ -253,9 +251,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       toast({ title: "Logged in successfully!" });
       
-      if (email === SUPER_ADMIN_EMAIL) {
+      const docData = userDoc.exists() ? userDoc.data() : {};
+      if (docData.role === 'admin' || loggedInUser.email === SUPER_ADMIN_EMAIL) {
         router.push("/admin/dashboard");
-      } else {
+      } else if (docData.role === 'teacher') {
+        router.push("/teacher/dashboard");
+      }
+      else {
         router.push("/");
       }
       return true;
@@ -314,6 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAdmin,
     userRole,
+    userSchoolId,
     permissions,
     loading,
     hasPermission,

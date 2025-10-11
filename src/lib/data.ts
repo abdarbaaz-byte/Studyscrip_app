@@ -22,6 +22,12 @@ export type School = {
   id?: string; // Firestore doc ID
   name: string;
   teachers: SchoolTeacher[];
+  students?: SchoolStudent[];
+};
+
+export type SchoolStudent = {
+    uid: string;
+    email: string;
 };
 
 
@@ -99,6 +105,8 @@ export type UserProfile = {
     userClass?: string;
     mobileNumber?: string;
     certificates?: UserCertificate[];
+    role?: 'admin' | 'employee' | 'teacher' | null;
+    schoolId?: string | null;
 };
 
 // COURSES
@@ -1027,6 +1035,15 @@ export async function getSchools(): Promise<School[]> {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as School));
 }
 
+export async function getSchool(id: string): Promise<School | null> {
+  const schoolDocRef = doc(db, 'schools', id);
+  const schoolSnap = await getDoc(schoolDocRef);
+  if (schoolSnap.exists()) {
+    return { id: schoolSnap.id, ...schoolSnap.data() } as School;
+  }
+  return null;
+}
+
 export async function saveSchool(school: Omit<School, 'id'>): Promise<string> {
   const schoolsCol = collection(db, 'schools');
   const docRef = await addDoc(schoolsCol, school);
@@ -1090,4 +1107,56 @@ export async function removeTeacherFromSchool(schoolId: string, teacherId: strin
 
   await batch.commit();
 }
+
+export async function addStudentToSchool(schoolId: string, studentEmail: string): Promise<void> {
+    const studentUser = await findUserByEmail(studentEmail);
+    if (!studentUser) {
+        throw new Error(`User with email ${studentEmail} not found. Please ask them to register first.`);
+    }
+
+    const batch = writeBatch(db);
+
+    const userDocRef = doc(db, 'users', studentUser.uid);
+    batch.update(userDocRef, {
+        schoolId: schoolId
+    });
+
+    const schoolDocRef = doc(db, 'schools', schoolId);
+    batch.update(schoolDocRef, {
+        students: arrayUnion({
+            uid: studentUser.uid,
+            email: studentUser.email
+        })
+    });
+
+    await batch.commit();
+}
+
+export async function removeStudentFromSchool(schoolId: string, studentId: string): Promise<void> {
+    const schoolDocRef = doc(db, 'schools', schoolId);
+    const schoolSnap = await getDoc(schoolDocRef);
+    if (!schoolSnap.exists()) throw new Error("School not found.");
+
+    const schoolData = schoolSnap.data() as School;
+    const studentToRemove = schoolData.students?.find(s => s.uid === studentId);
+
+    if (!studentToRemove) throw new Error("Student not found in this school.");
+
+    const batch = writeBatch(db);
+
+    const userDocRef = doc(db, 'users', studentId);
+    batch.update(userDocRef, {
+        schoolId: null
+    });
     
+    batch.update(schoolDocRef, {
+        students: arrayRemove(studentToRemove)
+    });
+
+    await batch.commit();
+}
+
+export async function getStudentsForSchool(schoolId: string): Promise<SchoolStudent[]> {
+  const schoolDoc = await getSchool(schoolId);
+  return schoolDoc?.students || [];
+}

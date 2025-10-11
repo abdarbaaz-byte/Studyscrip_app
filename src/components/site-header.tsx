@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut, Share2, User, Link as LinkIcon } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2, User, Link as LinkIcon, School } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAdmin, logOut } = useAuth();
+  const { user, isAdmin, userRole, logOut } = useAuth();
   const { toast } = useToast();
   const isAuthPage = ["/login", "/signup", "/forgot-password", "/verify-email"].includes(pathname);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -143,6 +143,11 @@ export function SiteHeader() {
                 Dashboard
               </Link>
             )}
+            {userRole === 'teacher' && (
+                <Link href="/teacher/dashboard" className={cn("transition-colors hover:text-foreground/80", pathname.startsWith('/teacher') ? "text-foreground" : "text-foreground/60")}>
+                    Teacher Dashboard
+                </Link>
+            )}
           </nav>
         </div>
         
@@ -200,6 +205,11 @@ export function SiteHeader() {
                     Dashboard
                   </Link>
                  )}
+                 {userRole === 'teacher' && (
+                    <Link href="/teacher/dashboard" className="text-foreground/70 transition-colors hover:text-foreground" onClick={handleLinkClick}>
+                        Teacher Dashboard
+                    </Link>
+                )}
                   <Link
                     href="/feedback"
                     className="text-foreground/70 transition-colors hover:text-foreground"
@@ -302,7 +312,15 @@ export function SiteHeader() {
           
           {user ? (
              <div className="hidden md:flex items-center gap-2">
-                <Button asChild variant="secondary">
+                {userRole === 'teacher' && (
+                    <Button asChild variant="secondary">
+                        <Link href="/teacher/dashboard">
+                            <School className="mr-2 h-4 w-4"/>
+                            Teacher Dashboard
+                        </Link>
+                    </Button>
+                )}
+                <Button asChild variant={userRole === 'teacher' ? 'outline' : 'secondary'}>
                   <Link href="/my-profile">
                       <User className="mr-2 h-4 w-4" />
                       My Profile
