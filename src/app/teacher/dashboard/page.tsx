@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, UserPlus, Users, FileText, BrainCircuit } from "lucide-react";
+import { Loader2, UserPlus, Users, FileText, BrainCircuit, BarChart3, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   getSchool,
@@ -50,9 +50,15 @@ import {
   saveSchoolTest,
   deleteSchoolTest,
   type Quiz,
+  getTestAttemptsForSchool,
+  type QuizAttempt,
+  deleteQuizAttempt,
 } from "@/lib/data";
 import { TeacherNotesForm } from "@/components/teacher-notes-form";
 import { AdminQuizForm } from "@/components/admin-quiz-form";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function TeacherDashboardPage() {
   const { user, userRole, userSchoolId, loading: authLoading } = useAuth();
@@ -64,27 +70,29 @@ export default function TeacherDashboardPage() {
   const [students, setStudents] = useState<SchoolStudent[]>([]);
   const [notes, setNotes] = useState<SchoolNote[]>([]);
   const [tests, setTests] = useState<Quiz[]>([]);
+  const [testAttempts, setTestAttempts] = useState<QuizAttempt[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [newStudentEmail, setNewStudentEmail] = useState("");
   const [isAddingStudent, setIsAddingStudent] = useState(false);
-  const [studentToRemove, setStudentToRemove] = useState<SchoolStudent | null>(
-    null
-  );
+  const [studentToRemove, setStudentToRemove] = useState<SchoolStudent | null>(null);
+  const [attemptToDelete, setAttemptToDelete] = useState<QuizAttempt | null>(null);
 
   const loadTeacherData = useCallback(async () => {
     if (!userSchoolId) return;
     setLoadingData(true);
     try {
-      const [schoolData, studentsData, notesData, testsData] = await Promise.all([
+      const [schoolData, studentsData, notesData, testsData, attemptsData] = await Promise.all([
         getSchool(userSchoolId),
         getStudentsForSchool(userSchoolId),
         getSchoolNotes(userSchoolId),
         getSchoolTests(userSchoolId),
+        getTestAttemptsForSchool(userSchoolId),
       ]);
       setSchool(schoolData);
       setStudents(studentsData);
       setNotes(notesData);
       setTests(testsData);
+      setTestAttempts(attemptsData);
     } catch (error) {
       console.error("Failed to load teacher data:", error);
       toast({ variant: "destructive", title: "Failed to load data" });
@@ -177,6 +185,24 @@ export default function TeacherDashboardPage() {
     await deleteSchoolTest(userSchoolId, testId);
     toast({ title: "Test Deleted!" });
     loadTeacherData();
+  };
+
+  const handleDeleteAttemptClick = (attempt: QuizAttempt) => {
+    setAttemptToDelete(attempt);
+  };
+
+  const confirmDeleteAttempt = async () => {
+    if (attemptToDelete && attemptToDelete.id) {
+        try {
+            await deleteQuizAttempt(attemptToDelete.id);
+            setTestAttempts(prev => prev.filter((a) => a.id !== attemptToDelete!.id));
+            toast({ title: "Test attempt deleted successfully." });
+        } catch (error) {
+            console.error("Failed to delete quiz attempt:", error);
+            toast({ variant: "destructive", title: "Failed to delete test attempt." });
+        }
+      setAttemptToDelete(null);
+    }
   };
 
 
@@ -351,6 +377,76 @@ export default function TeacherDashboardPage() {
       </Card>
   );
 
+  const renderTestAttempts = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+            <BarChart3 /> Test Attempts
+        </CardTitle>
+        <CardDescription>View all submitted test results from your students.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Student</TableHead>
+              <TableHead>Test</TableHead>
+              <TableHead>Score</TableHead>
+              <TableHead>Submitted At</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {testAttempts.map((attempt) => (
+              <TableRow key={attempt.id}>
+                <TableCell>
+                    <div className="font-medium">{attempt.userName}</div>
+                    <div className="text-sm text-muted-foreground">{attempt.userEmail}</div>
+                </TableCell>
+                <TableCell>{attempt.quizTitle}</TableCell>
+                <TableCell>
+                    <Badge variant={attempt.percentage >= 50 ? 'default' : 'destructive'} className={cn(attempt.percentage >= 50 && "bg-green-600")}>
+                        {attempt.score} / {attempt.totalQuestions} ({attempt.percentage.toFixed(0)}%)
+                    </Badge>
+                </TableCell>
+                <TableCell>{format(attempt.submittedAt.toDate(), "PPP p")}</TableCell>
+                <TableCell className="text-right">
+                   <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAttemptClick(attempt)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="sr-only">Delete Attempt</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Test Attempt?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will permanently delete the attempt by "{attemptToDelete?.userName}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setAttemptToDelete(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteAttempt}>Continue</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
+            ))}
+            {testAttempts.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        No test attempts have been submitted yet.
+                    </TableCell>
+                </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+
 
   return (
     <div className="container mx-auto py-10 space-y-8">
@@ -371,11 +467,15 @@ export default function TeacherDashboardPage() {
           <Button variant={activeTab === 'tests' ? 'default' : 'outline'} onClick={() => setActiveTab('tests')}>
               <BrainCircuit className="mr-2 h-4 w-4" /> Tests
           </Button>
+          <Button variant={activeTab === 'attempts' ? 'default' : 'outline'} onClick={() => setActiveTab('attempts')}>
+              <BarChart3 className="mr-2 h-4 w-4" /> Test Attempts
+          </Button>
       </div>
       
       {activeTab === 'students' && renderStudentManagement()}
       {activeTab === 'notes' && renderNotesManagement()}
       {activeTab === 'tests' && renderTestManagement()}
+      {activeTab === 'attempts' && renderTestAttempts()}
 
     </div>
   );

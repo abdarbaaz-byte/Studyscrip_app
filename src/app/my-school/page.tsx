@@ -241,7 +241,7 @@ export default function MySchoolPage() {
                             </div>
                            </div>
                            <Button asChild className="mt-4 sm:mt-0">
-                                <Link href={`/quizzes/${test.id}?type=live`}>
+                                <Link href={`/quizzes/${test.id}?type=live&schoolId=${userSchoolId}`}>
                                     Take Test <ArrowRight className="ml-2 h-4 w-4"/>
                                 </Link>
                            </Button>

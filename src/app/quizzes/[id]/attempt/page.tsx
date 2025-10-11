@@ -192,6 +192,7 @@ function QuizAttemptContent() {
 
   // User details & quiz type from query params
   const quizType = searchParams.get('type') || 'practice';
+  const schoolId = searchParams.get('schoolId'); // For school tests
   const name = searchParams.get('name') || 'Anonymous';
   const school = searchParams.get('school');
   const userClass = searchParams.get('class');
@@ -243,6 +244,7 @@ function QuizAttemptContent() {
           score: score,
           totalQuestions: quiz.questions.length,
           percentage: (score / quiz.questions.length) * 100,
+          schoolId: schoolId || null,
         };
         
         try {
@@ -263,10 +265,13 @@ function QuizAttemptContent() {
         type: quizType,
         answers: encodedAnswers,
         name: name,
-    }).toString();
+    });
+    if (schoolId) {
+        queryParams.set('schoolId', schoolId);
+    }
     
-    router.replace(`/quizzes/${quizId}/results?${queryParams}`);
-  }, [quiz, quizId, quizType, name, school, userClass, place, userId, userEmail, router, toast]);
+    router.replace(`/quizzes/${quizId}/results?${queryParams.toString()}`);
+  }, [quiz, quizId, quizType, name, school, userClass, place, userId, userEmail, schoolId, router, toast]);
 
   const triggerSubmit = useCallback(() => {
     handleSubmit(answers);

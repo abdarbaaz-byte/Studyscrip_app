@@ -83,6 +83,7 @@ export type QuizAttempt = {
   totalQuestions: number;
   percentage: number;
   submittedAt: Timestamp;
+  schoolId?: string | null;
 };
 
 // --- REVIEWS ---
@@ -1239,4 +1240,11 @@ export async function saveSchoolTest(schoolId: string, test: Quiz): Promise<void
 export async function deleteSchoolTest(schoolId: string, testId: string): Promise<void> {
     const testDocRef = doc(db, 'schools', schoolId, 'tests', testId);
     await deleteDoc(testDocRef);
+}
+
+export async function getTestAttemptsForSchool(schoolId: string): Promise<QuizAttempt[]> {
+  const attemptsCol = collection(db, 'quizAttempts');
+  const q = query(attemptsCol, where('schoolId', '==', schoolId), orderBy('submittedAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
 }
