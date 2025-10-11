@@ -69,7 +69,7 @@ export type Quiz = {
     questions: Question[];
     startTime?: Timestamp; // Optional start time for the quiz
     endTime?: Timestamp;   // Optional end time for the quiz
-    targetClass?: string;
+    targetClass: string;
 };
 
 // This type will be used to store a user's attempt in Firestore
@@ -1277,7 +1277,9 @@ export async function deleteSchoolTest(schoolId: string, testId: string): Promis
 
 export async function getTestAttemptsForSchool(schoolId: string): Promise<QuizAttempt[]> {
   const attemptsCol = collection(db, 'quizAttempts');
-  const q = query(attemptsCol, where('schoolId', '==', schoolId), orderBy('submittedAt', 'desc'));
+  const q = query(attemptsCol, where('schoolId', '==', schoolId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+  const attempts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
+  // Sort in code to avoid composite index
+  return attempts.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
 }
