@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAdmin, userRole, logOut } = useAuth();
+  const { user, isAdmin, userRole, userSchoolId, logOut } = useAuth();
   const { toast } = useToast();
   const isAuthPage = ["/login", "/signup", "/forgot-password", "/verify-email"].includes(pathname);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -148,6 +148,11 @@ export function SiteHeader() {
                     Teacher Dashboard
                 </Link>
             )}
+            {user && userSchoolId && userRole !== 'teacher' && userRole !== 'admin' && userRole !== 'employee' && (
+              <Link href="/my-school" className={cn("transition-colors hover:text-foreground/80", pathname.startsWith('/my-school') ? "text-foreground" : "text-foreground/60")}>
+                  My School
+              </Link>
+            )}
           </nav>
         </div>
         
@@ -209,6 +214,11 @@ export function SiteHeader() {
                     <Link href="/teacher/dashboard" className="text-foreground/70 transition-colors hover:text-foreground" onClick={handleLinkClick}>
                         Teacher Dashboard
                     </Link>
+                )}
+                {user && userSchoolId && userRole !== 'teacher' && userRole !== 'admin' && userRole !== 'employee' && (
+                  <Link href="/my-school" className="text-foreground/70 transition-colors hover:text-foreground" onClick={handleLinkClick}>
+                      My School
+                  </Link>
                 )}
                   <Link
                     href="/feedback"

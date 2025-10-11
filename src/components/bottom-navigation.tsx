@@ -3,28 +3,47 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, BrainCircuit, MessageCircleQuestion, User } from "lucide-react";
+import { Home, LayoutGrid, BrainCircuit, MessageCircleQuestion, User, School } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/", label: "Home", icon: Home, requiresAuth: false },
   { href: "/my-courses", label: "Courses", icon: LayoutGrid, requiresAuth: true },
-  { href: "/quizzes", label: "Quizzes", icon: BrainCircuit },
-  { href: "/doubt-ai", label: "AI Doubt", icon: MessageCircleQuestion },
+  { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
+  { href: "/doubt-ai", label: "AI Doubt", icon: MessageCircleQuestion, requiresAuth: false },
   { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
 ];
 
 export function BottomNavigation() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, userSchoolId, userRole } = useAuth();
   
   const authPages = ["/login", "/signup", "/forgot-password", "/verify-email"];
   if (authPages.includes(pathname)) {
     return null;
   }
 
-  const visibleNavItems = navItems.filter(item => !item.requiresAuth || !!user);
+  const baseNavItems = [
+    { href: "/", label: "Home", icon: Home, requiresAuth: false },
+    null, // Placeholder for conditional item
+    { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
+    { href: "/doubt-ai", label: "AI Doubt", icon: MessageCircleQuestion, requiresAuth: false },
+    { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
+  ];
+
+  let conditionalItem = { href: "/my-courses", label: "Courses", icon: LayoutGrid, requiresAuth: true };
+
+  if (userRole === 'teacher') {
+    conditionalItem = { href: "/teacher/dashboard", label: "Dashboard", icon: School, requiresAuth: true };
+  } else if (userSchoolId) {
+    conditionalItem = { href: "/my-school", label: "School", icon: School, requiresAuth: true };
+  }
+  
+  baseNavItems[1] = conditionalItem as any;
+
+  const visibleNavItems = baseNavItems.filter(item => item && (!item.requiresAuth || !!user)) as (typeof navItems[0])[];
+
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">

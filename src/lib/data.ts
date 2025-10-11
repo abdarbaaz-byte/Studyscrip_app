@@ -1120,7 +1120,7 @@ export async function addStudentToSchool(schoolId: string, studentEmail: string)
     batch.update(userDocRef, {
         schoolId: schoolId
     });
-
+    
     const schoolDocRef = doc(db, 'schools', schoolId);
     batch.update(schoolDocRef, {
         students: arrayUnion({
@@ -1159,4 +1159,18 @@ export async function removeStudentFromSchool(schoolId: string, studentId: strin
 export async function getStudentsForSchool(schoolId: string): Promise<SchoolStudent[]> {
   const schoolDoc = await getSchool(schoolId);
   return schoolDoc?.students || [];
+}
+
+// --- SCHOOL CONTENT ---
+
+// Placeholder: These will be implemented in a future step.
+export async function getSchoolNotes(schoolId: string): Promise<any[]> {
+    console.log(`Fetching notes for school: ${schoolId}`);
+    return [];
+}
+
+// Placeholder: These will be implemented in a future step.
+export async function getSchoolTests(schoolId:string): Promise<any[]> {
+    console.log(`Fetching tests for school: ${schoolId}`);
+    return [];
 }
