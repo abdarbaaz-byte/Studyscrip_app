@@ -32,6 +32,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Loader2, UserPlus, Users, FileText, BrainCircuit, BarChart3, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
