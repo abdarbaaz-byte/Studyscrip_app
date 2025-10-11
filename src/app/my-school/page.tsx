@@ -31,6 +31,8 @@ export default function MySchoolPage() {
 
   // State for viewing content
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
+  // FIX: Moved state from renderContentInDialog to the top level of the component.
+  const [numPages, setNumPages] = useState<number | undefined>();
 
   useEffect(() => {
     if (authLoading) return;
@@ -71,12 +73,12 @@ export default function MySchoolPage() {
 
   const handleViewContent = (item: ContentItem) => {
     setContentToView(item);
+    setNumPages(undefined); // Reset page count when opening a new item
   };
   
   const renderContentInDialog = () => {
     if (!contentToView) return null;
 
-    const [numPages, setNumPages] = useState<number>();
     const { type, url, title } = contentToView;
     
     const getYouTubeId = (youtubeUrl: string) => {
