@@ -1,7 +1,7 @@
 
 
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove } from 'firebase/firestore';
 import type { Course } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
@@ -11,6 +11,19 @@ import { UserPermission } from '@/hooks/use-auth';
 
 // Re-export ContentItem for use in other modules
 export type { ContentItem } from './academics';
+
+// --- SCHOOLS & TEACHERS ---
+export type SchoolTeacher = {
+  uid: string;
+  email: string;
+};
+
+export type School = {
+  id?: string; // Firestore doc ID
+  name: string;
+  teachers: SchoolTeacher[];
+};
+
 
 // --- QUIZ ---
 export type QuestionType = 'mcq' | 'true_false' | 'fill_in_blank' | 'match';
@@ -1005,9 +1018,76 @@ export async function updateUserCertificates(userId: string, certificates: UserC
     const userDocRef = doc(db, 'users', userId);
     await updateDoc(userDocRef, { certificates });
 }
-    
 
+// --- SCHOOLS / INSTITUTES ---
+export async function getSchools(): Promise<School[]> {
+  const schoolsCol = collection(db, 'schools');
+  const q = query(schoolsCol, orderBy('name'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as School));
+}
 
+export async function saveSchool(school: Omit<School, 'id'>): Promise<string> {
+  const schoolsCol = collection(db, 'schools');
+  const docRef = await addDoc(schoolsCol, school);
+  return docRef.id;
+}
 
+export async function addTeacherToSchool(schoolId: string, teacherEmail: string): Promise<void> {
+  const teacherUser = await findUserByEmail(teacherEmail);
+  if (!teacherUser) {
+    throw new Error(`User with email ${teacherEmail} not found. Please ask them to register first.`);
+  }
 
+  const batch = writeBatch(db);
+
+  // 1. Update user's role and schoolId
+  const userDocRef = doc(db, 'users', teacherUser.uid);
+  batch.update(userDocRef, {
+    role: 'teacher',
+    schoolId: schoolId
+  });
+
+  // 2. Add teacher to the school's teacher list
+  const schoolDocRef = doc(db, 'schools', schoolId);
+  batch.update(schoolDocRef, {
+    teachers: arrayUnion({
+      uid: teacherUser.uid,
+      email: teacherUser.email
+    })
+  });
+  
+  await batch.commit();
+}
+
+export async function removeTeacherFromSchool(schoolId: string, teacherId: string): Promise<void> {
+  const schoolDocRef = doc(db, 'schools', schoolId);
+  const schoolSnap = await getDoc(schoolDocRef);
+  if (!schoolSnap.exists()) {
+    throw new Error("School not found.");
+  }
+
+  const schoolData = schoolSnap.data() as School;
+  const teacherToRemove = schoolData.teachers.find(t => t.uid === teacherId);
+
+  if (!teacherToRemove) {
+    throw new Error("Teacher not found in this school.");
+  }
+
+  const batch = writeBatch(db);
+
+  // 1. Remove role and schoolId from user
+  const userDocRef = doc(db, 'users', teacherId);
+  batch.update(userDocRef, {
+    role: null,
+    schoolId: null
+  });
+
+  // 2. Remove teacher from school's teacher list
+  batch.update(schoolDocRef, {
+    teachers: arrayRemove(teacherToRemove)
+  });
+
+  await batch.commit();
+}
     

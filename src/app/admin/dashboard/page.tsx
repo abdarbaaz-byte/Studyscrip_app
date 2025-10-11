@@ -36,7 +36,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -143,6 +143,12 @@ export default function AdminDashboardPage() {
   const [userCertificates, setUserCertificates] = useState<UserCertificate[]>([]);
   const [isSavingCerts, setIsSavingCerts] = useState(false);
 
+  // State for Schools
+  const [schools, setSchools] = useState<School[]>([]);
+  const [newSchoolName, setNewSchoolName] = useState("");
+  const [teacherEmail, setTeacherEmail] = useState("");
+  const [isAddingSchool, setIsAddingSchool] = useState(false);
+
 
   useEffect(() => {
     // Redirect non-admin/employee users
@@ -182,10 +188,11 @@ export default function AdminDashboardPage() {
           if (hasPermission('manage_site_settings')) promises.push(getBannerSettings()); else promises.push(Promise.resolve(null));
           if (hasPermission('manage_reviews')) promises.push(getReviews('pending')); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_live_classes')) promises.push(getLiveClasses()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_schools')) promises.push(getSchools()); else promises.push(Promise.resolve([]));
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
           
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, liveClassesData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, liveClassesData, schoolsData, employeesData] = await Promise.all(promises);
           
           setAcademicClasses(academicsData as AcademicClass[]);
           setCourses(coursesData as Course[]);
@@ -198,6 +205,7 @@ export default function AdminDashboardPage() {
           setLiveSurveys(surveysData as LiveClassSurvey[]);
           setPendingReviews(reviewsData as Review[]);
           setLiveClasses(liveClassesData as LiveClass[]);
+          setSchools(schoolsData as School[]);
           setEmployees(employeesData as EmployeeData[]);
           if(bannerData) setBannerSettings(bannerData as BannerSettings);
 
@@ -769,6 +777,43 @@ export default function AdminDashboardPage() {
         toast({ variant: "destructive", title: "Failed to save certificates" });
     } finally {
         setIsSavingCerts(false);
+    }
+  };
+
+  // School Handlers
+  const handleAddSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSchoolName.trim()) return;
+    setIsAddingSchool(true);
+    try {
+      await saveSchool({ name: newSchoolName, teachers: [] });
+      setNewSchoolName("");
+      toast({ title: "School Added!", description: `The school "${newSchoolName}" has been created.` });
+      loadAdminData(); // Refresh
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    }
+    setIsAddingSchool(false);
+  };
+
+  const handleAddTeacher = async (schoolId: string, email: string) => {
+    if (!email.trim()) return;
+    try {
+      await addTeacherToSchool(schoolId, email);
+      toast({ title: "Teacher Added", description: `${email} has been assigned as a teacher.` });
+      loadAdminData(); // Refresh
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error Adding Teacher", description: error.message });
+    }
+  };
+
+  const handleRemoveTeacher = async (schoolId: string, teacherId: string) => {
+    try {
+      await removeTeacherFromSchool(schoolId, teacherId);
+      toast({ title: "Teacher Removed", description: "The teacher's access has been revoked." });
+      loadAdminData(); // Refresh
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error Removing Teacher", description: error.message });
     }
   };
 
@@ -1475,6 +1520,69 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderSchoolManagement = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Create New School/Institute</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleAddSchool} className="flex gap-4">
+            <Input 
+              placeholder="Enter school name..."
+              value={newSchoolName}
+              onChange={(e) => setNewSchoolName(e.target.value)}
+              required
+            />
+            <Button type="submit" disabled={isAddingSchool}>
+              {isAddingSchool ? <Loader2 className="animate-spin mr-2" /> : <PlusCircle className="mr-2" />}
+              Add School
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-4">
+        {schools.map(school => (
+          <Card key={school.id}>
+            <CardHeader>
+              <CardTitle>{school.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <h4 className="font-semibold mb-2">Manage Teachers</h4>
+              <form onSubmit={(e) => { e.preventDefault(); handleAddTeacher(school.id!, teacherEmail); setTeacherEmail(''); }} className="flex gap-4 mb-4">
+                <Input
+                  type="email"
+                  placeholder="teacher@example.com"
+                  onChange={(e) => setTeacherEmail(e.target.value)}
+                  required
+                />
+                <Button type="submit">Add Teacher</Button>
+              </form>
+              <div className="space-y-2">
+                <h5 className="font-medium">Assigned Teachers:</h5>
+                {school.teachers && school.teachers.length > 0 ? (
+                  <ul className="list-disc pl-5">
+                    {school.teachers.map(teacher => (
+                      <li key={teacher.uid} className="flex justify-between items-center">
+                        <span>{teacher.email}</span>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveTeacher(school.id!, teacher.uid)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No teachers assigned yet.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderCertificateManagement = () => (
     <Card>
       <CardHeader>
@@ -1644,6 +1752,9 @@ export default function AdminDashboardPage() {
             {hasPermission('manage_certificates') && <Button variant={activeTab === 'certificates' ? 'default' : 'outline'} onClick={() => setActiveTab('certificates')}>
                 <Award className="mr-2 h-4 w-4" /> Certificates
             </Button>}
+             {hasPermission('manage_schools') && <Button variant={activeTab === 'schools' ? 'default' : 'outline'} onClick={() => setActiveTab('schools')}>
+                <SchoolIcon className="mr-2 h-4 w-4" /> Schools
+            </Button>}
             {hasPermission('view_quiz_attempts') && <Button variant={activeTab === 'quiz-attempts' ? 'default' : 'outline'} onClick={() => setActiveTab('quiz-attempts')}>
                 <BarChart3 className="mr-2 h-4 w-4" /> Quiz Attempts
             </Button>}
@@ -1682,6 +1793,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
         {activeTab === 'live-classes' && hasPermission('manage_live_classes') && renderLiveClassManagement()}
         {activeTab === 'certificates' && hasPermission('manage_certificates') && renderCertificateManagement()}
+        {activeTab === 'schools' && hasPermission('manage_schools') && renderSchoolManagement()}
         {activeTab === 'quiz-attempts' && hasPermission('view_quiz_attempts') && renderQuizAttempts()}
         {activeTab === 'live-surveys' && hasPermission('view_live_class_surveys') && renderLiveSurveys()}
         {activeTab === 'reviews' && hasPermission('manage_reviews') && renderReviewManagement()}
@@ -1982,3 +2094,4 @@ export default function AdminDashboardPage() {
     
 
     
+
