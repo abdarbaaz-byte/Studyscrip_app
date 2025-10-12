@@ -28,7 +28,7 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   sw: 'sw.js',
-  swSrc: './src/sw.js', // Use our custom service worker as the source
+  // swSrc: './src/sw.js', // This was causing the build error, so it's removed.
   disable: process.env.NODE_ENV === 'development',
 });
 
