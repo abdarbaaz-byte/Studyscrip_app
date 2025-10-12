@@ -11,12 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Loader2, FileText, Video, Image as ImageIcon } from "lucide-react";
 import { getFreeNotes, type FreeNote, type ContentItem } from "@/lib/data";
 
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
 export default function FreeNotesPage() {
   const [notes, setNotes] = useState<FreeNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,13 +33,16 @@ export default function FreeNotesPage() {
   };
 
   const handleViewContent = (item: ContentItem) => {
-    setContentToView(item);
+    if (item.type === 'pdf') {
+      window.open(item.url, '_blank');
+    } else {
+      setContentToView(item);
+    }
   };
 
   const renderContentInDialog = () => {
     if (!contentToView) return null;
 
-    const [numPages, setNumPages] = useState<number>();
     const { type, url, title } = contentToView;
     
     const getYouTubeId = (youtubeUrl: string) => {
@@ -89,18 +86,6 @@ export default function FreeNotesPage() {
                 allowFullScreen
             ></iframe>
         );
-    }
-    
-    if (type === 'pdf') {
-       return (
-        <div className="w-full h-full overflow-auto bg-gray-200 flex justify-center">
-            <Document file={url} onLoadSuccess={({numPages}) => setNumPages(numPages)} loading={<Loader2 className="h-8 w-8 animate-spin" />}>
-                {Array.from(new Array(numPages), (el, index) => (
-                    <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false}/>
-                ))}
-            </Document>
-        </div>
-       );
     }
     
     if (type === 'image') {

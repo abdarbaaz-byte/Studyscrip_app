@@ -19,12 +19,6 @@ import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format } from "date-fns";
 
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
 
 export default function CourseDetailClientPage({ course }: { course: Course }) {
   const [isPurchased, setIsPurchased] = useState(false);
@@ -102,14 +96,19 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   };
 
   const handleViewContent = (content: CourseContent) => {
-    if (isPurchased) {
-      setContentToView(content);
-    } else {
-      toast({
+    if (!isPurchased) {
+       toast({
         variant: "destructive",
         title: "Access Denied",
         description: "Please purchase the course to view the content.",
       });
+      return;
+    }
+
+    if (content.type === 'pdf') {
+      window.open(content.url, '_blank');
+    } else {
+      setContentToView(content);
     }
   };
 
@@ -125,7 +124,6 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   const renderContentInDialog = () => {
     if (!contentToView) return null;
 
-    const [numPages, setNumPages] = useState<number>();
     const { type, url, title } = contentToView;
     
     const getYouTubeId = (youtubeUrl: string) => {
@@ -169,18 +167,6 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                 allowFullScreen
             ></iframe>
         );
-    }
-    
-    if (type === 'pdf') {
-       return (
-        <div className="w-full h-full overflow-auto bg-gray-200 flex justify-center">
-            <Document file={url} onLoadSuccess={({numPages}) => setNumPages(numPages)} loading={<Loader2 className="h-8 w-8 animate-spin" />}>
-                {Array.from(new Array(numPages), (el, index) => (
-                    <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false} />
-                ))}
-            </Document>
-        </div>
-       );
     }
     
     if (type === 'image') {

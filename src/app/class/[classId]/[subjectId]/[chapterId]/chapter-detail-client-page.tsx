@@ -15,13 +15,6 @@ import { checkUserPurchase } from "@/lib/data";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-
 export default function ChapterDetailClientPage() {
   const params = useParams();
   const router = useRouter();
@@ -101,7 +94,12 @@ export default function ChapterDetailClientPage() {
       });
       return;
     }
-    setContentToView(item);
+
+    if (item.type === 'pdf') {
+      window.open(item.url, '_blank');
+    } else {
+      setContentToView(item);
+    }
   };
 
 
@@ -109,7 +107,6 @@ export default function ChapterDetailClientPage() {
     if (!contentToView) return null;
 
     const { type, url, title } = contentToView;
-    const [numPages, setNumPages] = useState<number>();
     
     const getYouTubeId = (youtubeUrl: string) => {
       const patterns = [
@@ -152,18 +149,6 @@ export default function ChapterDetailClientPage() {
                 allowFullScreen
             ></iframe>
         );
-    }
-
-    if (type === 'pdf') {
-       return (
-        <div className="w-full h-full overflow-auto bg-gray-200 flex justify-center">
-            <Document file={url} onLoadSuccess={({numPages}) => setNumPages(numPages)} loading={<Loader2 className="h-8 w-8 animate-spin" />}>
-                {Array.from(new Array(numPages), (el, index) => (
-                    <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false}/>
-                ))}
-            </Document>
-        </div>
-       );
     }
     
     if (type === 'image') {

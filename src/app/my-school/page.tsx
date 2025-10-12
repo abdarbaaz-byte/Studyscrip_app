@@ -13,13 +13,7 @@ import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { format } from "date-fns";
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export default function MySchoolPage() {
   const { user, userSchoolId, loading: authLoading } = useAuth();
@@ -31,7 +25,6 @@ export default function MySchoolPage() {
   const [userClass, setUserClass] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
-  const [numPages, setNumPages] = useState<number | undefined>();
 
   useEffect(() => {
     if (authLoading) return;
@@ -86,8 +79,11 @@ export default function MySchoolPage() {
   };
 
   const handleViewContent = (item: ContentItem) => {
-    setContentToView(item);
-    setNumPages(undefined);
+    if (item.type === 'pdf') {
+        window.open(item.url, '_blank');
+    } else {
+        setContentToView(item);
+    }
   };
   
   const renderContentInDialog = () => {
@@ -136,18 +132,6 @@ export default function MySchoolPage() {
                 allowFullScreen
             ></iframe>
         );
-    }
-    
-    if (type === 'pdf') {
-       return (
-        <div className="w-full h-full overflow-auto bg-gray-200 flex justify-center">
-            <Document file={url} onLoadSuccess={({numPages}) => setNumPages(numPages)} loading={<Loader2 className="h-8 w-8 animate-spin" />}>
-                {Array.from(new Array(numPages), (el, index) => (
-                    <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false}/>
-                ))}
-            </Document>
-        </div>
-       );
     }
     
     if (type === 'image') {
