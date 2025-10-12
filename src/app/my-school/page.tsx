@@ -108,9 +108,13 @@ export default function MySchoolPage() {
     let contentUrl = url;
 
     if (type === 'pdf') {
+        const driveId = getGoogleDriveFileId(url);
+        if (driveId) {
+            contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+        }
         return (
              <iframe 
-                src={url} 
+                src={contentUrl} 
                 className="w-full h-full border-0" 
                 title={title} 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -127,8 +131,6 @@ export default function MySchoolPage() {
             const driveId = getGoogleDriveFileId(url);
             if (driveId) {
                 contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
-            } else {
-                contentUrl = url;
             }
         }
         return (
