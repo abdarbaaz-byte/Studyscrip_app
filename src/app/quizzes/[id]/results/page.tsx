@@ -27,6 +27,7 @@ function QuizResultsContent() {
   const quizType = searchParams.get('type') || 'practice';
   const answersString = searchParams.get('answers');
   const name = searchParams.get('name') || 'Student';
+  const userClass = searchParams.get('class');
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<AnswersState>({});
@@ -141,7 +142,7 @@ function QuizResultsContent() {
                 <GraduationCap className="h-16 w-16 text-primary" />
             </div>
             <CardTitle className="font-headline text-3xl">Quiz Results: {quiz.title}</CardTitle>
-            <CardDescription>Well done, {name}! Here's how you did.</CardDescription>
+            <CardDescription>Well done, {name}! {userClass && `(Class: ${userClass})`} Here's how you did.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
             <div className="text-5xl font-bold text-primary">
@@ -340,3 +341,5 @@ export default function QuizResultsPage() {
         </Suspense>
     )
 }
+
+    

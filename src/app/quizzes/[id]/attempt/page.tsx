@@ -261,6 +261,7 @@ function QuizAttemptContent() {
         type: quizType,
         answers: encodedAnswers,
         name: name,
+        class: userClass,
     });
     if (schoolId) {
         queryParams.set('schoolId', schoolId);
@@ -450,3 +451,5 @@ export default function QuizAttemptPage() {
         </Suspense>
     )
 }
+
+    
