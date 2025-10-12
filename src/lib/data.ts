@@ -787,7 +787,7 @@ export async function deleteQuiz(id: string): Promise<void> {
 export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'>): Promise<string> {
     const attemptsCol = collection(db, 'quizAttempts');
 
-    const dataToSave: Omit<QuizAttempt, 'id' | 'submittedAt' | 'userSchool'> & { userSchool?: string } = { ...attemptData };
+    const dataToSave: Omit<QuizAttempt, 'id' | 'submittedAt' > = { ...attemptData };
 
     if (dataToSave.schoolId && dataToSave.userId) {
         const school = await getSchool(dataToSave.schoolId);
@@ -797,12 +797,6 @@ export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'sub
             dataToSave.userClass = studentInfo.userClass;
         }
     }
-
-    // Remove userSchool if it's undefined to avoid storing null fields
-    if (dataToSave.userSchool === undefined) {
-        delete dataToSave.userSchool;
-    }
-
 
     const docRef = await addDoc(attemptsCol, {
         ...dataToSave,
