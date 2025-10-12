@@ -195,6 +195,7 @@ function QuizAttemptContent() {
   const schoolId = searchParams.get('schoolId'); // For school tests
   const name = searchParams.get('name') || 'Anonymous';
   const userClass = searchParams.get('class') || 'N/A';
+  const userSchool = searchParams.get('school') || '';
   const userId = searchParams.get('userId');
   const userEmail = searchParams.get('userEmail');
 
@@ -236,6 +237,7 @@ function QuizAttemptContent() {
           userEmail: userEmail,
           userName: name,
           userClass: userClass,
+          userSchool: userSchool,
           answers: currentAnswers,
           score: score,
           totalQuestions: quiz.questions.length,
@@ -247,7 +249,7 @@ function QuizAttemptContent() {
             await saveQuizAttempt(attemptData);
             // Store attempt flag and data in localStorage for redirection
             localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
-            const dataToSave = { answers: encodedAnswers, name, class: userClass };
+            const dataToSave = { answers: encodedAnswers, name, class: userClass, school: userSchool };
             localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify(dataToSave));
         } catch(error) {
             console.error("Failed to save quiz attempt:", error);
@@ -268,7 +270,7 @@ function QuizAttemptContent() {
     }
     
     router.replace(`/quizzes/${quizId}/results?${queryParams.toString()}`);
-  }, [quiz, quizId, quizType, name, userClass, userId, userEmail, schoolId, router, toast]);
+  }, [quiz, quizId, quizType, name, userClass, userSchool, userId, userEmail, schoolId, router, toast]);
 
   const triggerSubmit = useCallback(() => {
     handleSubmit(answers);

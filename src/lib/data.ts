@@ -89,6 +89,7 @@ export type QuizAttempt = {
   userEmail: string | null;
   userName: string;
   userClass: string;
+  userSchool?: string; // For general live quizzes
   answers: { [questionId: string]: number | string | { [matchId: string]: string } };
   score: number;
   totalQuestions: number;
@@ -804,9 +805,15 @@ export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'sub
     return docRef.id;
 }
 
-export async function getQuizAttempts(): Promise<QuizAttempt[]> {
+export async function getQuizAttempts(options?: { generalOnly?: boolean }): Promise<QuizAttempt[]> {
     const attemptsCol = collection(db, 'quizAttempts');
-    const q = query(attemptsCol, orderBy('submittedAt', 'desc'));
+    let q;
+    if (options?.generalOnly) {
+        // Fetch only attempts that are NOT from a school test
+        q = query(attemptsCol, where('schoolId', '==', null), orderBy('submittedAt', 'desc'));
+    } else {
+        q = query(attemptsCol, orderBy('submittedAt', 'desc'));
+    }
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
 }

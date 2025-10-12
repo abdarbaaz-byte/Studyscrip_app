@@ -32,6 +32,7 @@ function QuizStartPageContent() {
   // User details state
   const [userName, setUserName] = useState('');
   const [userClass, setUserClass] = useState('');
+  const [userSchool, setUserSchool] = useState('');
 
   const loadQuizAndUser = useCallback(async () => {
     if (!quizId) return;
@@ -72,8 +73,6 @@ function QuizStartPageContent() {
             setUserName(studentInfo.name);
             setUserClass(studentInfo.userClass);
           } else {
-            // This might happen if a teacher tries to take a test.
-            // We can block it or let them proceed with their profile name.
             toast({
                 variant: 'destructive',
                 title: 'Access Error',
@@ -83,7 +82,6 @@ function QuizStartPageContent() {
             return;
           }
         } else {
-          // For general quizzes, default to user's display name
           setUserName(user.displayName || '');
         }
       }
@@ -119,8 +117,7 @@ function QuizStartPageContent() {
         return;
     }
     
-    // For general live quizzes, the form is still needed
-    if (quizType === 'live' && !schoolId && (!userName || !userClass)) {
+    if (quizType === 'live' && !schoolId && (!userName || !userClass || !userSchool)) {
         toast({ variant: 'destructive', title: 'Please fill all your details for the quiz.' });
         return;
     }
@@ -128,7 +125,8 @@ function QuizStartPageContent() {
     let quizData: any = { 
         type: quizType,
         name: userName || user.displayName, 
-        class: userClass, 
+        class: userClass,
+        school: userSchool,
         userId: user.uid,
         userEmail: user.email || ''
     };
@@ -173,7 +171,6 @@ function QuizStartPageContent() {
     return null;
   }
 
-  // Show form only for general live quizzes, not for school tests or practice tests.
   const isFormRequired = quizType === 'live' && !schoolId;
 
   return (
@@ -252,6 +249,10 @@ function QuizStartPageContent() {
                                 <div className="space-y-2">
                                     <Label htmlFor="class" className="flex items-center gap-2"><NotebookText className="h-4 w-4"/> Class</Label>
                                     <Input id="class" value={userClass} onChange={(e) => setUserClass(e.target.value)} placeholder="e.g., 10th, 12th" required />
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="school" className="flex items-center gap-2"><School className="h-4 w-4"/> School Name</Label>
+                                    <Input id="school" value={userSchool} onChange={(e) => setUserSchool(e.target.value)} placeholder="e.g., Delhi Public School" required />
                                 </div>
                                 <Button type="submit" className="w-full" size="lg">Start Live Quiz</Button>
                             </form>
