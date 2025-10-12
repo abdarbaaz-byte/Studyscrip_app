@@ -33,11 +33,7 @@ export default function FreeNotesPage() {
   };
 
   const handleViewContent = (item: ContentItem) => {
-    if (item.type === 'pdf') {
-      window.open(item.url, '_blank');
-    } else {
-      setContentToView(item);
-    }
+    setContentToView(item);
   };
 
   const renderContentInDialog = () => {
@@ -64,6 +60,18 @@ export default function FreeNotesPage() {
     }
 
     let contentUrl = url;
+
+    if (type === 'pdf') {
+        return (
+             <iframe 
+                src={url} 
+                className="w-full h-full border-0" 
+                title={title} 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+            ></iframe>
+        );
+    }
 
     if (type === 'video') {
         const youtubeId = getYouTubeId(url);
