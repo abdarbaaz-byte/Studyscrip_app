@@ -36,6 +36,9 @@ function QuizResultsContent() {
   const [canShowAnalysis, setCanShowAnalysis] = useState(quizType === 'practice');
   const [allAttempts, setAllAttempts] = useState<QuizAttempt[]>([]);
   const [userRank, setUserRank] = useState<number | null>(null);
+  
+  // New state to control rank visibility
+  const [canShowRank, setCanShowRank] = useState(false);
 
   useEffect(() => {
     if (!answersString) {
@@ -62,15 +65,24 @@ function QuizResultsContent() {
         setQuiz(loadedQuiz);
 
         let showAnalysis = quizType === 'practice';
+        let showRank = false;
+
         if (quizType === 'live') {
             const now = new Date();
             const endTime = loadedQuiz.endTime?.toDate();
-            if (!endTime || now > endTime) {
-                showAnalysis = true;
-            }
             
-            if (showAnalysis) {
-                // Fetch all attempts for ranking only if analysis can be shown
+            // Logic to determine if analysis and ranks can be shown
+            if (endTime && now > endTime) {
+                showAnalysis = true;
+                showRank = true; // Only show rank if an end time is set and has passed
+            } else if (!endTime) {
+                // If no end time, it's like a practice quiz, show analysis but no rank
+                showAnalysis = true;
+                showRank = false;
+            }
+
+            if (showRank) {
+                // Fetch all attempts for ranking only if ranks can be shown
                 const attempts = await getQuizAttemptsForQuiz(quizId);
                 setAllAttempts(attempts);
                 
@@ -80,6 +92,7 @@ function QuizResultsContent() {
             }
         }
         setCanShowAnalysis(showAnalysis);
+        setCanShowRank(showRank);
 
         let currentScore = 0;
         loadedQuiz.questions.forEach(q => {
@@ -153,7 +166,7 @@ function QuizResultsContent() {
             </div>
             <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Correct</p>
 
-            {quizType === 'live' && userRank && (
+            {canShowRank && userRank && (
                 <div className="font-bold text-2xl p-4 bg-secondary rounded-lg">
                     Your Rank: <span className={cn("font-extrabold", getRankColor(userRank))}>{userRank}</span>
                 </div>
@@ -172,7 +185,7 @@ function QuizResultsContent() {
         </CardContent>
       </Card>
 
-      {quizType === 'live' && canShowAnalysis && topThree.length > 0 && (
+      {canShowRank && topThree.length > 0 && (
           <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-100 dark:from-yellow-900/20 dark:to-orange-900/20">
               <CardHeader className="text-center">
                    <div className="flex justify-center mb-4">
@@ -190,7 +203,7 @@ function QuizResultsContent() {
                                 </div>
                                 <div>
                                   <p className="font-bold">{attempt.userName}</p>
-                                  <p className="text-sm text-muted-foreground">{attempt.userSchool}, {attempt.userPlace}</p>
+                                  <p className="text-sm text-muted-foreground">{attempt.userClass}</p>
                                 </div>
                               </div>
                                <div className="text-lg font-bold">
