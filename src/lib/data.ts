@@ -1088,6 +1088,43 @@ export async function saveSchool(school: Omit<School, 'id'>): Promise<string> {
   return docRef.id;
 }
 
+export async function deleteSchool(schoolId: string): Promise<void> {
+    const schoolDocRef = doc(db, 'schools', schoolId);
+    const schoolSnap = await getDoc(schoolDocRef);
+
+    if (!schoolSnap.exists()) {
+        throw new Error("School not found.");
+    }
+
+    const schoolData = schoolSnap.data() as School;
+    const batch = writeBatch(db);
+
+    // Unlink all teachers
+    if (schoolData.teachers && schoolData.teachers.length > 0) {
+        schoolData.teachers.forEach(teacher => {
+            const userDocRef = doc(db, 'users', teacher.uid);
+            batch.update(userDocRef, { role: null, schoolId: null });
+        });
+    }
+
+    // Unlink all students
+    if (schoolData.students && schoolData.students.length > 0) {
+        schoolData.students.forEach(student => {
+            const userDocRef = doc(db, 'users', student.uid);
+            batch.update(userDocRef, { schoolId: null });
+        });
+    }
+    
+    // Note: This does not delete subcollections like 'notes' or 'tests'.
+    // A more robust solution would involve a Cloud Function to recursively delete subcollections.
+
+    // Delete the school document itself
+    batch.delete(schoolDocRef);
+
+    await batch.commit();
+}
+
+
 export async function addTeacherToSchool(schoolId: string, teacherEmail: string): Promise<void> {
   const teacherUser = await findUserByEmail(teacherEmail);
   if (!teacherUser) {
