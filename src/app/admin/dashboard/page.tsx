@@ -184,7 +184,7 @@ export default function AdminDashboardPage() {
           if (hasPermission('manage_free_notes')) promises.push(getFreeNotes()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_bookstore')) promises.push(getBookstoreItems()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_quizzes')) promises.push(getQuizzes()); else promises.push(Promise.resolve([]));
-          if (hasPermission('view_quiz_attempts')) promises.push(getQuizAttempts({ generalOnly: true })); else promises.push(Promise.resolve([]));
+          if (hasPermission('view_quiz_attempts')) promises.push(getQuizAttempts()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_live_class_surveys')) promises.push(getLiveClassSurveys()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_site_settings')) promises.push(getBannerSettings()); else promises.push(Promise.resolve(null));
           if (hasPermission('manage_reviews')) promises.push(getReviews('pending')); else promises.push(Promise.resolve([]));
@@ -2127,6 +2127,7 @@ export default function AdminDashboardPage() {
     
 
     
+
 
 
 

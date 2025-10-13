@@ -1337,15 +1337,6 @@ export async function deleteSchoolTest(schoolId: string, testId: string): Promis
     await deleteDoc(testDocRef);
 }
 
-export async function getTestAttemptsForSchool(schoolId: string): Promise<QuizAttempt[]> {
-  const attemptsCol = collection(db, 'quizAttempts');
-  const q = query(attemptsCol, where('schoolId', '==', schoolId));
-  const snapshot = await getDocs(q);
-  const attempts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
-  // Sort in code to avoid composite index
-  return attempts.sort((a, b) => b.submittedAt.toMillis() - a.submittedAt.toMillis());
-}
-
 export async function getSchoolInformation(schoolId: string): Promise<SchoolInformation[]> {
   const infoColRef = collection(db, 'schools', schoolId, 'information');
   const q = query(infoColRef, orderBy('createdAt', 'desc'));

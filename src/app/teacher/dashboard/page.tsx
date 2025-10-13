@@ -51,7 +51,7 @@ import {
   saveSchoolTest,
   deleteSchoolTest,
   type Quiz,
-  getTestAttemptsForSchool,
+  getQuizAttempts, // Changed from getTestAttemptsForSchool
   type QuizAttempt,
   deleteQuizAttempt,
   updateStudentDetails,
@@ -108,14 +108,16 @@ export default function TeacherDashboardPage() {
         getStudentsForSchool(userSchoolId),
         getSchoolNotes(userSchoolId),
         getSchoolTests(userSchoolId),
-        getTestAttemptsForSchool(userSchoolId),
+        getQuizAttempts(), // Fetch all attempts
         getSchoolInformation(userSchoolId),
       ]);
       setSchool(schoolData);
       setStudents(studentsData);
       setNotes(notesData);
       setTests(testsData);
-      setTestAttempts(attemptsData);
+      // Filter attempts on the client-side
+      const schoolAttempts = (attemptsData as QuizAttempt[]).filter(attempt => attempt.schoolId === userSchoolId);
+      setTestAttempts(schoolAttempts);
       setInformation(infoData);
     } catch (error) {
       console.error("Failed to load teacher data:", error);
