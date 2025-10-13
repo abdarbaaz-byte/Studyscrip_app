@@ -172,6 +172,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await updateProfile(user, { displayName: name });
       
       await sendEmailVerification(user);
+      
+      toast({ 
+        title: "Account Created!",
+        description: "A verification link has been sent to your email."
+      });
 
       const userDocRef = doc(db, "users", user.uid);
       
@@ -191,13 +196,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           schoolId: null,
       });
 
-      toast({ 
-        title: "Account Created!",
-        description: "A verification link has been sent to your email."
-      });
-      
-      await signOut(auth);
+      // Redirect immediately after sending email, then sign out
       router.push("/verify-email");
+      await signOut(auth);
 
       return true;
     } catch (error: any) {
@@ -280,6 +281,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logOut = async () => {
+    // Redirect first to avoid client-side error on state change
+    router.push("/login");
     try {
       if(user) {
         const userDocRef = doc(db, 'users', user.uid);
@@ -288,7 +291,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signOut(auth);
       localStorage.removeItem('sessionToken');
       toast({ title: "Logged out successfully." });
-      router.push("/login");
     } catch (error: any) {
       toast({ variant: "destructive", title: "Logout failed", description: error.message });
     }
