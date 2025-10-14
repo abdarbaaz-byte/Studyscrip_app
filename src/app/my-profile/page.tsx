@@ -306,12 +306,13 @@ export default function MyProfilePage() {
                             {certificates.map((cert) => (
                                 <Card key={cert.id} className="overflow-hidden">
                                     <CardHeader className="p-0">
-                                        <div className="aspect-video relative bg-secondary">
+                                        <div className="relative bg-secondary">
                                             <Image
                                                 src={getGoogleDriveImageUrl(cert.url)}
                                                 alt={cert.title}
-                                                fill
-                                                className="object-cover"
+                                                width={1650}
+                                                height={1275}
+                                                className="w-full h-auto object-cover"
                                             />
                                         </div>
                                     </CardHeader>
