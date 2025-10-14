@@ -129,6 +129,7 @@ export default function AdminDashboardPage() {
   const [liveClassStartTime, setLiveClassStartTime] = useState<Date | undefined>();
   const [liveClassEndTime, setLiveClassEndTime] = useState<Date | undefined>();
   const [liveClassAssociatedItem, setLiveClassAssociatedItem] = useState<string>('');
+  const [liveClassMeetingLink, setLiveClassMeetingLink] = useState('');
   const [isSavingLiveClass, setIsSavingLiveClass] = useState(false);
   const [liveClassToDelete, setLiveClassToDelete] = useState<LiveClass | null>(null);
 
@@ -347,8 +348,8 @@ export default function AdminDashboardPage() {
 
   const handleSaveLiveClass = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!liveClassTitle || !liveClassStartTime || !liveClassEndTime || !liveClassAssociatedItem) {
-        toast({ variant: "destructive", title: "Please fill all fields for the live class." });
+    if (!liveClassTitle || !liveClassStartTime || !liveClassEndTime || !liveClassAssociatedItem || !liveClassMeetingLink) {
+        toast({ variant: "destructive", title: "Please fill all fields for the live class, including the meeting link." });
         return;
     }
 
@@ -362,6 +363,7 @@ export default function AdminDashboardPage() {
         title: liveClassTitle,
         startTime: liveClassStartTime as any,
         endTime: liveClassEndTime as any,
+        meetingLink: liveClassMeetingLink,
         associatedItemId: selectedItem.id,
         itemType: selectedItem.type,
         associatedItemName: selectedItem.name,
@@ -378,6 +380,7 @@ export default function AdminDashboardPage() {
         setLiveClassStartTime(undefined);
         setLiveClassEndTime(undefined);
         setLiveClassAssociatedItem('');
+        setLiveClassMeetingLink('');
         loadAdminData(); // Refresh the list
     } catch (error) {
         console.error("Failed to save live class:", error);
@@ -1073,9 +1076,11 @@ export default function AdminDashboardPage() {
                         />
                     </div>
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="live-class-link">Meeting Link (Zoom, Google Meet, etc.)</Label>
+                    <Input id="live-class-link" value={liveClassMeetingLink} onChange={(e) => setLiveClassMeetingLink(e.target.value)} required placeholder="https://zoom.us/j/..." />
+                </div>
              </div>
-             <div className="text-center text-muted-foreground text-sm pt-2">Selected Start: {liveClassStartTime ? format(liveClassStartTime, "PPP p") : "Not set"}</div>
-             <div className="text-center text-muted-foreground text-sm">Selected End: {liveClassEndTime ? format(liveClassEndTime, "PPP p") : "Not set"}</div>
              <Button type="submit" disabled={isSavingLiveClass}>
                 {isSavingLiveClass ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                 Schedule Class
@@ -1088,9 +1093,8 @@ export default function AdminDashboardPage() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Title</TableHead>
-                        <TableHead>Associated Item</TableHead>
                         <TableHead>Start Time</TableHead>
-                        <TableHead>End Time</TableHead>
+                        <TableHead>Meeting Link</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -1098,9 +1102,12 @@ export default function AdminDashboardPage() {
                     {liveClasses.map(lc => (
                         <TableRow key={lc.id}>
                             <TableCell>{lc.title}</TableCell>
-                            <TableCell>{lc.associatedItemName}</TableCell>
                             <TableCell>{format(lc.startTime.toDate(), "PPP p")}</TableCell>
-                            <TableCell>{format(lc.endTime.toDate(), "PPP p")}</TableCell>
+                            <TableCell>
+                                <a href={lc.meetingLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center gap-1">
+                                    <LinkIcon className="h-4 w-4" /> Link
+                                </a>
+                            </TableCell>
                             <TableCell className="text-right">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleDeleteLiveClassClick(lc)}><Trash2 className="h-4 w-4 text-destructive"/></Button></AlertDialogTrigger>
@@ -1119,7 +1126,7 @@ export default function AdminDashboardPage() {
                         </TableRow>
                     ))}
                     {liveClasses.length === 0 && (
-                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No live classes scheduled.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No live classes scheduled.</TableCell></TableRow>
                     )}
                 </TableBody>
             </Table>
@@ -2127,6 +2134,7 @@ export default function AdminDashboardPage() {
     
 
     
+
 
 
 

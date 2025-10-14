@@ -993,6 +993,7 @@ export type LiveClass = {
     title: string;
     startTime: Timestamp;
     endTime: Timestamp;
+    meetingLink: string;
     associatedItemId: string; // course or subject id
     itemType: 'course' | 'subject';
     associatedItemName: string; // denormalized for display
