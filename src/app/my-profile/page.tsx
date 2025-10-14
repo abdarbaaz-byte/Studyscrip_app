@@ -35,6 +35,7 @@ export default function MyProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSharing, setIsSharing] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -88,27 +89,41 @@ export default function MyProfilePage() {
   };
 
   const handleShareCertificate = async (cert: UserCertificate) => {
-    const shareData = {
-      title: 'My Certificate!',
-      text: `I just earned a certificate for "${cert.title}" from StudyScript!`,
-      url: cert.url
-    };
+    setIsSharing(cert.id);
+    const imageUrl = getGoogleDriveImageUrl(cert.url);
+    const proxyUrl = `/api/download?url=${encodeURIComponent(imageUrl)}&name=${encodeURIComponent(cert.title)}.jpg`;
 
-    if (navigator.share && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-      } catch (error) {
-        console.error('Error sharing certificate:', error);
-        toast({ variant: 'destructive', title: 'Could not share', description: 'There was an error trying to share your certificate.'})
+    try {
+      // Fetch the image as a blob
+      const response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    } else {
-        // Fallback for browsers that don't support Web Share API
-        try {
-            await navigator.clipboard.writeText(cert.url);
-            toast({ title: 'Link Copied!', description: 'Certificate URL copied to clipboard.' });
-        } catch (error) {
-             toast({ variant: 'destructive', title: 'Could not copy link' });
-        }
+      const blob = await response.blob();
+      
+      // Create a File object
+      const file = new File([blob], `${cert.title}.jpg`, { type: blob.type });
+
+      // Prepare share data with the file
+      const shareData = {
+        title: 'My Certificate!',
+        text: `I just earned a certificate for "${cert.title}" from StudyScript!`,
+        files: [file],
+      };
+
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback for browsers that don't support file sharing
+         await navigator.clipboard.writeText(cert.url);
+         toast({ title: 'Link Copied!', description: 'File sharing is not supported, so the certificate link has been copied to your clipboard.' });
+      }
+
+    } catch (error) {
+      console.error('Error sharing certificate:', error);
+      toast({ variant: 'destructive', title: 'Could not share', description: 'There was an error trying to share your certificate.' });
+    } finally {
+      setIsSharing(null);
     }
   };
 
@@ -306,8 +321,9 @@ export default function MyProfilePage() {
                                             <Button size="sm" className="w-full" onClick={() => handleDownloadCertificate(cert.url, cert.title)}>
                                                 <Download className="mr-2 h-4 w-4"/> Download
                                             </Button>
-                                             <Button size="sm" variant="outline" className="w-full" onClick={() => handleShareCertificate(cert)}>
-                                                <Share2 className="mr-2 h-4 w-4"/> Share
+                                             <Button size="sm" variant="outline" className="w-full" onClick={() => handleShareCertificate(cert)} disabled={isSharing === cert.id}>
+                                                {isSharing === cert.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Share2 className="mr-2 h-4 w-4"/>}
+                                                Share
                                             </Button>
                                         </div>
                                     </CardContent>
