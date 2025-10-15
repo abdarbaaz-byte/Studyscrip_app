@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Paperclip, Send, MessageSquare, X, Bot, Loader2 } from "lucide-react";
+import { Paperclip, Send, MessageSquare, X, Bot, Loader2, User } from "lucide-react";
 import type { ChatMessage, Chat, AdminProfile } from "@/lib/chat";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
@@ -302,6 +303,12 @@ export function ChatWidget() {
                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
+                            {msg.sender === "user" && (
+                               <Avatar className="h-8 w-8">
+                                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                                 <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                              </Avatar>
+                            )}
                           </div>
                         ))}
                       </div>

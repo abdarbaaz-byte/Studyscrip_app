@@ -36,7 +36,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -103,7 +103,7 @@ export default function AdminDashboardPage() {
   const [isRejecting, setIsRejecting] = useState(false);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null);
-  const [replyMessage, setReplyMessage] = useState("");
+  const [replyMessage, setReplyMessage]_state_machine_marker = useState("");
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('academics');
   const [loading, setLoading] = useState(true);
@@ -2031,8 +2031,7 @@ export default function AdminDashboardPage() {
                     <TableRow key={chat.id}>
                       <TableCell className="font-medium flex items-center gap-3">
                          <Avatar className="h-9 w-9">
-                            <AvatarImage src={`https://i.pravatar.cc/40?u=${chat.userId}`} alt={chat.userName} />
-                            <AvatarFallback>{chat.userName.charAt(0)}</AvatarFallback>
+                            <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
                             <span>{chat.userName}</span>
@@ -2094,8 +2093,7 @@ export default function AdminDashboardPage() {
                   <div key={msg.id} className={`flex items-end gap-2 my-2 ${ msg.sender === 'admin' ? "justify-end" : "justify-start"}`}>
                      {msg.sender === "user" && (
                          <Avatar className="h-8 w-8">
-                          <AvatarImage src={`https://i.pravatar.cc/40?u=${selectedChat.userId}`} alt={selectedChat.userName} />
-                           <AvatarFallback>{selectedChat.userName.charAt(0)}</AvatarFallback>
+                            <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
                         </Avatar>
                       )}
                       <div className={`max-w-[75%] rounded-lg px-3 py-2 ${ msg.sender === 'admin' ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
@@ -2134,6 +2132,7 @@ export default function AdminDashboardPage() {
     
 
     
+
 
 
 
