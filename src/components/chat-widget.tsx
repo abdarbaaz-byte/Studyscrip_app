@@ -254,7 +254,7 @@ export function ChatWidget() {
                  <CardHeader className="flex flex-row items-center gap-3">
                    <Avatar>
                     <AvatarImage src={adminProfile.avatar} alt={adminProfile.name} />
-                    <AvatarFallback><Bot /></AvatarFallback>
+                    <AvatarFallback><Bot className="h-5 w-5" /></AvatarFallback>
                   </Avatar>
                   <div>
                     <CardTitle className="text-lg">{adminProfile.name}</CardTitle>
