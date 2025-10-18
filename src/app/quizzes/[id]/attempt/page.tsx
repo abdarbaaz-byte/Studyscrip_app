@@ -403,7 +403,8 @@ function QuizAttemptContent() {
         <CardContent>
           <div className="py-6 min-h-[300px]">
             <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
-            <QuizQuestion 
+            <QuizQuestion
+                key={currentQuestion.id} 
                 question={currentQuestion}
                 answer={answers[currentQuestion.id]}
                 onAnswerChange={handleAnswerChange}
@@ -453,5 +454,3 @@ export default function QuizAttemptPage() {
         </Suspense>
     )
 }
-
-    
