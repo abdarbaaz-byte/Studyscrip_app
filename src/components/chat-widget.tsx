@@ -21,7 +21,7 @@ import { ChatMessageRenderer } from "@/components/chat-message-renderer";
 const adminProfile: AdminProfile = {
   id: 'admin-1',
   name: 'StudyScript Support',
-  avatar: '/logo-icon.svg'
+  avatar: '/icons/icon-192x192.png'
 };
 
 const emptyChat: Chat = {

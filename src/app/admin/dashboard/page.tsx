@@ -511,7 +511,7 @@ export default function AdminDashboardPage() {
                     userId: foundUser.uid,
                     userName: foundUser.email,
                     messages: [],
-                    admin: { id: 'admin-1', name: 'StudyScript Support', avatar: '/logo-icon.svg' },
+                    admin: { id: 'admin-1', name: 'StudyScript Support', avatar: '/icons/icon-192x192.png' },
                     lastMessageTimestamp: new Date().toISOString()
                 };
                 setSelectedChat(newChat);
@@ -2101,7 +2101,7 @@ export default function AdminDashboardPage() {
                       </div>
                        {msg.sender === "admin" && (
                          <Avatar className="h-8 w-8">
-                          <AvatarImage src="/logo-icon.svg" alt="Admin" />
+                          <AvatarImage src="/icons/icon-192x192.png" alt="Admin" />
                            <AvatarFallback>A</AvatarFallback>
                         </Avatar>
                       )}
@@ -2132,6 +2132,7 @@ export default function AdminDashboardPage() {
     
 
     
+
 
 
 

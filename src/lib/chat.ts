@@ -30,7 +30,7 @@ export type Chat = {
 const adminProfile: AdminProfile = {
   id: 'admin-1',
   name: 'StudyScript Support',
-  avatar: '/logo-icon.svg'
+  avatar: '/icons/icon-192x192.png'
 };
 
 // This initialChats data is now for reference only and is not used in the live app.
