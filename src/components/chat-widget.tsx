@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -243,7 +242,7 @@ export function ChatWidget() {
     return null;
   }
 
-  const hasUnreadMessages = !isOpen && activeChat && activeChat.unreadCount && activeChat.unreadCount > 0;
+  const hasUnreadMessages = !isOpen && activeChat?.unreadCount && activeChat.unreadCount > 0;
 
   return (
     <div ref={chatWidgetRef}>
