@@ -61,6 +61,26 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
             initialAnswerSetRef.current = true; // Mark as set to prevent re-shuffling on re-renders
         }
     }, [question, onAnswerChange]);
+    
+    useEffect(() => {
+        const preventPullToRefresh = (event: TouchEvent) => {
+          if (window.scrollY === 0) {
+            // Check if user is swiping down from the top
+            const touch = event.touches[0];
+            if (touch.screenY < window.innerHeight) {
+               // A simple check to prevent pull-to-refresh gesture
+               // You can make this more robust if needed
+            }
+          }
+        };
+
+        const options = { passive: false };
+        window.addEventListener('touchmove', preventPullToRefresh, options);
+
+        return () => {
+            window.removeEventListener('touchmove', preventPullToRefresh);
+        };
+    }, []);
 
     const handleReorder = (index: number, direction: 'up' | 'down') => {
         const newIndex = direction === 'up' ? index - 1 : index + 1;
@@ -343,15 +363,6 @@ function QuizAttemptContent() {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [triggerSubmit]);
-
-  useEffect(() => {
-    // Add class to body to prevent pull-to-refresh on mount
-    document.body.style.overscrollBehaviorY = 'contain';
-    // Remove class on unmount
-    return () => {
-      document.body.style.overscrollBehaviorY = '';
-    };
-  }, []);
 
   
   const handleAnswerChange = (questionId: string, value: any) => {
