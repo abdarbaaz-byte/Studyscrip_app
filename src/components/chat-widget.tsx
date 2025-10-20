@@ -248,7 +248,7 @@ export function ChatWidget() {
     <div ref={chatWidgetRef}>
       <div className="fixed bottom-20 right-4 z-50 md:bottom-4">
         <Button id="chat-widget-toggle" onClick={handleToggleWidget} size="icon" className="rounded-full h-14 w-14 shadow-lg relative">
-          {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+           {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
           {hasUnreadMessages && (
              <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-600 ring-2 ring-background" />
           )}
@@ -363,5 +363,3 @@ export function ChatWidget() {
     </div>
   );
 }
-
-    
