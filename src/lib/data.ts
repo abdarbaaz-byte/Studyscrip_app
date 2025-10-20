@@ -1,7 +1,7 @@
 
 
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove, increment } from 'firebase/firestore';
 import type { Course, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
@@ -562,20 +562,27 @@ export async function sendMessage(chatId: string, message: ChatMessage, userInfo
     });
   }
 
-  const chatDoc = await getDoc(chatDocRef);
-  if (chatDoc.exists()) {
-    await updateDoc(chatDocRef, {
+  const updateData: { [key: string]: any } = {
       messages: arrayUnion(message),
       lastMessageTimestamp: message.timestamp,
-    });
+  };
+
+  if (message.sender === 'admin') {
+      updateData.unreadCount = increment(1);
+  }
+
+  const chatDoc = await getDoc(chatDocRef);
+  if (chatDoc.exists()) {
+    await updateDoc(chatDocRef, updateData);
   } else {
     await setDoc(chatDocRef, {
       id: chatId,
       userId: userInfo.userId,
       userName: userInfo.userName,
-      admin: { id: 'admin-1', name: 'StudyScript Support', avatar: '/logo-icon.svg' },
+      admin: { id: 'admin-1', name: 'StudyScript Support', avatar: '/icons/icon-192x192.png' },
       messages: [message],
       lastMessageTimestamp: message.timestamp,
+      unreadCount: message.sender === 'admin' ? 1 : 0,
     });
   }
 }
@@ -600,6 +607,17 @@ export function listenToChat(chatId: string, callback: (chat: Chat | null) => vo
     }
   });
 }
+
+export async function markChatAsRead(userId: string) {
+    const chatDocRef = doc(db, 'chats', userId);
+    const chatDoc = await getDoc(chatDocRef);
+    if (chatDoc.exists()) {
+        await updateDoc(chatDocRef, {
+            unreadCount: 0
+        });
+    }
+}
+
 
 export async function deleteChat(chatId: string): Promise<void> {
     const chatDocRef = doc(db, 'chats', chatId);

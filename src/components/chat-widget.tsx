@@ -12,7 +12,7 @@ import { Paperclip, Send, MessageSquare, X, Bot, Loader2, User } from "lucide-re
 import type { ChatMessage, Chat, AdminProfile } from "@/lib/chat";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
-import { sendMessage, listenToChat } from "@/lib/data";
+import { sendMessage, listenToChat, markChatAsRead } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { usePathname } from "next/navigation";
 import { ChatMessageRenderer } from "@/components/chat-message-renderer";
@@ -30,7 +30,8 @@ const emptyChat: Chat = {
     userName: '',
     admin: adminProfile,
     messages: [],
-    lastMessageTimestamp: ''
+    lastMessageTimestamp: '',
+    unreadCount: 0,
 }
 
 export function ChatWidget() {
@@ -84,20 +85,18 @@ export function ChatWidget() {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!user || !isOpen) {
-        setActiveChat(null); // Reset chat when closed or logged out
+    if (!user) {
+        setActiveChat(null); // Reset chat when logged out
         return;
     };
-
-    setIsLoading(true);
-    // User's chat document ID is their UID
+    
     const chatId = user.uid; 
     
+    // Listen to chat changes irrespective of whether the widget is open, to get unread count
     const unsubscribe = listenToChat(chatId, (chatData) => {
         if (chatData) {
             setActiveChat(chatData);
         } else {
-            // No chat history, set up a new chat object
             setActiveChat({
                 ...emptyChat,
                 id: chatId,
@@ -105,8 +104,11 @@ export function ChatWidget() {
                 userName: user.email || 'New User',
             });
         }
-        setIsLoading(false);
-        scrollToBottom();
+        
+        if (isOpen) {
+          setIsLoading(false);
+          scrollToBottom();
+        }
     });
 
     return () => unsubscribe();
@@ -159,6 +161,14 @@ export function ChatWidget() {
       scrollToBottom();
     }
   }, [isOpen, activeChat?.messages]);
+  
+  const handleToggleWidget = () => {
+    const newOpenState = !isOpen;
+    setIsOpen(newOpenState);
+    if (newOpenState && user && activeChat && activeChat.unreadCount && activeChat.unreadCount > 0) {
+      markChatAsRead(user.uid);
+    }
+  };
 
 
   const handleSendMessage = async () => {
@@ -229,15 +239,20 @@ export function ChatWidget() {
   if (!isMounted) return null;
 
   const authPages = ["/login", "/signup", "/forgot-password", "/verify-email"];
-  if (authPages.includes(pathname)) {
+  if (authPages.includes(pathname) || !user) {
     return null;
   }
+
+  const hasUnreadMessages = !isOpen && activeChat && activeChat.unreadCount && activeChat.unreadCount > 0;
 
   return (
     <div ref={chatWidgetRef}>
       <div className="fixed bottom-20 right-4 z-50 md:bottom-4">
-        <Button id="chat-widget-toggle" onClick={() => setIsOpen(!isOpen)} size="icon" className="rounded-full h-14 w-14 shadow-lg">
+        <Button id="chat-widget-toggle" onClick={handleToggleWidget} size="icon" className="rounded-full h-14 w-14 shadow-lg relative">
           {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+          {hasUnreadMessages && (
+             <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-600 ring-2 ring-background" />
+          )}
         </Button>
       </div>
 

@@ -25,6 +25,7 @@ export type Chat = {
   admin: AdminProfile;
   messages: ChatMessage[];
   lastMessageTimestamp: string; // Using string to be compatible with Firestore
+  unreadCount?: number; // Number of unread messages for the user
 };
 
 const adminProfile: AdminProfile = {
@@ -62,5 +63,6 @@ export const initialChats: Chat[] = [
       }
     ],
     lastMessageTimestamp: new Date().toISOString(),
+    unreadCount: 0,
   },
 ];
