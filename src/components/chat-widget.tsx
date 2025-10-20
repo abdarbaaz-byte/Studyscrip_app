@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Paperclip, Send, MessageSquare, X, Bot, Loader2, User } from "lucide-react";
+import { Paperclip, Send, MessageSquare, X, Bot, Loader2, User, Link as LinkIcon } from "lucide-react";
 import type { ChatMessage, Chat, AdminProfile } from "@/lib/chat";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
@@ -298,7 +298,7 @@ export function ChatWidget() {
                               </Avatar>
                             )}
                             <div
-                              className={`max-w-[75%] rounded-lg px-3 py-2 ${
+                              className={`max-w-[75%] rounded-lg px-3 py-2 break-words ${
                                 msg.sender === "user"
                                   ? "bg-primary text-primary-foreground"
                                   : "bg-secondary"

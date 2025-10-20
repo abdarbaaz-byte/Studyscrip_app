@@ -2097,7 +2097,7 @@ export default function AdminDashboardPage() {
                         </Avatar>
                       )}
                       <div className={`max-w-[75%] rounded-lg px-3 py-2 ${ msg.sender === 'admin' ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-                         <p className="text-sm">{msg.text}</p>
+                         <p className="text-sm break-words">{msg.text}</p>
                       </div>
                        {msg.sender === "admin" && (
                          <Avatar className="h-8 w-8">
@@ -2132,6 +2132,7 @@ export default function AdminDashboardPage() {
     
 
     
+
 
 
 
