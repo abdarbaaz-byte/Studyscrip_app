@@ -242,7 +242,7 @@ export function ChatWidget() {
     return null;
   }
 
-  const hasUnreadMessages = !isOpen && activeChat && activeChat.unreadCount && activeChat.unreadCount > 0;
+  const hasUnreadMessages = !isOpen && activeChat && typeof activeChat.unreadCount === 'number' && activeChat.unreadCount > 0;
 
   return (
     <div ref={chatWidgetRef}>
