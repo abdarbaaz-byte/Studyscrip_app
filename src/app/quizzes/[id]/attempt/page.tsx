@@ -344,6 +344,15 @@ function QuizAttemptContent() {
     };
   }, [triggerSubmit]);
 
+  useEffect(() => {
+    // Add class to body to prevent pull-to-refresh on mount
+    document.body.style.overscrollBehaviorY = 'contain';
+    // Remove class on unmount
+    return () => {
+      document.body.style.overscrollBehaviorY = '';
+    };
+  }, []);
+
   
   const handleAnswerChange = (questionId: string, value: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
