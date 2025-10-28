@@ -1,6 +1,7 @@
 
+import type { NextConfig } from 'next';
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -92,18 +93,6 @@ const withPWA = require('next-pwa')({
         expiration: {
           maxEntries: 32,
           maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-        networkTimeoutSeconds: 10,
-      },
-    },
-     {
-      urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'firestore-data',
-        expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 60 * 60, // 1 hour
         },
         networkTimeoutSeconds: 10,
       },
