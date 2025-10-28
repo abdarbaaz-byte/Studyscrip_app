@@ -78,7 +78,7 @@ export default function DoubtAiPage() {
     };
 
     return (
-        <div className="h-full flex flex-col">
+        <div className="flex flex-col min-h-[calc(100vh-140px)] md:min-h-screen">
             <Card className="w-full flex-1 flex flex-col shadow-none border-0 rounded-none">
                 <CardHeader className="text-center">
                     <CardTitle className="font-headline text-3xl md:text-4xl">AI Doubt Solver</CardTitle>
