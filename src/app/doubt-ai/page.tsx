@@ -78,8 +78,8 @@ export default function DoubtAiPage() {
     };
 
     return (
-        <div className="h-full flex flex-col md:container md:mx-auto md:py-8">
-            <Card className="w-full flex-1 flex flex-col shadow-2xl border-0 md:border">
+        <div className="h-full flex flex-col">
+            <Card className="w-full flex-1 flex flex-col shadow-none border-0 rounded-none">
                 <CardHeader className="text-center">
                     <CardTitle className="font-headline text-3xl md:text-4xl">AI Doubt Solver</CardTitle>
                     <CardDescription className="text-md md:text-lg text-muted-foreground pt-2">
