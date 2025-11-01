@@ -1,28 +1,8 @@
 
+import type {NextConfig} from 'next';
+import createNextPwa from 'next-pwa';
 
-const nextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'drive.google.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**', // Allows all hostnames
-      },
-    ],
-  },
-};
-
-const withPWA = require('next-pwa')({
+const withPWA = createNextPwa({
   dest: 'public',
   register: true,
   skipWaiting: true,
@@ -99,4 +79,26 @@ const withPWA = require('next-pwa')({
 });
 
 
-module.exports = withPWA(nextConfig);
+const nextConfig: NextConfig = {
+  /* config options here */
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'drive.google.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**', // Allows all hostnames
+      },
+    ],
+  },
+};
+
+export default withPWA(nextConfig);
