@@ -21,6 +21,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
+const coursesAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
+const reviewsAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
+const bannerAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -29,11 +32,6 @@ export default function Home() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-
-  const coursesAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
-  const reviewsAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
-  const bannerAutoplay = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
-
 
   // State for review form
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -129,10 +127,8 @@ export default function Home() {
              <div className="aspect-[4/1] w-full relative overflow-hidden bg-secondary animate-pulse"></div>
         ) : activeBanners.length > 0 && (
             <Carousel
-              plugins={[bannerAutoplay.current]}
+              plugins={[bannerAutoplay]}
               className="w-full"
-              onMouseEnter={bannerAutoplay.current.stop}
-              onMouseLeave={bannerAutoplay.current.reset}
               opts={{
                 align: "start",
                 loop: true,
@@ -217,10 +213,8 @@ export default function Home() {
               </h2>
               <Carousel
                 setApi={setCoursesApi}
-                plugins={[coursesAutoplay.current]}
+                plugins={[coursesAutoplay]}
                 className="w-full"
-                onMouseEnter={coursesAutoplay.current.stop}
-                onMouseLeave={coursesAutoplay.current.reset}
                 opts={{
                   align: "start",
                   loop: true,
@@ -262,10 +256,8 @@ export default function Home() {
               {reviews.length > 0 ? (
                 <Carousel
                   setApi={setReviewsApi}
-                  plugins={[reviewsAutoplay.current]}
+                  plugins={[reviewsAutoplay]}
                   className="w-full max-w-4xl mx-auto"
-                  onMouseEnter={reviewsAutoplay.current.stop}
-                  onMouseLeave={reviewsAutoplay.current.reset}
                   opts={{ align: "start", loop: true, }}
                 >
                   <CarouselContent className="-ml-4">
