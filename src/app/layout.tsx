@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { ChatWidget } from "@/components/chat-widget";
 import { AuthProvider } from "@/hooks/use-auth";
 import { InstallPwaButton } from "@/components/install-pwa-button";
-import { OneSignalProvider } from "@/components/onesignal-provider";
 import "./globals.css";
 import { ClientSideLayout } from "@/components/client-side-layout";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -45,7 +44,6 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-body antialiased">
         <AuthProvider>
-          <OneSignalProvider>
             <ClientSideLayout>
                 <div className="relative flex min-h-screen flex-col">
                   <SiteHeader />
@@ -57,7 +55,6 @@ export default function RootLayout({
                 <Toaster />
                 <InstallPwaButton />
             </ClientSideLayout>
-          </OneSignalProvider>
         </AuthProvider>
       </body>
     </html>
