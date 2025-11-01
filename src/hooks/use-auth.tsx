@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   
   useEffect(() => {
-    if (user && user.emailVerified) {
+    if (user) { // Removed user.emailVerified check
       if (user.email === SUPER_ADMIN_EMAIL) {
           setUserRole('admin');
           setPermissions([
@@ -131,9 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserRole(null);
       setPermissions([]);
       setUserSchoolId(null);
-      if (user && !user.emailVerified) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [user]);
 
@@ -171,14 +169,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await updateProfile(user, { displayName: name });
       
-      await sendEmailVerification(user);
-      
-      toast({ 
-        title: "Account Created!",
-        description: "A verification link has been sent to your email."
-      });
-
       const userDocRef = doc(db, "users", user.uid);
+      const sessionToken = Date.now().toString();
+      localStorage.setItem('sessionToken', sessionToken);
       
       await setDoc(userDocRef, {
           uid: user.uid,
@@ -192,15 +185,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userClass: "",
           mobileNumber: "",
           certificates: [],
-          activeSessionToken: null,
+          activeSessionToken: sessionToken,
           schoolId: null,
       });
 
-      // Redirect immediately after sending email, then sign out
-      router.push("/verify-email");
-      await signOut(auth);
+      toast({ 
+        title: "Account Created!",
+        description: "Welcome to StudyScript. You are now logged in."
+      });
 
+      router.push("/");
       return true;
+
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign-up failed", description: error.message });
       return false;
@@ -211,17 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const loggedInUser = userCredential.user;
-
-      if (!loggedInUser.emailVerified) {
-          toast({
-              variant: "destructive",
-              title: "Email Not Verified",
-              description: "Please verify your email address before logging in.",
-          });
-          router.push("/verify-email");
-          return false;
-      }
-
+      
       const userDocRef = doc(db, 'users', loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
       
