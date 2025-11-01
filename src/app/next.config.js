@@ -27,7 +27,6 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   sw: 'sw.js',
-  disable: process.env.NODE_ENV === 'development',
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
