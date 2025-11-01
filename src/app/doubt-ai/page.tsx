@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -7,6 +8,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Bot, User, Loader2, AlertTriangle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+
+// AI features are temporarily disabled to resolve package dependency issues.
+// To re-enable, Genkit packages need to be installed and this file's code uncommented.
 
 // import { chat, ChatInput, ChatOutput } from '@/ai/flows/chat-flow';
 // import { type Content, type Part } from '@genkit-ai/google-genai';
