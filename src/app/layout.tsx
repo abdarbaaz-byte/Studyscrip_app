@@ -13,9 +13,9 @@ import { NotificationPermissionHandler } from "@/components/notification-permiss
 
 
 export const metadata: Metadata = {
-  title: "StudyScript - E-Learning for Academic & Professional Courses",
-  description: "Join StudyScript, a modern e-learning platform for academic classes (9th, 10th) and professional courses in web development, data science, and more. Start learning today!",
-  keywords: ["e-learning", "online courses", "academic classes", "9th class", "10th class", "professional courses", "online education", "StudyScript"],
+  title: "StudyScript - Live Classes, Courses, and AI Doubts",
+  description: "StudyScript par online padhai karein! Hum Class 8-12 ke liye structured courses, live classes, quizzes, free notes, aur AI doubt solver pradan karte hain. Aaj hi join karein aur apni padhai ko ek nayi disha dein.",
+  keywords: ["online classes", "e-learning India", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "academic courses", "live classes", "online quiz", "free study material", "free notes pdf", "AI doubt solver", "online padhai", "digital learning", "education platform", "professional courses", "exam preparation"],
   authors: [{ name: "StudyScript" }],
   robots: "index, follow",
 };
