@@ -11,7 +11,6 @@ const navItems = [
   { href: "/", label: "Home", icon: Home, requiresAuth: false },
   { href: "/my-courses", label: "Courses", icon: LayoutGrid, requiresAuth: true },
   { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
-  { href: "/doubt-ai", label: "AI Doubt", icon: MessageCircleQuestion, requiresAuth: false },
   { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
 ];
 
@@ -28,7 +27,6 @@ export function BottomNavigation() {
     { href: "/", label: "Home", icon: Home, requiresAuth: false },
     null, // Placeholder for conditional item
     { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
-    { href: "/doubt-ai", label: "AI Doubt", icon: MessageCircleQuestion, requiresAuth: false },
     { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
   ];
 
@@ -40,9 +38,17 @@ export function BottomNavigation() {
     conditionalItem = { href: "/my-school", label: "School", icon: School, requiresAuth: true };
   }
   
-  baseNavItems[1] = conditionalItem as any;
+  // A simple 4-item layout for mobile. We can adjust this.
+  // The middle item will be the conditional one.
+  const finalNavItems = [
+     { href: "/", label: "Home", icon: Home, requiresAuth: false },
+     conditionalItem,
+     { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
+     { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
+  ];
 
-  const visibleNavItems = baseNavItems.filter(item => item && (!item.requiresAuth || !!user)) as (typeof navItems[0])[];
+
+  const visibleNavItems = finalNavItems.filter(item => item && (!item.requiresAuth || !!user)) as (typeof navItems[0])[];
 
 
   return (
