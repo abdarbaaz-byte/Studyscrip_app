@@ -12,6 +12,20 @@ import { UserPermission } from '@/hooks/use-auth';
 // Re-export ContentItem for use in other modules
 export type { ContentItem } from './academics';
 
+// --- GAMES ---
+export type WordMatchPair = {
+    id: string;
+    word: string;
+    meaning: string;
+};
+
+export type Game = {
+    id: string; // docId, e.g., 'word-match-1'
+    title: string;
+    type: 'WordMatch';
+    pairs: WordMatchPair[];
+};
+
 // --- SCHOOLS & TEACHERS ---
 export type SchoolTeacher = {
   uid: string;
@@ -738,6 +752,41 @@ export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
 
 export async function deleteBookstoreItem(id: string): Promise<void> {
     await deleteDoc(doc(db, 'bookstore', id));
+}
+
+// --- GAMES ---
+export async function getGames(): Promise<Game[]> {
+    const gamesCol = collection(db, 'games');
+    const q = query(gamesCol, orderBy('title'));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        // Seed initial game data if collection is empty
+        const initialGame: Game = {
+            id: 'word-match-1',
+            title: 'Vocabulary Word Match',
+            type: 'WordMatch',
+            pairs: [
+                { id: 'wm-1', word: "Integrity", meaning: "ईमानदारी" },
+                { id: 'wm-2', word: "Perseverance", meaning: "दृढ़ता" },
+                { id: 'wm-3', word: "Empathy", meaning: "सहानुभूति" },
+                { id: 'wm-4', word: "Innovation", meaning: "नवाचार" },
+                { id: 'wm-5', word: "Gratitude", meaning: "कृतज्ञता" },
+                { id: 'wm-6', word: "Curiosity", meaning: "जिज्ञासा" },
+            ]
+        };
+        await setDoc(doc(db, 'games', initialGame.id), initialGame);
+        return [initialGame];
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+}
+
+export async function saveGame(game: Game): Promise<void> {
+    const { id, ...data } = game;
+    if (id) {
+        await setDoc(doc(db, 'games', id), data, { merge: true });
+    } else {
+        await addDoc(collection(db, 'games'), data);
+    }
 }
 
 // --- QUIZZES ---

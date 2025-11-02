@@ -5,31 +5,26 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, Gamepad2, Shuffle, RefreshCw } from "lucide-react";
+import { Check, Gamepad2, Shuffle, RefreshCw, Loader2 } from "lucide-react";
+import { getGames, type Game, type WordMatchPair } from "@/lib/data";
 
 // Helper function to shuffle an array
 const shuffleArray = <T,>(array: T[]): T[] => {
   return [...array].sort(() => Math.random() - 0.5);
 };
 
-const initialWordPairs = [
-  { word: "Integrity", meaning: "ईमानदारी" },
-  { word: "Perseverance", meaning: "दृढ़ता" },
-  { word: "Empathy", meaning: "सहानुभूति" },
-  { word: "Innovation", meaning: "नवाचार" },
-  { word: "Gratitude", meaning: "कृतज्ञता" },
-  { word: "Curiosity", meaning: "जिज्ञासा" },
-];
-
 type WordItem = {
-  id: number;
+  id: string;
   text: string;
   type: 'word' | 'meaning';
-  pairId: number;
+  pairId: string;
   matched: boolean;
 };
 
 export default function GamesPage() {
+  const [loading, setLoading] = useState(true);
+  const [initialWordPairs, setInitialWordPairs] = useState<WordMatchPair[]>([]);
+  
   const [words, setWords] = useState<WordItem[]>([]);
   const [meanings, setMeanings] = useState<WordItem[]>([]);
   const [selectedWord, setSelectedWord] = useState<WordItem | null>(null);
@@ -37,19 +32,34 @@ export default function GamesPage() {
   const [score, setScore] = useState(0);
   const [incorrectShake, setIncorrectShake] = useState(false);
 
+  useEffect(() => {
+    async function loadGameData() {
+        setLoading(true);
+        const games = await getGames();
+        const wordMatchGame = games.find(g => g.type === 'WordMatch');
+        if (wordMatchGame) {
+            setInitialWordPairs(wordMatchGame.pairs);
+        }
+        setLoading(false);
+    }
+    loadGameData();
+  }, []);
+
   const setupGame = () => {
-    const wordItems: WordItem[] = initialWordPairs.map((pair, index) => ({
-      id: index,
+    if (initialWordPairs.length === 0) return;
+    
+    const wordItems: WordItem[] = initialWordPairs.map((pair) => ({
+      id: `word-${pair.id}`,
       text: pair.word,
       type: 'word',
-      pairId: index,
+      pairId: pair.id,
       matched: false,
     }));
-    const meaningItems: WordItem[] = initialWordPairs.map((pair, index) => ({
-      id: index + initialWordPairs.length,
+    const meaningItems: WordItem[] = initialWordPairs.map((pair) => ({
+      id: `meaning-${pair.id}`,
       text: pair.meaning,
       type: 'meaning',
-      pairId: index,
+      pairId: pair.id,
       matched: false,
     }));
 
@@ -62,7 +72,7 @@ export default function GamesPage() {
 
   useEffect(() => {
     setupGame();
-  }, []);
+  }, [initialWordPairs]);
 
   const handleWordSelect = (word: WordItem) => {
     if (word.matched) return;
@@ -99,7 +109,15 @@ export default function GamesPage() {
     }
   }, [selectedWord, selectedMeaning]);
 
-  const allMatched = score === initialWordPairs.length;
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
+  }
+
+  const allMatched = initialWordPairs.length > 0 && score === initialWordPairs.length;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -114,7 +132,11 @@ export default function GamesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {allMatched ? (
+          {initialWordPairs.length === 0 ? (
+             <div className="text-center py-16 text-muted-foreground">
+                <p>No games available at the moment. Please check back later.</p>
+             </div>
+          ) : allMatched ? (
             <div className="text-center py-16">
               <Check className="h-20 w-20 text-green-500 mx-auto animate-bounce" />
               <h2 className="text-3xl font-bold mt-4">Congratulations! You Won!</h2>
