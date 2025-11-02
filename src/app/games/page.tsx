@@ -26,10 +26,9 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [initialWordPairs, setInitialWordPairs] = useState<WordMatchPair[]>([]);
   
-  const [words, setWords] = useState<WordItem[]>([]);
-  const [meanings, setMeanings] = useState<WordItem[]>([]);
-  const [selectedWord, setSelectedWord] = useState<WordItem | null>(null);
-  const [selectedMeaning, setSelectedMeaning] = useState<WordItem | null>(null);
+  const [gameItems, setGameItems] = useState<WordItem[]>([]);
+  const [firstSelection, setFirstSelection] = useState<WordItem | null>(null);
+  const [secondSelection, setSecondSelection] = useState<WordItem | null>(null);
   const [score, setScore] = useState(0);
   const [incorrectShake, setIncorrectShake] = useState(false);
 
@@ -69,10 +68,9 @@ export default function GamesPage() {
       matched: false,
     }));
 
-    setWords(shuffleArray(wordItems));
-    setMeanings(shuffleArray(meaningItems));
-    setSelectedWord(null);
-    setSelectedMeaning(null);
+    setGameItems(shuffleArray([...wordItems, ...meaningItems]));
+    setFirstSelection(null);
+    setSecondSelection(null);
     setScore(0);
     setTime(0);
     setIsGameActive(true);
@@ -80,6 +78,7 @@ export default function GamesPage() {
 
   useEffect(() => {
     setupGame();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialWordPairs]);
 
   useEffect(() => {
@@ -95,40 +94,40 @@ export default function GamesPage() {
     };
   }, [isGameActive]);
 
-  const handleWordSelect = (word: WordItem) => {
-    if (word.matched) return;
-    setSelectedWord(word);
-  };
+  const handleItemSelect = (item: WordItem) => {
+    if (item.matched || secondSelection) return; // Prevent selection if already matched or 2 items are selected
 
-  const handleMeaningSelect = (meaning: WordItem) => {
-    if (meaning.matched) return;
-    setSelectedMeaning(meaning);
+    if (!firstSelection) {
+      setFirstSelection(item);
+    } else if (firstSelection.id !== item.id) {
+      setSecondSelection(item);
+    }
   };
   
   useEffect(() => {
-    if (selectedWord && selectedMeaning) {
-      if (selectedWord.pairId === selectedMeaning.pairId) {
+    if (firstSelection && secondSelection) {
+      if (firstSelection.pairId === secondSelection.pairId) {
         // Correct match
-        setWords(prevWords =>
-          prevWords.map(w => (w.id === selectedWord.id ? { ...w, matched: true } : w))
-        );
-        setMeanings(prevMeanings =>
-          prevMeanings.map(m => (m.id === selectedMeaning.id ? { ...m, matched: true } : m))
+        setGameItems(prevItems =>
+          prevItems.map(item =>
+            item.pairId === firstSelection.pairId ? { ...item, matched: true } : item
+          )
         );
         setScore(prev => prev + 1);
-        setSelectedWord(null);
-        setSelectedMeaning(null);
+        setFirstSelection(null);
+        setSecondSelection(null);
       } else {
         // Incorrect match
         setIncorrectShake(true);
         setTimeout(() => {
-          setSelectedWord(null);
-          setSelectedMeaning(null);
+          setFirstSelection(null);
+          setSecondSelection(null);
           setIncorrectShake(false);
         }, 500);
       }
     }
-  }, [selectedWord, selectedMeaning]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstSelection, secondSelection]);
 
   if (loading) {
     return (
@@ -193,53 +192,27 @@ export default function GamesPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Words Column */}
-                <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-center font-headline">English Words</h3>
-                    {words.map(word => (
-                    <Button
-                        key={word.id}
-                        variant="outline"
-                        onClick={() => handleWordSelect(word)}
-                        disabled={word.matched}
-                        className={cn(
-                        "w-full justify-center text-lg h-16 p-2 transition-all duration-300 transform",
-                        "border-2 bg-background shadow-md",
-                        selectedWord?.id === word.id && "ring-4 ring-primary ring-offset-2 scale-105 z-10",
-                        word.matched && "bg-green-100 border-green-500 text-green-800 opacity-60 cursor-not-allowed",
-                        incorrectShake && selectedWord?.id === word.id && "bg-red-100 border-red-500 animate-shake"
-                        )}
-                    >
-                        {word.text}
-                        {word.matched && <Check className="ml-2 h-5 w-5" />}
-                    </Button>
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                    {gameItems.map(item => (
+                        <Button
+                            key={item.id}
+                            variant="outline"
+                            onClick={() => handleItemSelect(item)}
+                            disabled={item.matched || !!secondSelection}
+                            className={cn(
+                            "w-full justify-center text-lg h-20 p-2 transition-all duration-300 transform",
+                            "border-2 bg-background shadow-md",
+                            (firstSelection?.id === item.id || secondSelection?.id === item.id) && "ring-4 ring-primary ring-offset-2 scale-105 z-10",
+                            item.matched && "bg-green-100 border-green-500 text-green-800 opacity-60 cursor-not-allowed",
+                            incorrectShake && (firstSelection?.id === item.id || secondSelection?.id === item.id) && "bg-red-100 border-red-500 animate-shake"
+                            )}
+                        >
+                            {item.text}
+                            {item.matched && <Check className="ml-2 h-5 w-5" />}
+                        </Button>
                     ))}
                 </div>
 
-                {/* Meanings Column */}
-                <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-center font-headline">Hindi Meanings</h3>
-                    {meanings.map(meaning => (
-                    <Button
-                        key={meaning.id}
-                        variant="outline"
-                        onClick={() => handleMeaningSelect(meaning)}
-                        disabled={meaning.matched}
-                        className={cn(
-                        "w-full justify-center text-lg h-16 p-2 transition-all duration-300 transform",
-                        "border-2 bg-background shadow-md",
-                        selectedMeaning?.id === meaning.id && "ring-4 ring-primary ring-offset-2 scale-105 z-10",
-                        meaning.matched && "bg-green-100 border-green-500 text-green-800 opacity-60 cursor-not-allowed",
-                        incorrectShake && selectedMeaning?.id === meaning.id && "bg-red-100 border-red-500 animate-shake"
-                        )}
-                    >
-                        {meaning.text}
-                         {meaning.matched && <Check className="ml-2 h-5 w-5" />}
-                    </Button>
-                    ))}
-                </div>
-                </div>
                  <div className="mt-8 flex justify-center">
                     <Button variant="outline" onClick={setupGame}>
                         <RefreshCw className="mr-2 h-4 w-4"/> Restart Game
