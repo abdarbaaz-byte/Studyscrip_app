@@ -3,16 +3,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, BrainCircuit, MessageCircleQuestion, User, School } from "lucide-react";
+import { Home, LayoutGrid, BrainCircuit, Gamepad2, User, School } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-
-const navItems = [
-  { href: "/", label: "Home", icon: Home, requiresAuth: false },
-  { href: "/my-courses", label: "Courses", icon: LayoutGrid, requiresAuth: true },
-  { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
-  { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
-];
 
 export function BottomNavigation() {
   const pathname = usePathname();
@@ -22,33 +15,28 @@ export function BottomNavigation() {
   if (authPages.includes(pathname)) {
     return null;
   }
-
-  const baseNavItems = [
-    { href: "/", label: "Home", icon: Home, requiresAuth: false },
-    null, // Placeholder for conditional item
-    { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
-    { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
-  ];
-
-  let conditionalItem = { href: "/my-courses", label: "Courses", icon: LayoutGrid, requiresAuth: true };
-
-  if (userRole === 'teacher') {
-    conditionalItem = { href: "/teacher/dashboard", label: "Dashboard", icon: School, requiresAuth: true };
-  } else if (userSchoolId) {
-    conditionalItem = { href: "/my-school", label: "School", icon: School, requiresAuth: true };
-  }
   
-  // A simple 4-item layout for mobile. We can adjust this.
-  // The middle item will be the conditional one.
-  const finalNavItems = [
-     { href: "/", label: "Home", icon: Home, requiresAuth: false },
-     conditionalItem,
-     { href: "/quizzes", label: "Quizzes", icon: BrainCircuit, requiresAuth: false },
-     { href: "/my-profile", label: "Profile", icon: User, requiresAuth: true },
+  // Define a 5-item layout for better spacing
+  const baseNavItems = [
+    { href: "/", label: "Home", icon: Home },
+    { href: "/my-courses", label: "Courses", icon: LayoutGrid },
+    { href: "/games", label: "Games", icon: Gamepad2 },
+    { href: "/quizzes", label: "Quizzes", icon: BrainCircuit },
+    { href: "/my-profile", label: "Profile", icon: User },
   ];
+  
+  let navItems = [...baseNavItems];
+  
+  if (userRole === 'teacher') {
+    // Replace 'Courses' with 'Dashboard' for teachers
+    navItems[1] = { href: "/teacher/dashboard", label: "Dashboard", icon: School };
+  } else if (userSchoolId) {
+    // Replace 'Courses' with 'School' for students in a school
+    navItems[1] = { href: "/my-school", label: "School", icon: School };
+  }
 
-
-  const visibleNavItems = finalNavItems.filter(item => item && (!item.requiresAuth || !!user)) as (typeof navItems[0])[];
+  // Filter out items that require auth if user is not logged in
+  const visibleNavItems = user ? navItems : navItems.filter(item => ["/", "/quizzes", "/games"].includes(item.href));
 
 
   return (

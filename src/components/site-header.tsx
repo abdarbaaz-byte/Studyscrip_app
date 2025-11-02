@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut, Share2, User, Link as LinkIcon, School } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2, User, Link as LinkIcon, School, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -101,6 +101,7 @@ export function SiteHeader() {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/#courses", label: "Courses" },
+    { href: "/games", label: "Games" },
     { href: "/faq", label: "FAQs" },
     { href: "/contact", label: "Contact" },
     { href: "/about", label: "About" },
