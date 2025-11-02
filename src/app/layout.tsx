@@ -9,6 +9,7 @@ import { InstallPwaButton } from "@/components/install-pwa-button";
 import "./globals.css";
 import { ClientSideLayout } from "@/components/client-side-layout";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { NotificationPermissionHandler } from "@/components/notification-permission-handler";
 
 
 export const metadata: Metadata = {
@@ -54,6 +55,7 @@ export default function RootLayout({
                 <ChatWidget />
                 <Toaster />
                 <InstallPwaButton />
+                <NotificationPermissionHandler />
             </ClientSideLayout>
         </AuthProvider>
       </body>

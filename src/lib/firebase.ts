@@ -3,6 +3,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getMessaging } from "firebase/messaging";
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -28,9 +29,11 @@ const app: FirebaseApp = createFirebaseApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+let messaging;
 
 if (typeof window !== 'undefined') {
   try {
+    messaging = getMessaging(app);
     enableIndexedDbPersistence(db)
       .then(() => console.log("Firestore offline persistence enabled."))
       .catch((err) => {
@@ -41,8 +44,8 @@ if (typeof window !== 'undefined') {
         }
       });
   } catch (error) {
-    console.error("Error enabling Firestore persistence:", error);
+    console.error("Error initializing Firebase services:", error);
   }
 }
 
-export { app, auth, db, storage };
+export { app, auth, db, storage, messaging };
