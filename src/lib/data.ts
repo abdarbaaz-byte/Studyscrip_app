@@ -19,11 +19,17 @@ export type WordMatchPair = {
     meaning: string;
 };
 
+export type SentenceScrambleItem = {
+    id: string;
+    sentence: string;
+};
+
 export type Game = {
     id: string; // docId, e.g., 'word-match-1'
     title: string;
-    type: 'WordMatch';
-    pairs: WordMatchPair[];
+    type: 'WordMatch' | 'SentenceScramble';
+    pairs?: WordMatchPair[];
+    sentences?: SentenceScrambleItem[];
 };
 
 // --- SCHOOLS & TEACHERS ---
@@ -759,25 +765,53 @@ export async function getGames(): Promise<Game[]> {
     const gamesCol = collection(db, 'games');
     const q = query(gamesCol, orderBy('title'));
     const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-        // Seed initial game data if collection is empty
-        const initialGame: Game = {
-            id: 'word-match-1',
-            title: 'Vocabulary Word Match',
-            type: 'WordMatch',
-            pairs: [
-                { id: 'wm-1', word: "Integrity", meaning: "ईमानदारी" },
-                { id: 'wm-2', word: "Perseverance", meaning: "दृढ़ता" },
-                { id: 'wm-3', word: "Empathy", meaning: "सहानुभूति" },
-                { id: 'wm-4', word: "Innovation", meaning: "नवाचार" },
-                { id: 'wm-5', word: "Gratitude", meaning: "कृतज्ञता" },
-                { id: 'wm-6', word: "Curiosity", meaning: "जिज्ञासा" },
-            ]
-        };
-        await setDoc(doc(db, 'games', initialGame.id), initialGame);
-        return [initialGame];
+    
+    let games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+    
+    // Seed initial games if the collection is empty or a game type is missing
+    const hasWordMatch = games.some(g => g.type === 'WordMatch');
+    const hasSentenceScramble = games.some(g => g.type === 'SentenceScramble');
+    
+    const batch = writeBatch(db);
+    let needsCommit = false;
+    
+    if (!hasWordMatch) {
+      const initialGame: Game = {
+        id: 'word-match-game',
+        title: 'Word Match Challenge',
+        type: 'WordMatch',
+        pairs: [
+          { id: 'wm-1', word: "Integrity", meaning: "ईमानदारी" },
+          { id: 'wm-2', word: "Perseverance", meaning: "दृढ़ता" },
+        ]
+      };
+      const docRef = doc(db, 'games', initialGame.id);
+      batch.set(docRef, initialGame);
+      games.push(initialGame);
+      needsCommit = true;
     }
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+    
+    if (!hasSentenceScramble) {
+      const initialGame: Game = {
+        id: 'sentence-scramble-game',
+        title: 'Sentence Scramble',
+        type: 'SentenceScramble',
+        sentences: [
+          { id: 'ss-1', sentence: "The sun is shining brightly" },
+          { id: 'ss-2', sentence: "She went to the market" },
+        ]
+      };
+      const docRef = doc(db, 'games', initialGame.id);
+      batch.set(docRef, initialGame);
+      games.push(initialGame);
+      needsCommit = true;
+    }
+    
+    if (needsCommit) {
+      await batch.commit();
+    }
+    
+    return games;
 }
 
 export async function saveGame(game: Game): Promise<void> {

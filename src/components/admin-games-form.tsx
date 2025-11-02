@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Game, WordMatchPair } from "@/lib/data";
+import type { Game, WordMatchPair, SentenceScrambleItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,20 +24,48 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
 
   const handleWordPairChange = (gameIndex: number, pairIndex: number, field: 'word' | 'meaning', value: string) => {
     const newGames = [...games];
-    newGames[gameIndex].pairs[pairIndex][field] = value;
-    setGames(newGames);
+    if (newGames[gameIndex].pairs) {
+      newGames[gameIndex].pairs![pairIndex][field] = value;
+      setGames(newGames);
+    }
   };
   
   const handleAddPair = (gameIndex: number) => {
     const newGames = [...games];
-    newGames[gameIndex].pairs.push({ id: generateId('wp'), word: '', meaning: ''});
+    if (!newGames[gameIndex].pairs) newGames[gameIndex].pairs = [];
+    newGames[gameIndex].pairs!.push({ id: generateId('wp'), word: '', meaning: ''});
     setGames(newGames);
   };
   
   const handleRemovePair = (gameIndex: number, pairIndex: number) => {
     const newGames = [...games];
-    newGames[gameIndex].pairs.splice(pairIndex, 1);
+    if (newGames[gameIndex].pairs) {
+      newGames[gameIndex].pairs!.splice(pairIndex, 1);
+      setGames(newGames);
+    }
+  };
+
+  const handleSentenceChange = (gameIndex: number, sentenceIndex: number, value: string) => {
+    const newGames = [...games];
+    if (newGames[gameIndex].sentences) {
+        newGames[gameIndex].sentences![sentenceIndex].sentence = value;
+        setGames(newGames);
+    }
+  };
+
+  const handleAddSentence = (gameIndex: number) => {
+    const newGames = [...games];
+    if (!newGames[gameIndex].sentences) newGames[gameIndex].sentences = [];
+    newGames[gameIndex].sentences!.push({ id: generateId('ss'), sentence: '' });
     setGames(newGames);
+  };
+
+  const handleRemoveSentence = (gameIndex: number, sentenceIndex: number) => {
+    const newGames = [...games];
+    if (newGames[gameIndex].sentences) {
+        newGames[gameIndex].sentences!.splice(sentenceIndex, 1);
+        setGames(newGames);
+    }
   };
 
   const handleSaveGame = async (game: Game) => {
@@ -52,7 +80,7 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
   }
 
   return (
-    <Accordion type="single" collapsible className="w-full space-y-4">
+    <Accordion type="multiple" defaultValue={games.map(g => g.id)} className="w-full space-y-4">
       {games.map((game, gameIndex) => (
         <AccordionItem value={game.id} key={game.id} className="border rounded-md px-4 bg-card">
           <AccordionTrigger className="hover:no-underline text-xl font-headline py-4">
@@ -62,7 +90,7 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
             <div className="space-y-4 p-2 border-t mt-3">
               {game.type === 'WordMatch' && (
                 <div className="space-y-4">
-                  {game.pairs.map((pair, pairIndex) => (
+                  {(game.pairs || []).map((pair, pairIndex) => (
                     <div key={pair.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-end p-4 border rounded-md bg-secondary/50">
                         <div className="space-y-1.5">
                             <Label htmlFor={`word-${pair.id}`}>English Word</Label>
@@ -90,18 +118,45 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
                         </Button>
                     </div>
                   ))}
-                  <div className="flex justify-between items-center pt-4">
-                    <Button type="button" variant="outline" onClick={() => handleAddPair(gameIndex)}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Word Pair
-                    </Button>
-                     <Button onClick={() => handleSaveGame(game)} disabled={isSaving === game.id}>
-                        {isSaving === game.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-                        Save Changes
-                    </Button>
-                  </div>
+                  <Button type="button" variant="outline" onClick={() => handleAddPair(gameIndex)}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Word Pair
+                  </Button>
                 </div>
               )}
+              {game.type === 'SentenceScramble' && (
+                  <div className="space-y-4">
+                    {(game.sentences || []).map((item, sentenceIndex) => (
+                        <div key={item.id} className="flex items-center gap-4 p-4 border rounded-md bg-secondary/50">
+                           <Label htmlFor={`sentence-${item.id}`} className="flex-shrink-0">Sentence:</Label>
+                           <Input
+                                id={`sentence-${item.id}`}
+                                value={item.sentence}
+                                onChange={(e) => handleSentenceChange(gameIndex, sentenceIndex, e.target.value)}
+                                className="flex-grow"
+                            />
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => handleRemoveSentence(gameIndex, sentenceIndex)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                     <Button type="button" variant="outline" onClick={() => handleAddSentence(gameIndex)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Sentence
+                    </Button>
+                  </div>
+              )}
+            </div>
+             <div className="flex justify-end pt-4">
+                <Button onClick={() => handleSaveGame(game)} disabled={isSaving === game.id}>
+                    {isSaving === game.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                    Save Changes
+                </Button>
             </div>
           </AccordionContent>
         </AccordionItem>
