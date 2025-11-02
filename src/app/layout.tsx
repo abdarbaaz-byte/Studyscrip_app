@@ -13,9 +13,9 @@ import { NotificationPermissionHandler } from "@/components/notification-permiss
 
 
 export const metadata: Metadata = {
-  title: "StudyScript - Live Classes, Courses, and AI Doubts",
-  description: "StudyScript par online padhai karein! Hum Class 8-12 ke liye structured courses, live classes, quizzes, free notes, aur AI doubt solver pradan karte hain. Aaj hi join karein aur apni padhai ko ek nayi disha dein.",
-  keywords: ["online classes", "e-learning India", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "academic courses", "live classes", "online quiz", "free study material", "free notes pdf", "AI doubt solver", "online padhai", "digital learning", "education platform", "professional courses", "exam preparation"],
+  title: "StudyScript | Live Classes, Courses & Exam Prep for NCERT & MP Board",
+  description: "StudyScript se online padhai karein! Hum Class 8-12 ke liye structured courses, live classes, quizzes, aur AI doubt solver pradan karte hain. NCERT, MP Board syllabus, aur previous year question papers ke saath apni exam ki taiyari ko behtar banayein.",
+  keywords: ["online classes", "e-learning India", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "NCERT solutions", "MP Board", "previous year question papers", "academic courses", "live classes", "online quiz", "free study material", "free notes pdf", "AI doubt solver", "online padhai", "digital learning", "education platform", "professional courses", "exam preparation"],
   authors: [{ name: "StudyScript" }],
   robots: "index, follow",
 };
