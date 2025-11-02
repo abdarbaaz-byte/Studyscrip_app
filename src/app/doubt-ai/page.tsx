@@ -8,83 +8,79 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Bot, User, Loader2, AlertTriangle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { chat, ChatInput, ChatOutput } from '@/ai/flows/chat-flow';
+import { type Content, type Part } from '@genkit-ai/ai';
 
-// AI features are temporarily disabled to resolve package dependency issues.
-// To re-enable, Genkit packages need to be installed and this file's code uncommented.
-
-// import { chat, ChatInput, ChatOutput } from '@/ai/flows/chat-flow';
-// import { type Content, type Part } from '@genkit-ai/google-genai';
-
-// type Message = {
-//   role: 'user' | 'model';
-//   content: Content;
-// };
+type Message = {
+  role: 'user' | 'model';
+  content: Content;
+};
 
 
 export default function AiDoubtSolverPage() {
-  // const [messages, setMessages] = useState<Message[]>([]);
-  // const [input, setInput] = useState('');
-  // const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // const scrollToBottom = () => {
-  //   if (scrollAreaRef.current) {
-  //     const scrollViewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-  //     if (scrollViewport) {
-  //       setTimeout(() => scrollViewport.scrollTop = scrollViewport.scrollHeight, 100);
-  //     }
-  //   }
-  // };
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollViewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+      if (scrollViewport) {
+        setTimeout(() => scrollViewport.scrollTop = scrollViewport.scrollHeight, 100);
+      }
+    }
+  };
 
-  // const handleSubmit = async (e?: React.FormEvent) => {
-  //   if (e) e.preventDefault();
-  //   if (!input.trim() || isLoading) return;
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!input.trim() || isLoading) return;
 
-  //   const userMessage: Message = {
-  //     role: 'user',
-  //     content: [{ text: input }],
-  //   };
-  //   const newMessages = [...messages, userMessage];
-  //   setMessages(newMessages);
-  //   setInput('');
-  //   setIsLoading(true);
-  //   scrollToBottom();
+    const userMessage: Message = {
+      role: 'user',
+      content: [{ text: input }],
+    };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setInput('');
+    setIsLoading(true);
+    scrollToBottom();
 
-  //   try {
-  //     const chatInput: ChatInput = {
-  //       messages: newMessages.map(msg => ({
-  //         role: msg.role,
-  //         content: msg.content as Part[],
-  //       })),
-  //       prompt: input,
-  //     };
+    try {
+      const chatInput: ChatInput = {
+        messages: newMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content as Part[],
+        })),
+        prompt: input,
+      };
 
-  //     const result: ChatOutput = await chat(chatInput);
+      const result: ChatOutput = await chat(chatInput);
 
-  //     const botMessage: Message = {
-  //       role: 'model',
-  //       content: [{ text: result.text }],
-  //     };
-  //     setMessages(prevMessages => [...prevMessages, botMessage]);
-  //   } catch (error) {
-  //     console.error('AI chat error:', error);
-  //     const errorMessage: Message = {
-  //       role: 'model',
-  //       content: [{ text: "Sorry, I'm having trouble connecting. Please try again later." }],
-  //     };
-  //     setMessages(prevMessages => [...prevMessages, errorMessage]);
-  //   } finally {
-  //     setIsLoading(false);
-  //     scrollToBottom();
-  //   }
-  // };
+      const botMessage: Message = {
+        role: 'model',
+        content: [{ text: result.text }],
+      };
+      setMessages(prevMessages => [...prevMessages, botMessage]);
+    } catch (error) {
+      console.error('AI chat error:', error);
+      const errorMessage: Message = {
+        role: 'model',
+        content: [{ text: "Sorry, I'm having trouble connecting. Please try again later." }],
+      };
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      scrollToBottom();
+    }
+  };
 
-  // const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-  //   if (e.key === 'Enter' && !e.shiftKey) {
-  //     e.preventDefault();
-  //     handleSubmit();
-  //   }
-  // };
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -116,16 +112,7 @@ export default function AiDoubtSolverPage() {
                           </div>
                         </div>
 
-                         <div className="flex items-start gap-4 justify-center text-center p-8 bg-yellow-50 border-yellow-200 border rounded-lg">
-                            <AlertTriangle className="h-8 w-8 text-yellow-500"/>
-                            <div>
-                                <p className="font-semibold text-yellow-800">AI Feature Temporarily Disabled</p>
-                                <p className="text-sm text-yellow-700">AI Doubt Solver abhi uplabdh nahi hai. Hum is par kaam kar rahe hain.</p>
-                            </div>
-                        </div>
-
-
-                        {/* {messages.map((message, index) => (
+                        {messages.map((message, index) => (
                           <div
                             key={index}
                             className={`flex items-start gap-4 ${
@@ -148,7 +135,7 @@ export default function AiDoubtSolverPage() {
                               <p className="font-bold text-sm mb-1">
                                 {message.role === 'user' ? 'You' : 'StudyScript AI'}
                               </p>
-                               <p className="text-sm whitespace-pre-wrap">{message.content[0].text}</p>
+                               <p className="text-sm whitespace-pre-wrap">{(message.content[0] as Part).text}</p>
                             </div>
                              {message.role === "user" && (
                               <Avatar>
@@ -167,12 +154,12 @@ export default function AiDoubtSolverPage() {
                               <Loader2 className="h-5 w-5 animate-spin"/>
                             </div>
                           </div>
-                        )} */}
+                        )}
                       </div>
                     </ScrollArea>
                   </div>
                   <div className="p-4 border-t bg-background">
-                    {/* <form onSubmit={handleSubmit} className="flex items-center gap-4">
+                    <form onSubmit={handleSubmit} className="flex items-center gap-4">
                       <Textarea
                         placeholder="Yahan apna sawaal likhein..."
                         className="flex-1 resize-none"
@@ -185,18 +172,7 @@ export default function AiDoubtSolverPage() {
                       <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
                         {isLoading ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-5 w-5" />}
                       </Button>
-                    </form> */}
-                    <div className="relative">
-                        <Textarea
-                            placeholder="AI feature abhi uplabdh nahi hai"
-                            className="flex-1 resize-none"
-                            disabled={true}
-                            rows={1}
-                        />
-                        <Button type="submit" size="icon" disabled={true} className="absolute right-2 bottom-2 h-7 w-7">
-                            <Send className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    </form>
                   </div>
                 </div>
             </CardContent>

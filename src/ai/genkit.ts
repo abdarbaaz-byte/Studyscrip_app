@@ -1,4 +1,15 @@
 
-// This file is temporarily cleared to resolve package dependency issues.
-// To re-enable AI features, the Genkit packages need to be re-installed with compatible versions.
-export const ai = {};
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/google-genai';
+
+export const ai = genkit({
+  plugins: [
+    googleAI({
+      apiVersion: 'v1beta',
+    }),
+  ],
+  // Log chunks in streaming responses
+  logLevel: 'debug',
+  // Manually disable OpenTelemetry so that we can manage it ourselves
+  enableOpenTelemetry: false,
+});

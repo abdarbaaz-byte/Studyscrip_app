@@ -6,7 +6,7 @@
  * - ChatInputSchema - The Zod schema for the input type.
  * - ChatOutputSchema - The Zod schema for the output type.
  */
-import {z} from 'genkit';
+import { z } from 'zod';
 
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),

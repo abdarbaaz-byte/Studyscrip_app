@@ -5,11 +5,17 @@
  *
  * - chat - A function that handles the chatbot conversation.
  */
-import { ChatInput, ChatOutput } from './chat-flow-types';
-// This flow is temporarily disabled to resolve package dependency issues.
+import {ai} from '../genkit';
+import {ChatInput, ChatOutput, ChatOutputSchema} from './chat-flow-types';
+
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  console.warn("AI features are temporarily disabled.");
-  return {
-    text: "I'm sorry, my AI capabilities are temporarily offline while we resolve some technical issues. Please check back later."
-  };
+  const llmResponse = await ai.generate({
+    model: 'googleai/gemini-1.0-pro',
+    prompt: input.prompt,
+    history: input.messages,
+    output: {
+      schema: ChatOutputSchema,
+    },
+  });
+  return llmResponse.output as ChatOutput;
 }
