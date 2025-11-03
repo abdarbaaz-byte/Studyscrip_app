@@ -24,12 +24,20 @@ export type SentenceScrambleItem = {
     sentence: string;
 };
 
+export type MathProblem = {
+    id: string;
+    question: string; // e.g., "5 + 3"
+    answer: number;   // e.g., 8
+};
+
 export type Game = {
-    id: string; // docId, e.g., 'word-match-1'
+    id: string; // docId
     title: string;
-    type: 'WordMatch' | 'SentenceScramble';
+    description: string;
+    type: 'WordMatch' | 'SentenceScramble' | 'MathRunner';
     pairs?: WordMatchPair[];
     sentences?: SentenceScrambleItem[];
+    problems?: MathProblem[];
 };
 
 // --- SCHOOLS & TEACHERS ---
@@ -768,47 +776,48 @@ export async function getGames(): Promise<Game[]> {
     
     let games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
     
-    // Seed initial games if the collection is empty or a game type is missing
-    const hasWordMatch = games.some(g => g.type === 'WordMatch');
-    const hasSentenceScramble = games.some(g => g.type === 'SentenceScramble');
-    
-    const batch = writeBatch(db);
-    let needsCommit = false;
-    
-    if (!hasWordMatch) {
-      const initialGame: Game = {
-        id: 'word-match-game',
-        title: 'Word Match Challenge',
-        type: 'WordMatch',
-        pairs: [
-          { id: 'wm-1', word: "Integrity", meaning: "ईमानदारी" },
-          { id: 'wm-2', word: "Perseverance", meaning: "दृढ़ता" },
-        ]
-      };
-      const docRef = doc(db, 'games', initialGame.id);
-      batch.set(docRef, initialGame);
-      games.push(initialGame);
-      needsCommit = true;
-    }
-    
-    if (!hasSentenceScramble) {
-      const initialGame: Game = {
-        id: 'sentence-scramble-game',
-        title: 'Sentence Scramble',
-        type: 'SentenceScramble',
-        sentences: [
-          { id: 'ss-1', sentence: "The sun is shining brightly" },
-          { id: 'ss-2', sentence: "She went to the market" },
-        ]
-      };
-      const docRef = doc(db, 'games', initialGame.id);
-      batch.set(docRef, initialGame);
-      games.push(initialGame);
-      needsCommit = true;
-    }
-    
-    if (needsCommit) {
-      await batch.commit();
+    if (games.length === 0) {
+        const batch = writeBatch(db);
+        const initialGames: Game[] = [
+            {
+                id: 'hindi-opposites',
+                title: 'Opposite Words ( विलोम शब्द )',
+                description: 'Match the English words with their Hindi opposites.',
+                type: 'WordMatch',
+                pairs: [
+                    { id: 'wm-1', word: "Day", meaning: "रात" },
+                    { id: 'wm-2', word: "Happy", meaning: "दुखी" },
+                ]
+            },
+            {
+                id: 'sentence-scramble-1',
+                title: 'Beginner Sentence Scramble',
+                description: 'Unscramble the words to form a correct sentence.',
+                type: 'SentenceScramble',
+                sentences: [
+                    { id: 'ss-1', sentence: "The sun is shining brightly" },
+                    { id: 'ss-2', sentence: "She went to the market" },
+                ]
+            },
+            {
+                id: 'basic-addition',
+                title: 'Basic Addition Runner',
+                description: 'Solve simple addition problems while running!',
+                type: 'MathRunner',
+                problems: [
+                    { id: 'mr-1', question: "2+2", answer: 4 },
+                    { id: 'mr-2', question: "5+3", answer: 8 },
+                ]
+            }
+        ];
+
+        initialGames.forEach(game => {
+            const docRef = doc(db, 'games', game.id);
+            batch.set(docRef, game);
+        });
+
+        await batch.commit();
+        return initialGames;
     }
     
     return games;
@@ -822,6 +831,7 @@ export async function saveGame(game: Game): Promise<void> {
         await addDoc(collection(db, 'games'), data);
     }
 }
+
 
 // --- QUIZZES ---
 export async function getQuiz(id: string): Promise<Quiz | null> {
