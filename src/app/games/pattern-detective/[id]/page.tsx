@@ -172,21 +172,23 @@ export default function PatternDetectivePage() {
                 </div>
 
                 {/* Feedback and Next Button */}
-                {selectedAnswer !== null && (
-                    <div className="h-20 flex flex-col items-center justify-center">
-                        <div className="flex items-center text-xl font-semibold mb-4">
-                           {isCorrect ? (
-                                <span className="text-green-600 flex items-center gap-2"><Lightbulb /> Correct!</span>
-                           ) : (
-                               <span className="text-red-600">Not quite! The correct answer was {currentPattern.correctAnswer}.</span>
-                           )}
-                        </div>
-                        <Button onClick={handleNext} className="animate-pulse">
-                            {isLastQuestion ? 'Finish Game' : 'Next Question'}
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                    </div>
-                )}
+                <div className="h-20 flex flex-col items-center justify-center">
+                    {selectedAnswer !== null && (
+                        <>
+                            <div className="flex items-center text-xl font-semibold mb-4">
+                            {isCorrect ? (
+                                    <span className="text-green-600 flex items-center gap-2"><Lightbulb /> Correct!</span>
+                            ) : (
+                                <span className="text-red-600">Not quite! The correct answer was {currentPattern.correctAnswer}.</span>
+                            )}
+                            </div>
+                            <Button onClick={handleNext} className="animate-pulse">
+                                {isLastQuestion ? 'Finish Game' : 'Next Question'}
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </>
+                    )}
+                </div>
             </CardContent>
         </Card>
       <style jsx>{`
