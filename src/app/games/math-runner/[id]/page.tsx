@@ -143,14 +143,14 @@ export default function MathRunnerPage() {
           {obstacles.map(obs => (
             <div key={obs.id} className="absolute w-full transition-all duration-100 ease-linear" style={{ top: `${obs.top}px` }}>
               <div className="text-center text-2xl font-bold mb-4">{obs.question} = ?</div>
-              <div className="flex justify-around">
+              <div className="flex justify-around px-2">
                 {obs.options.map((opt: {value: number, isCorrect: boolean}, index: number) => (
                   <Button
                     key={index}
                     onClick={() => handleAnswerTap(obs.id, opt)}
                     disabled={obs.tapped}
                     className={cn(
-                      "w-28 h-28 flex items-center justify-center text-2xl font-bold rounded-lg shadow-lg",
+                      "w-20 h-20 md:w-28 md:h-28 flex items-center justify-center text-xl md:text-2xl font-bold rounded-lg shadow-lg",
                       "bg-primary text-primary-foreground hover:bg-primary/90",
                       obs.tapped && opt.isCorrect && "bg-green-500 hover:bg-green-500 cursor-not-allowed",
                     )}
@@ -165,7 +165,7 @@ export default function MathRunnerPage() {
       )}
 
       {gameState === "ready" && (
-        <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center p-4">
             <Card className="max-w-md text-center">
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl">{game.title}</CardTitle>
@@ -179,7 +179,7 @@ export default function MathRunnerPage() {
       )}
 
        {gameState === "over" && (
-         <div className="w-full h-full flex items-center justify-center bg-black/50 z-20 absolute top-0 left-0">
+         <div className="w-full h-full flex items-center justify-center bg-black/50 z-20 absolute top-0 left-0 p-4">
             <Card className="max-w-md text-center p-8">
                <Trophy className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
                 <h2 className="text-3xl font-bold">Game Over!</h2>
@@ -194,4 +194,3 @@ export default function MathRunnerPage() {
     </div>
   );
 }
-
