@@ -175,7 +175,7 @@ export default function WordMatchTopicPage() {
             {game.description}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
           {initialWordPairs.length === 0 ? (
              <div className="text-center py-16 text-muted-foreground">
                 <p>No words found for this topic. Please ask the admin to add some.</p>
@@ -207,7 +207,7 @@ export default function WordMatchTopicPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-4">
                     {gameItems.map(item => (
                         <Button
                             key={item.id}
@@ -215,7 +215,7 @@ export default function WordMatchTopicPage() {
                             onClick={() => handleItemSelect(item)}
                             disabled={item.matched || !!secondSelection}
                             className={cn(
-                            "w-full justify-center text-lg h-20 p-2 transition-all duration-300 transform",
+                            "w-full justify-center text-base md:text-lg min-h-20 p-1 md:p-2 transition-all duration-300 transform flex items-center text-center leading-tight break-words whitespace-normal",
                             "border-2 bg-background shadow-md",
                             (firstSelection?.id === item.id || secondSelection?.id === item.id) && "ring-4 ring-primary ring-offset-2 scale-105 z-10",
                             item.matched && "bg-green-100 border-green-500 text-green-800 opacity-60 cursor-not-allowed",
