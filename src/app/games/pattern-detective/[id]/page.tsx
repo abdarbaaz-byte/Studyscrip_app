@@ -70,7 +70,7 @@ export default function PatternDetectivePage() {
   };
 
   const handleNext = () => {
-    if (currentPatternIndex < patterns.length - 1) {
+    if (currentPatternIndex < patterns.length) {
       setCurrentPatternIndex(i => i + 1);
     }
   };
@@ -106,6 +106,7 @@ export default function PatternDetectivePage() {
       );
   }
 
+  const isLastQuestion = currentPatternIndex === patterns.length - 1;
   const isGameOver = currentPatternIndex >= patterns.length;
 
   if (isGameOver) {
@@ -181,7 +182,8 @@ export default function PatternDetectivePage() {
                            )}
                         </div>
                         <Button onClick={handleNext} className="animate-pulse">
-                            Next Question <ArrowRight className="ml-2 h-4 w-4" />
+                            {isLastQuestion ? 'Finish Game' : 'Next Question'}
+                            <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </div>
                 )}
