@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import { useState } from "react";
-import type { Game, WordMatchPair, SentenceScrambleItem, MathProblem } from "@/lib/data";
+import type { Game, WordMatchPair, SentenceScrambleItem, MathProblem, PatternDetectiveItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +24,7 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleAddNewGame = (type: 'WordMatch' | 'SentenceScramble' | 'MathRunner') => {
+  const handleAddNewGame = (type: 'WordMatch' | 'SentenceScramble' | 'MathRunner' | 'PatternDetective') => {
     let newGame: Game;
     switch(type) {
         case 'WordMatch':
@@ -34,6 +35,9 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
             break;
         case 'MathRunner':
             newGame = { id: generateId('game'), title: 'New Math Runner Level', description: 'Solve math problems.', type, problems: [] };
+            break;
+        case 'PatternDetective':
+            newGame = { id: generateId('game'), title: 'New Pattern', description: 'Find the next item in the sequence.', type, patterns: [] };
             break;
     }
     setGames(prev => [...prev, newGame]);
@@ -121,6 +125,36 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
         }
     };
 
+    // Pattern Detective Handlers
+    const handlePatternChange = (gameIndex: number, patternIndex: number, field: 'sequence' | 'options' | 'correctAnswer', value: string) => {
+        const newGames = [...games];
+        const game = newGames[gameIndex];
+        if (game.patterns) {
+            if (field === 'sequence' || field === 'options') {
+                game.patterns[patternIndex][field] = value.split(',').map(s => s.trim());
+            } else {
+                game.patterns[patternIndex][field] = value;
+            }
+            setGames(newGames);
+        }
+    };
+
+    const handleAddPattern = (gameIndex: number) => {
+        const newGames = [...games];
+        if (!newGames[gameIndex].patterns) newGames[gameIndex].patterns = [];
+        newGames[gameIndex].patterns!.push({ id: generateId('pd'), sequence: [], options: [], correctAnswer: '' });
+        setGames(newGames);
+    };
+
+    const handleRemovePattern = (gameIndex: number, patternIndex: number) => {
+        const newGames = [...games];
+        if (newGames[gameIndex].patterns) {
+            newGames[gameIndex].patterns!.splice(patternIndex, 1);
+            setGames(newGames);
+        }
+    };
+
+
   const handleSaveGame = async (game: Game) => {
     setIsSaving(game.id);
     await onSave(game);
@@ -130,10 +164,11 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
   
   return (
     <div className="space-y-4">
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 flex-wrap">
             <Button variant="outline" onClick={() => handleAddNewGame('WordMatch')}><PlusCircle className="mr-2 h-4 w-4" /> Add Word Match</Button>
             <Button variant="outline" onClick={() => handleAddNewGame('SentenceScramble')}><PlusCircle className="mr-2 h-4 w-4" /> Add Sentence Scramble</Button>
             <Button variant="outline" onClick={() => handleAddNewGame('MathRunner')}><PlusCircle className="mr-2 h-4 w-4" /> Add Math Runner</Button>
+            <Button variant="outline" onClick={() => handleAddNewGame('PatternDetective')}><PlusCircle className="mr-2 h-4 w-4" /> Add Pattern Detective</Button>
         </div>
         
         {games.length === 0 ? (
@@ -228,6 +263,36 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
                             <Button type="button" variant="outline" onClick={() => handleAddProblem(gameIndex)}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Problem
                             </Button>
+                        </div>
+                    )}
+                     {game.type === 'PatternDetective' && (
+                        <div className="space-y-4">
+                        {(game.patterns || []).map((pattern, patternIndex) => (
+                            <div key={pattern.id} className="p-4 border rounded-md bg-secondary/50 space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-end">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor={`sequence-${pattern.id}`}>Sequence (comma separated)</Label>
+                                        <Input id={`sequence-${pattern.id}`} value={(pattern.sequence || []).join(', ')} onChange={(e) => handlePatternChange(gameIndex, patternIndex, 'sequence', e.target.value)} placeholder="e.g., 2, 4, 6" />
+                                    </div>
+                                    <Button type="button" variant="destructive" size="icon" onClick={() => handleRemovePattern(gameIndex, patternIndex)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                     <div className="space-y-1.5">
+                                        <Label htmlFor={`options-${pattern.id}`}>Options (comma separated)</Label>
+                                        <Input id={`options-${pattern.id}`} value={(pattern.options || []).join(', ')} onChange={(e) => handlePatternChange(gameIndex, patternIndex, 'options', e.target.value)} placeholder="e.g., 8, 9, 10"/>
+                                    </div>
+                                     <div className="space-y-1.5">
+                                        <Label htmlFor={`correct-answer-${pattern.id}`}>Correct Answer</Label>
+                                        <Input id={`correct-answer-${pattern.id}`} value={pattern.correctAnswer} onChange={(e) => handlePatternChange(gameIndex, patternIndex, 'correctAnswer', e.target.value)} placeholder="e.g., 8"/>
+                                    </div>
+                                 </div>
+                            </div>
+                        ))}
+                        <Button type="button" variant="outline" onClick={() => handleAddPattern(gameIndex)}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Pattern
+                        </Button>
                         </div>
                     )}
                     </div>

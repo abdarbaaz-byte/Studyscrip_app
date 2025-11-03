@@ -1,17 +1,19 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Gamepad2, Loader2, ArrowRight, Puzzle, AlignHorizontalJustify, Orbit } from "lucide-react";
+import { Gamepad2, Loader2, ArrowRight, Puzzle, AlignHorizontalJustify, Orbit, Search } from "lucide-react";
 import { getGames, type Game } from "@/lib/data";
 
 const gameIcons: { [key: string]: React.ElementType } = {
   WordMatch: Puzzle,
   SentenceScramble: AlignHorizontalJustify,
   MathRunner: Orbit,
+  PatternDetective: Search,
   Default: Gamepad2,
 };
 
@@ -19,6 +21,7 @@ const gameLinks: { [key: string]: string } = {
   WordMatch: "/games/word-match",
   SentenceScramble: "/games/sentence-scramble",
   MathRunner: "/games/math-runner",
+  PatternDetective: "/games/pattern-detective",
 };
 
 export default function GamesLobbyPage() {
@@ -48,8 +51,8 @@ export default function GamesLobbyPage() {
     let link = gameLinks[game.type];
     if (!link) return null;
     
-    // For games with topics (like WordMatch), the link should be dynamic
-    if(game.type === 'WordMatch' || game.type === 'MathRunner') {
+    // For games with topics, the link should be dynamic
+    if(game.type === 'WordMatch' || game.type === 'MathRunner' || game.type === 'PatternDetective') {
         link = `${link}/${game.id}`;
     }
 
@@ -80,6 +83,7 @@ export default function GamesLobbyPage() {
   const wordMatchGames = games.filter(g => g.type === 'WordMatch');
   const sentenceScrambleGames = games.filter(g => g.type === 'SentenceScramble');
   const mathRunnerGames = games.filter(g => g.type === 'MathRunner');
+  const patternDetectiveGames = games.filter(g => g.type === 'PatternDetective');
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -100,6 +104,15 @@ export default function GamesLobbyPage() {
             </div>
           ) : (
             <>
+               {patternDetectiveGames.length > 0 && (
+                <section>
+                  <h2 className="font-headline text-2xl font-bold mb-4">Pattern Detective</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {patternDetectiveGames.map(renderGameCard)}
+                  </div>
+                </section>
+              )}
+
                {mathRunnerGames.length > 0 && (
                 <section>
                   <h2 className="font-headline text-2xl font-bold mb-4">Math Runner</h2>

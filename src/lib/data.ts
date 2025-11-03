@@ -30,14 +30,22 @@ export type MathProblem = {
     answer: number;   // e.g., 8
 };
 
+export type PatternDetectiveItem = {
+  id: string;
+  sequence: string[];
+  options: string[];
+  correctAnswer: string;
+};
+
 export type Game = {
     id: string; // docId
     title: string;
     description: string;
-    type: 'WordMatch' | 'SentenceScramble' | 'MathRunner';
+    type: 'WordMatch' | 'SentenceScramble' | 'MathRunner' | 'PatternDetective';
     pairs?: WordMatchPair[];
     sentences?: SentenceScrambleItem[];
     problems?: MathProblem[];
+    patterns?: PatternDetectiveItem[];
 };
 
 // --- SCHOOLS & TEACHERS ---
@@ -807,6 +815,16 @@ export async function getGames(): Promise<Game[]> {
                 problems: [
                     { id: 'mr-1', question: "2+2", answer: 4 },
                     { id: 'mr-2', question: "5+3", answer: 8 },
+                ]
+            },
+             {
+                id: 'number-patterns-1',
+                title: 'Simple Number Patterns',
+                description: 'Find the next number in the sequence.',
+                type: 'PatternDetective',
+                patterns: [
+                    { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10' },
+                    { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25' },
                 ]
             }
         ];
