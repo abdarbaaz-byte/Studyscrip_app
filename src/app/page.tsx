@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
 import { getCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview } from "@/lib/data";
-import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuestion, Store, Radio, BrainCircuit, Star, Send, Gamepad2 } from "lucide-react";
+import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, Store, Radio, BrainCircuit, Star, Send, Gamepad2, Headphones } from "lucide-react";
 import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { getAcademicData, AcademicClass } from "@/lib/academics";
@@ -112,7 +112,7 @@ export default function Home() {
   const featureItems = [
     { icon: LayoutGrid, text: "My Courses", href: "/my-courses" },
     { icon: FileText, text: "Free Notes", href: "/free-notes" },
-    { icon: MessageCircleQuestion, text: "Doubt", href: "/doubt-ai" },
+    { icon: Headphones, text: "Audio", href: "/audio-lectures" },
     { icon: Store, text: "Bookstore", href: "/bookstore" },
     { icon: Radio, text: "Live Classes", href: "/live-classes" },
     { icon: Gamepad2, text: "Games", href: "/games" },

@@ -48,6 +48,21 @@ export type Game = {
     patterns?: PatternDetectiveItem[];
 };
 
+// --- AUDIO LECTURES ---
+export type AudioTrack = {
+  id: string;
+  title: string;
+  url: string;
+  duration: string; // e.g., "10:35"
+};
+
+export type AudioLecture = {
+  id: string; // docId
+  title: string;
+  description: string;
+  audios: AudioTrack[];
+};
+
 // --- SCHOOLS & TEACHERS ---
 export type SchoolTeacher = {
   uid: string;
@@ -173,6 +188,7 @@ export async function getCourses(): Promise<Course[]> {
 }
 
 export async function getCourse(docId: string): Promise<Course | null> {
+  if (docId === 'no-courses') return null;
   const courseDocRef = doc(db, 'courses', docId);
   const courseSnap = await getDoc(courseDocRef);
 
@@ -850,6 +866,26 @@ export async function saveGame(game: Game): Promise<void> {
     }
 }
 
+// --- AUDIO LECTURES ---
+export async function getAudioLectures(): Promise<AudioLecture[]> {
+  const lecturesCol = collection(db, 'audioLectures');
+  const q = query(lecturesCol, orderBy('title'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AudioLecture));
+}
+
+export async function saveAudioLecture(lecture: AudioLecture): Promise<void> {
+    const { id, ...data } = lecture;
+    if (id) {
+        await setDoc(doc(db, 'audioLectures', id), data, { merge: true });
+    } else {
+        await addDoc(collection(db, 'audioLectures'), data);
+    }
+}
+
+export async function deleteAudioLecture(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'audioLectures', id));
+}
 
 // --- QUIZZES ---
 export async function getQuiz(id: string): Promise<Quiz | null> {

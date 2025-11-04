@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -46,7 +47,8 @@ export type UserPermission =
   | 'manage_certificates'
   | 'manage_schools'
   | 'manage_students'
-  | 'manage_games';
+  | 'manage_games'
+  | 'manage_audio_lectures';
 
 interface AuthContextType {
   user: User | null;
@@ -103,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'manage_quizzes', 'view_quiz_attempts', 'manage_site_settings',
             'view_live_class_surveys', 'manage_reviews', 'manage_live_classes',
             'manage_certificates', 'manage_schools', 'manage_students',
-            'manage_games'
+            'manage_games', 'manage_audio_lectures'
           ]);
           setLoading(false);
           return;

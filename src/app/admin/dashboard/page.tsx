@@ -36,7 +36,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Gamepad2 } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Gamepad2, Headphones } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getGames, saveGame, type Game } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getGames, saveGame, type Game, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -59,6 +59,7 @@ import { AdminFreeNotesForm } from "@/components/admin-freenotes-form";
 import { AdminBookstoreForm } from "@/components/admin-bookstore-form";
 import { AdminQuizForm } from "@/components/admin-quiz-form";
 import { AdminGamesForm } from "@/components/admin-games-form";
+import { AdminAudioLecturesForm } from "@/components/admin-audio-lectures-form";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -84,6 +85,7 @@ export default function AdminDashboardPage() {
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [games, setGames] = useState<Game[]>([]);
+  const [audioLectures, setAudioLectures] = useState<AudioLecture[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [liveSurveys, setLiveSurveys] = useState<LiveClassSurvey[]>([]);
   const [pendingReviews, setPendingReviews] = useState<Review[]>([]);
@@ -187,6 +189,7 @@ export default function AdminDashboardPage() {
           if (hasPermission('manage_free_notes')) promises.push(getFreeNotes()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_bookstore')) promises.push(getBookstoreItems()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_games')) promises.push(getGames()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_audio_lectures')) promises.push(getAudioLectures()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_quizzes')) promises.push(getQuizzes()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_quiz_attempts')) promises.push(getQuizAttempts()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_live_class_surveys')) promises.push(getLiveClassSurveys()); else promises.push(Promise.resolve([]));
@@ -197,7 +200,7 @@ export default function AdminDashboardPage() {
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
           
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, gamesData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, liveClassesData, schoolsData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, gamesData, audioLecturesData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, liveClassesData, schoolsData, employeesData] = await Promise.all(promises);
           
           setAcademicClasses(academicsData as AcademicClass[]);
           setCourses(coursesData as Course[]);
@@ -206,6 +209,7 @@ export default function AdminDashboardPage() {
           setFreeNotes(freeNotesData as FreeNote[]);
           setBookstoreItems(bookstoreData as BookstoreItem[]);
           setGames(gamesData as Game[]);
+          setAudioLectures(audioLecturesData as AudioLecture[]);
           setQuizzes(quizzesData as Quiz[]);
           setQuizAttempts(quizAttemptsData as QuizAttempt[]);
           setLiveSurveys(surveysData as LiveClassSurvey[]);
@@ -324,6 +328,28 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error("Failed to save game:", error);
       toast({ variant: "destructive", title: "Failed to save Game" });
+    }
+  };
+
+  const handleSaveAudioLecture = async (lecture: AudioLecture) => {
+    try {
+      await saveAudioLecture(lecture);
+      await loadAdminData();
+      toast({ title: "Audio Lecture saved successfully!" });
+    } catch (error) {
+      console.error("Failed to save audio lecture:", error);
+      toast({ variant: "destructive", title: "Failed to save Audio Lecture" });
+    }
+  };
+
+  const handleDeleteAudioLecture = async (lectureId: string) => {
+    try {
+      await deleteAudioLecture(lectureId);
+      await loadAdminData();
+      toast({ title: "Audio Lecture deleted successfully." });
+    } catch (error) {
+      console.error("Failed to delete audio lecture:", error);
+      toast({ variant: "destructive", title: "Failed to delete Audio Lecture" });
     }
   };
 
@@ -1016,6 +1042,22 @@ export default function AdminDashboardPage() {
         <AdminGamesForm
             initialGames={games}
             onSave={handleSaveGame}
+        />
+      </CardContent>
+    </Card>
+  );
+
+  const renderAudioLectureManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Audio Lectures Management</CardTitle>
+        <CardDescription>Manage audio lecture topics and their tracks.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AdminAudioLecturesForm
+          initialLectures={audioLectures}
+          onSave={handleSaveAudioLecture}
+          onDelete={handleDeleteAudioLecture}
         />
       </CardContent>
     </Card>
@@ -1816,6 +1858,9 @@ export default function AdminDashboardPage() {
             {hasPermission('manage_games') && <Button variant={activeTab === 'games' ? 'default' : 'outline'} onClick={() => setActiveTab('games')}>
                 <Gamepad2 className="mr-2 h-4 w-4" /> Games
             </Button>}
+            {hasPermission('manage_audio_lectures') && <Button variant={activeTab === 'audio-lectures' ? 'default' : 'outline'} onClick={() => setActiveTab('audio-lectures')}>
+                <Headphones className="mr-2 h-4 w-4" /> Audio Lectures
+            </Button>}
             {hasPermission('manage_quizzes') && <Button variant={activeTab === 'quizzes' ? 'default' : 'outline'} onClick={() => setActiveTab('quizzes')}>
                 <BrainCircuit className="mr-2 h-4 w-4" /> Quizzes
             </Button>}
@@ -1864,6 +1909,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'free-notes' && hasPermission('manage_free_notes') && renderFreeNotesManagement()}
         {activeTab === 'bookstore' && hasPermission('manage_bookstore') && renderBookstoreManagement()}
         {activeTab === 'games' && hasPermission('manage_games') && renderGameManagement()}
+        {activeTab === 'audio-lectures' && hasPermission('manage_audio_lectures') && renderAudioLectureManagement()}
         {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
         {activeTab === 'live-classes' && hasPermission('manage_live_classes') && renderLiveClassManagement()}
         {activeTab === 'certificates' && hasPermission('manage_certificates') && renderCertificateManagement()}
@@ -2166,6 +2212,7 @@ export default function AdminDashboardPage() {
     
 
     
+
 
 
 
