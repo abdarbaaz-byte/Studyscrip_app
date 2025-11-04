@@ -9,8 +9,9 @@ import { BottomNavigation } from "@/components/bottom-navigation";
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isGamePage = pathname.startsWith('/games/');
+  const isQuizAttemptPage = pathname.startsWith('/quizzes/') && pathname.endsWith('/attempt');
 
-  if (isGamePage) {
+  if (isGamePage || isQuizAttemptPage) {
     return <main className="h-screen w-screen">{children}</main>;
   }
 
