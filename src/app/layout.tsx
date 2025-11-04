@@ -1,15 +1,13 @@
 
 import type { Metadata, Viewport } from "next";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/toaster";
 import { ChatWidget } from "@/components/chat-widget";
 import { AuthProvider } from "@/hooks/use-auth";
 import { InstallPwaButton } from "@/components/install-pwa-button";
 import "./globals.css";
 import { ClientSideLayout } from "@/components/client-side-layout";
-import { BottomNavigation } from "@/components/bottom-navigation";
 import { NotificationPermissionHandler } from "@/components/notification-permission-handler";
+import { ConditionalLayout } from "@/components/conditional-layout";
 
 
 export const metadata: Metadata = {
@@ -46,12 +44,9 @@ export default function RootLayout({
       <body className="min-h-screen font-body antialiased">
         <AuthProvider>
             <ClientSideLayout>
-                <div className="relative flex min-h-screen flex-col">
-                  <SiteHeader />
-                  <main className="flex-1 pb-20 md:pb-0">{children}</main>
-                  <SiteFooter />
-                </div>
-                <BottomNavigation />
+                <ConditionalLayout>
+                  {children}
+                </ConditionalLayout>
                 <ChatWidget />
                 <Toaster />
                 <InstallPwaButton />
