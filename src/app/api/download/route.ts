@@ -11,23 +11,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch the image from the provided URL.
+    // Fetch the file from the provided URL.
     // The server can do this without CORS restrictions.
-    const response = await fetch(fileUrl);
+    const response = await fetch(fileUrl, {
+      headers: {
+        'Range': request.headers.get('range') || 'bytes=0-',
+      },
+    });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    if (!response.ok && response.status !== 206) { // 206 is Partial Content
+      throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
 
-    // Get the image data as a blob.
     const blob = await response.blob();
-
-    // Create a new response to send the image data back to the client.
-    const headers = new Headers();
+    const headers = new Headers(response.headers);
     headers.set('Content-Type', blob.type);
     headers.set('Content-Disposition', `attachment; filename="${fileName}"`);
 
-    return new NextResponse(blob, { status: 200, headers });
+    return new NextResponse(blob, { status: response.status, statusText: response.statusText, headers });
 
   } catch (error: any) {
     console.error("Download proxy error:", error);
