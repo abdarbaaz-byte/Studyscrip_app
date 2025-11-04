@@ -34,7 +34,8 @@ export function getGoogleDriveAudioUrl(url: string): string {
 
   if (match && match[1]) {
     const fileId = match[1];
-    const directUrl = `https://drive.google.com/uc?export=media&id=${fileId}`;
+    // Using uc?export=view is more reliable for different file types including audio
+    const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
     // Use our own API as a proxy to bypass CORS issues for audio streaming
     return `/api/download?url=${encodeURIComponent(directUrl)}&name=audio.mp3`;
   }
