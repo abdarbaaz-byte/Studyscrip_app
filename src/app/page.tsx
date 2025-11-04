@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
 import { getCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview } from "@/lib/data";
-import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuestion, Store, Radio, BrainCircuit, Star, Send } from "lucide-react";
+import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, MessageCircleQuestion, Store, Radio, BrainCircuit, Star, Send, Gamepad2 } from "lucide-react";
 import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { getAcademicData, AcademicClass } from "@/lib/academics";
@@ -115,7 +115,7 @@ export default function Home() {
     { icon: MessageCircleQuestion, text: "Doubt", href: "/doubt-ai" },
     { icon: Store, text: "Bookstore", href: "/bookstore" },
     { icon: Radio, text: "Live Classes", href: "/live-classes" },
-    { icon: BrainCircuit, text: "Quiz", href: "/quizzes" },
+    { icon: Gamepad2, text: "Games", href: "/games" },
   ];
   
   const activeBanners = bannerSettings?.banners.filter(b => b.isActive) || [];
@@ -137,29 +137,29 @@ export default function Home() {
               <CarouselContent>
                 {activeBanners.map((banner) => (
                   <CarouselItem key={banner.id}>
-                    <div className="aspect-[4/1] w-full relative overflow-hidden">
-                      {banner.linkUrl ? (
-                        <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
-                           <Image
-                            src={getGoogleDriveImageUrl(banner.imageUrl)}
-                            alt="Promotional Banner"
-                            fill
-                            className="object-cover prevent-long-press"
-                            data-ai-hint="advertisement banner"
-                            onContextMenu={(e) => e.preventDefault()}
-                          />
-                        </Link>
-                      ) : (
-                         <Image
-                            src={getGoogleDriveImageUrl(banner.imageUrl)}
-                            alt="Promotional Banner"
-                            fill
-                            className="object-cover prevent-long-press"
-                            data-ai-hint="advertisement banner"
-                            onContextMenu={(e) => e.preventDefault()}
-                          />
-                      )}
-                    </div>
+                    {banner.linkUrl ? (
+                      <Link href={banner.linkUrl} target="_blank" rel="noopener noreferrer" className="block aspect-[4/1] w-full relative overflow-hidden">
+                          <Image
+                          src={getGoogleDriveImageUrl(banner.imageUrl)}
+                          alt="Promotional Banner"
+                          fill
+                          className="object-cover"
+                          data-ai-hint="advertisement banner"
+                          onContextMenu={(e) => e.preventDefault()}
+                        />
+                      </Link>
+                    ) : (
+                      <div className="aspect-[4/1] w-full relative overflow-hidden">
+                        <Image
+                          src={getGoogleDriveImageUrl(banner.imageUrl)}
+                          alt="Promotional Banner"
+                          fill
+                          className="object-cover prevent-long-press"
+                          data-ai-hint="advertisement banner"
+                          onContextMenu={(e) => e.preventDefault()}
+                        />
+                      </div>
+                    )}
                   </CarouselItem>
                 ))}
               </CarouselContent>
