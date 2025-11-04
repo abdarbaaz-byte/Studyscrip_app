@@ -5,12 +5,13 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Headphones, PlayCircle } from "lucide-react";
 import { getAudioLectures, type AudioLecture } from "@/lib/data";
-import Link from "next/link";
 import { ScrollAnimation } from "@/components/scroll-animation";
+import { useAudioPlayer } from "@/hooks/use-audio-player";
 
 export default function AudioLecturesPage() {
   const [lectures, setLectures] = useState<AudioLecture[]>([]);
   const [loading, setLoading] = useState(true);
+  const { playPlaylist } = useAudioPlayer();
 
   useEffect(() => {
     async function loadData() {
@@ -21,6 +22,12 @@ export default function AudioLecturesPage() {
     }
     loadData();
   }, []);
+
+  const handlePlayTopic = (lecture: AudioLecture) => {
+    if (lecture.audios && lecture.audios.length > 0) {
+      playPlaylist(lecture.audios, 0);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -57,10 +64,14 @@ export default function AudioLecturesPage() {
                        <div className="text-sm text-muted-foreground mt-4">{lecture.audios.length} tracks</div>
                     </CardContent>
                     <CardContent>
-                       <Link href={`#`} className="w-full inline-flex items-center justify-center h-10 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium">
+                       <button
+                          onClick={() => handlePlayTopic(lecture)}
+                          disabled={lecture.audios.length === 0}
+                          className="w-full inline-flex items-center justify-center h-10 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
+                        >
                             <PlayCircle className="mr-2 h-5 w-5"/>
                             Start Listening
-                       </Link>
+                       </button>
                     </CardContent>
                   </Card>
                 </ScrollAnimation>

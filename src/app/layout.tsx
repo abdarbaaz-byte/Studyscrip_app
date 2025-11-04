@@ -8,6 +8,8 @@ import "./globals.css";
 import { ClientSideLayout } from "@/components/client-side-layout";
 import { NotificationPermissionHandler } from "@/components/notification-permission-handler";
 import { ConditionalLayout } from "@/components/conditional-layout";
+import { AudioPlayerProvider } from "@/hooks/use-audio-player";
+import { AudioPlayer } from "@/components/audio-player";
 
 
 export const metadata: Metadata = {
@@ -43,6 +45,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-body antialiased">
         <AuthProvider>
+          <AudioPlayerProvider>
             <ClientSideLayout>
                 <ConditionalLayout>
                   {children}
@@ -51,7 +54,9 @@ export default function RootLayout({
                 <Toaster />
                 <InstallPwaButton />
                 <NotificationPermissionHandler />
+                <AudioPlayer />
             </ClientSideLayout>
+          </AudioPlayerProvider>
         </AuthProvider>
       </body>
     </html>

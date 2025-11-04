@@ -23,3 +23,20 @@ export function getGoogleDriveImageUrl(url: string): string {
   // If it's not a recognized Google Drive link, return it as is, assuming it's a direct image URL.
   return url;
 }
+
+export function getGoogleDriveAudioUrl(url: string): string {
+  if (!url || typeof url !== 'string') {
+    return "";
+  }
+  
+  const driveRegex = /drive\.google\.com\/(?:file\/d\/|uc\?id=)([a-zA-Z0-9_-]+)/;
+  const match = url.match(driveRegex);
+
+  if (match && match[1]) {
+    const fileId = match[1];
+    // Use the `media` export format for direct audio streaming
+    return `https://drive.google.com/uc?export=media&id=${fileId}`;
+  }
+
+  return url;
+}
