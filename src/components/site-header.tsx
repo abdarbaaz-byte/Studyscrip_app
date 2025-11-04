@@ -27,6 +27,7 @@ export function SiteHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   
   const unreadCount = notifications.filter(n => !readNotificationIds.includes(n.id)).length;
   const sortedNotifications = [...notifications].sort((a, b) => 
@@ -58,6 +59,7 @@ export function SiteHeader() {
     }
     if(link) {
       router.push(link);
+      setIsNotificationOpen(false); // Close popover on navigation
     }
   };
 
@@ -276,7 +278,7 @@ export function SiteHeader() {
               </Button>
            </a>
 
-           <Popover>
+           <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative" onClick={handleMarkAllAsRead}>
                 <Bell className="h-5 w-5" />
