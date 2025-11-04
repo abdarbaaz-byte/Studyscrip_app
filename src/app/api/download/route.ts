@@ -16,12 +16,13 @@ export async function GET(request: NextRequest) {
     // Fetch headers first to get content length and type
     const headResponse = await fetch(fileUrl, { method: 'HEAD' });
     if (!headResponse.ok) {
-        // Fallback to GET if HEAD fails
+        // Fallback to GET if HEAD fails for some reason
         const getResponse = await fetch(fileUrl);
         if(!getResponse.ok) {
+            // If even GET fails, return the error
             return new NextResponse(getResponse.body, { status: getResponse.status, statusText: getResponse.statusText });
         }
-        // If GET works, we can proceed but might not support range requests fully
+        // If GET works, stream the full content
         return new NextResponse(getResponse.body, {
             status: getResponse.status,
             statusText: getResponse.statusText,
@@ -34,31 +35,29 @@ export async function GET(request: NextRequest) {
 
     const contentLength = headResponse.headers.get('Content-Length');
     const contentType = headResponse.headers.get('Content-Type') || 'application/octet-stream';
+    
+    // Check if range requests are supported by the source
     const acceptRanges = headResponse.headers.get('Accept-Ranges');
 
-    // If range requests are supported and requested
     if (isAudio && acceptRanges === 'bytes' && request.headers.has('range') && contentLength) {
       const range = request.headers.get('range')!;
-      const bytes = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(bytes[0], 10);
-      const end = bytes[1] ? parseInt(bytes[1], 10) : parseInt(contentLength) - 1;
-      const chunksize = (end - start) + 1;
       
       const response = await fetch(fileUrl, {
           headers: {
-              'Range': `bytes=${start}-${end}`
+              'Range': range
           }
       });
       
       if (!response.ok) {
+          // If range request fails, it might return a 200 with the full content.
+          // Or it could be an actual error.
           return new NextResponse(response.body, { status: response.status, statusText: response.statusText });
       }
 
       const headers = new Headers(response.headers);
-      headers.set('Content-Range', `bytes ${start}-${end}/${contentLength}`);
-      headers.set('Content-Length', chunksize.toString());
-      headers.set('Content-Type', contentType);
-      headers.set('Accept-Ranges', 'bytes');
+      headers.set('Content-Disposition', `inline; filename="${fileName}"`);
+      // Important: These headers are set by the fetch response itself when range is requested
+      // We just need to ensure they are passed through.
       
       return new NextResponse(response.body, {
         status: 206, // Partial Content
@@ -66,7 +65,7 @@ export async function GET(request: NextRequest) {
       });
 
     } else {
-        // Full content request
+        // Full content request (for non-audio or if range not supported/requested)
         const response = await fetch(fileUrl);
 
         if (!response.ok) {
@@ -75,11 +74,10 @@ export async function GET(request: NextRequest) {
         
         const responseHeaders = new Headers(response.headers);
         responseHeaders.set('Content-Disposition', `inline; filename="${fileName}"`);
-        responseHeaders.set('Content-Type', contentType);
-        if (contentLength) {
-            responseHeaders.set('Content-Length', contentLength);
-        }
-
+        // We set Content-Type and Length from the original response headers
+        if (contentType) responseHeaders.set('Content-Type', contentType);
+        if (contentLength) responseHeaders.set('Content-Length', contentLength);
+        
         return new NextResponse(response.body, {
             status: 200, // OK
             headers: responseHeaders,
