@@ -64,7 +64,7 @@ const withPWA = createNextPwa({
     },
     {
       urlPattern: /.*/i,
-      handler: 'NetworkFirst',
+      handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'others',
         expiration: {

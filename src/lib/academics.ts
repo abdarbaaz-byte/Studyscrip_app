@@ -1,6 +1,7 @@
 
+
 import { db } from './firebase';
-import { collection, getDocs, doc, writeBatch, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, writeBatch, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 export type ContentItem = {
   id: string;
@@ -105,6 +106,9 @@ export const initialClasses: AcademicClass[] = [
 
 // --- New code for Firestore ---
 
+// The old getAcademicData function is now replaced by the real-time listener below.
+// It is kept here commented out for reference, but the app will use listenToAcademics.
+/*
 export async function getAcademicData(): Promise<AcademicClass[]> {
     const classesCol = collection(db, 'academics');
     const classSnapshot = await getDocs(classesCol);
@@ -150,6 +154,46 @@ export async function getAcademicData(): Promise<AcademicClass[]> {
         return a.name.localeCompare(b.name);
     });
 }
+*/
+
+export function listenToAcademics(callback: (classes: AcademicClass[]) => void): () => void {
+    const classesCol = collection(db, 'academics');
+    
+    return onSnapshot(classesCol, (snapshot) => {
+        if (snapshot.empty) {
+            console.log("No academic data found. Seeding initial data...");
+            const batch = writeBatch(db);
+            initialClasses.forEach((ac) => {
+                const docRef = doc(db, 'academics', ac.id);
+                batch.set(docRef, ac);
+            });
+            batch.commit().then(() => callback(initialClasses)); // Provide seeded data immediately
+            return;
+        }
+
+        const classList = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return { ...data, id: doc.id } as AcademicClass;
+        });
+
+        const extractNumber = (name: string) => {
+            const match = name.match(/^\d+/);
+            return match ? parseInt(match[0], 10) : Infinity;
+        };
+
+        const sortedList = classList.sort((a, b) => {
+            const numA = extractNumber(a.name);
+            const numB = extractNumber(b.name);
+            if (numA !== Infinity && numB !== Infinity) {
+                return numA - numB;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+        callback(sortedList);
+    });
+}
+
 
 export async function saveAcademicData(data: AcademicClass[]) {
     const batch = writeBatch(db);
@@ -168,5 +212,3 @@ export async function deleteAcademicClass(classId: string): Promise<void> {
     const docRef = doc(db, 'academics', classId);
     await deleteDoc(docRef);
 }
-
-    

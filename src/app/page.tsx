@@ -6,11 +6,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
-import { getCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview } from "@/lib/data";
+import { listenToCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview, listenToAcademics } from "@/lib/data";
 import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, Store, Radio, BrainCircuit, Star, Send, Gamepad2, Headphones } from "lucide-react";
 import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { getAcademicData, AcademicClass } from "@/lib/academics";
+import { AcademicClass } from "@/lib/academics";
 import { useEffect, useState, useRef } from "react";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
@@ -70,21 +70,24 @@ export default function Home() {
 
 
   useEffect(() => {
-    async function loadData() {
-        setLoading(true);
-        const [courseData, academicsData, bannerData, reviewsData] = await Promise.all([
-            getCourses(),
-            getAcademicData(),
-            getBannerSettings(),
-            getReviews('approved'),
-        ]);
-        setCourses(courseData);
-        setAcademicClasses(academicsData);
-        setBannerSettings(bannerData);
-        setReviews(reviewsData);
-        setLoading(false);
-    }
-    loadData();
+    setLoading(true);
+    const unsubCourses = listenToCourses(setCourses);
+    const unsubAcademics = listenToAcademics(setAcademicClasses);
+    
+    // Banner and reviews don't need to be real-time for now
+    Promise.all([
+      getBannerSettings(),
+      getReviews('approved'),
+    ]).then(([bannerData, reviewsData]) => {
+      setBannerSettings(bannerData);
+      setReviews(reviewsData);
+      setLoading(false);
+    });
+
+    return () => {
+      unsubCourses();
+      unsubAcademics();
+    };
   }, []);
   
   const handleReviewSubmit = async (e: React.FormEvent) => {

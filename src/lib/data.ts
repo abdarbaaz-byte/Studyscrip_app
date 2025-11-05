@@ -5,9 +5,12 @@ import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc,
 import type { Course, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
-import { getAcademicData, type AcademicClass, type Subject } from './academics';
+import { listenToAcademics as listenToAcademicsData, type AcademicClass, type Subject } from './academics';
 import { UserPermission } from '@/hooks/use-auth';
 
+// Re-export listenToAcademics for components to use
+export const listenToAcademics = listenToAcademicsData;
+export type { AcademicClass, Subject } from './academics';
 
 // Re-export ContentItem for use in other modules
 export type { ContentItem } from './academics';
@@ -179,12 +182,14 @@ export type UserProfile = {
 };
 
 // COURSES
-export async function getCourses(): Promise<Course[]> {
+export function listenToCourses(callback: (courses: Course[]) => void) {
   const coursesCol = collection(db, 'courses');
   const q = query(coursesCol, orderBy('createdAt', 'desc'));
-  const courseSnapshot = await getDocs(q);
-  const courseList = courseSnapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() } as Course));
-  return courseList;
+  
+  return onSnapshot(q, (snapshot) => {
+    const courseList = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() } as Course));
+    callback(courseList);
+  });
 }
 
 export async function getCourse(docId: string): Promise<Course | null> {
@@ -408,9 +413,12 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
     
     if (purchaseSnapshot.empty) return [];
 
-    const allCourses = await getCourses();
-    const allAcademicData = await getAcademicData();
-    const allSubjects = allAcademicData.flatMap(ac => ac.subjects.map(s => ({...s, className: ac.name})));
+    const allCourses = await getDocs(collection(db, 'courses'));
+    const allAcademicData = await getDocs(collection(db, 'academics'));
+    const allSubjects = allAcademicData.docs.flatMap(doc => (doc.data().subjects || []).map((s: Subject) => ({...s, className: doc.data().name})));
+
+    const allCoursesMap = new Map(allCourses.docs.map(doc => [doc.id, doc.data()]));
+    const allSubjectsMap = new Map(allSubjects.map(s => [s.id, s]));
 
     const usersCol = collection(db, 'users');
     const usersSnapshot = await getDocs(usersCol);
@@ -421,10 +429,10 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
         
         let itemName = 'Unknown Item';
         if(purchase.itemType === 'course') {
-            const course = allCourses.find(c => c.docId === purchase.itemId);
+            const course = allCoursesMap.get(purchase.itemId);
             itemName = course ? course.title : purchase.itemId;
         } else {
-            const subject = allSubjects.find(s => s.id === purchase.itemId);
+            const subject = allSubjectsMap.get(purchase.itemId);
             itemName = subject ? `${subject.name} (${subject.className})` : purchase.itemId;
         }
 
@@ -451,9 +459,13 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
     if (purchaseSnapshot.empty) return [];
 
     // Fetch all courses and subjects once to avoid multiple reads
-    const allCourses = await getCourses();
-    const allAcademicData = await getAcademicData();
-    const allSubjects = allAcademicData.flatMap(ac => ac.subjects.map(s => ({ ...s, classId: ac.id, className: ac.name })));
+    const allCourses = await getDocs(collection(db, 'courses'));
+    const allAcademicData = await getDocs(collection(db, 'academics'));
+    const allSubjects = allAcademicData.docs.flatMap(doc => (doc.data().subjects || []).map((s: Subject) => ({ ...s, classId: doc.id, className: doc.data().name })));
+    
+    const allCoursesMap = new Map(allCourses.docs.map(doc => [doc.id, {docId: doc.id, ...doc.data()} as Course]));
+    const allSubjectsMap = new Map(allSubjects.map(s => [s.id, s]));
+
 
     const now = new Date();
     const enrichedList: EnrichedPurchase[] = [];
@@ -468,9 +480,9 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
 
         let itemData: any = null;
         if (purchase.itemType === 'course') {
-            itemData = allCourses.find(c => c.docId === purchase.itemId);
+            itemData = allCoursesMap.get(purchase.itemId);
         } else {
-            itemData = allSubjects.find(s => s.id === purchase.itemId);
+            itemData = allSubjectsMap.get(purchase.itemId);
         }
 
         if (itemData) {
@@ -743,11 +755,13 @@ export type FreeNote = {
   content: CourseContent[];
 };
 
-export async function getFreeNotes(): Promise<FreeNote[]> {
+export function listenToFreeNotes(callback: (notes: FreeNote[]) => void) {
   const notesCol = collection(db, 'freeNotes');
   const q = query(notesCol, orderBy('title'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FreeNote));
+  return onSnapshot(q, (snapshot) => {
+    const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FreeNote));
+    callback(notes);
+  });
 }
 
 export async function saveFreeNotes(note: FreeNote): Promise<void> {
@@ -772,11 +786,13 @@ export type BookstoreItem = {
     thumbnailUrl: string; // Image URL
 };
 
-export async function getBookstoreItems(): Promise<BookstoreItem[]> {
+export function listenToBookstoreItems(callback: (items: BookstoreItem[]) => void) {
     const itemsCol = collection(db, 'bookstore');
     const q = query(itemsCol, orderBy('title'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookstoreItem));
+    return onSnapshot(q, (snapshot) => {
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookstoreItem));
+        callback(items);
+    });
 }
 
 export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
@@ -793,68 +809,66 @@ export async function deleteBookstoreItem(id: string): Promise<void> {
 }
 
 // --- GAMES ---
-export async function getGames(): Promise<Game[]> {
+export function listenToGames(callback: (games: Game[]) => void) {
     const gamesCol = collection(db, 'games');
     const q = query(gamesCol, orderBy('title'));
-    const snapshot = await getDocs(q);
-    
-    let games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
-    
-    if (games.length === 0) {
-        const batch = writeBatch(db);
-        const initialGames: Game[] = [
-            {
-                id: 'hindi-opposites',
-                title: 'Opposite Words ( विलोम शब्द )',
-                description: 'Match the English words with their Hindi opposites.',
-                type: 'WordMatch',
-                pairs: [
-                    { id: 'wm-1', word: "Day", meaning: "रात" },
-                    { id: 'wm-2', word: "Happy", meaning: "दुखी" },
-                ]
-            },
-            {
-                id: 'sentence-scramble-1',
-                title: 'Beginner Sentence Scramble',
-                description: 'Unscramble the words to form a correct sentence.',
-                type: 'SentenceScramble',
-                sentences: [
-                    { id: 'ss-1', sentence: "The sun is shining brightly" },
-                    { id: 'ss-2', sentence: "She went to the market" },
-                ]
-            },
-            {
-                id: 'basic-addition',
-                title: 'Basic Addition Runner',
-                description: 'Solve simple addition problems while running!',
-                type: 'MathRunner',
-                problems: [
-                    { id: 'mr-1', question: "2+2", answer: 4 },
-                    { id: 'mr-2', question: "5+3", answer: 8 },
-                ]
-            },
-             {
-                id: 'number-patterns-1',
-                title: 'Simple Number Patterns',
-                description: 'Find the next number in the sequence.',
-                type: 'PatternDetective',
-                patterns: [
-                    { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10' },
-                    { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25' },
-                ]
-            }
-        ];
+    return onSnapshot(q, (snapshot) => {
+        const games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+        if (games.length === 0) {
+            // Seed initial data if collection is empty
+            const batch = writeBatch(db);
+            const initialGames: Game[] = [
+                {
+                    id: 'hindi-opposites',
+                    title: 'Opposite Words ( विलोम शब्द )',
+                    description: 'Match the English words with their Hindi opposites.',
+                    type: 'WordMatch',
+                    pairs: [
+                        { id: 'wm-1', word: "Day", meaning: "रात" },
+                        { id: 'wm-2', word: "Happy", meaning: "दुखी" },
+                    ]
+                },
+                {
+                    id: 'sentence-scramble-1',
+                    title: 'Beginner Sentence Scramble',
+                    description: 'Unscramble the words to form a correct sentence.',
+                    type: 'SentenceScramble',
+                    sentences: [
+                        { id: 'ss-1', sentence: "The sun is shining brightly" },
+                        { id: 'ss-2', sentence: "She went to the market" },
+                    ]
+                },
+                {
+                    id: 'basic-addition',
+                    title: 'Basic Addition Runner',
+                    description: 'Solve simple addition problems while running!',
+                    type: 'MathRunner',
+                    problems: [
+                        { id: 'mr-1', question: "2+2", answer: 4 },
+                        { id: 'mr-2', question: "5+3", answer: 8 },
+                    ]
+                },
+                 {
+                    id: 'number-patterns-1',
+                    title: 'Simple Number Patterns',
+                    description: 'Find the next number in the sequence.',
+                    type: 'PatternDetective',
+                    patterns: [
+                        { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10' },
+                        { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25' },
+                    ]
+                }
+            ];
 
-        initialGames.forEach(game => {
-            const docRef = doc(db, 'games', game.id);
-            batch.set(docRef, game);
-        });
-
-        await batch.commit();
-        return initialGames;
-    }
-    
-    return games;
+            initialGames.forEach(game => {
+                const docRef = doc(db, 'games', game.id);
+                batch.set(docRef, game);
+            });
+            batch.commit().then(() => callback(initialGames));
+        } else {
+            callback(games);
+        }
+    });
 }
 
 export async function saveGame(game: Game): Promise<void> {
@@ -867,11 +881,13 @@ export async function saveGame(game: Game): Promise<void> {
 }
 
 // --- AUDIO LECTURES ---
-export async function getAudioLectures(): Promise<AudioLecture[]> {
+export function listenToAudioLectures(callback: (lectures: AudioLecture[]) => void) {
   const lecturesCol = collection(db, 'audioLectures');
   const q = query(lecturesCol, orderBy('title'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AudioLecture));
+  return onSnapshot(q, (snapshot) => {
+    const lectures = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AudioLecture));
+    callback(lectures);
+  });
 }
 
 export async function saveAudioLecture(lecture: AudioLecture): Promise<void> {
@@ -912,11 +928,13 @@ export async function getQuiz(id: string): Promise<Quiz | null> {
     return null;
 }
 
-export async function getQuizzes(): Promise<Quiz[]> {
+export function listenToQuizzes(callback: (quizzes: Quiz[]) => void) {
     const quizzesCol = collection(db, 'quizzes');
     const q = query(quizzesCol, orderBy('title'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+    return onSnapshot(q, (snapshot) => {
+        const quizzes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+        callback(quizzes);
+    });
 }
 
 export async function saveQuiz(quiz: Quiz): Promise<void> {
