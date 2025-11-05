@@ -12,6 +12,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetClose,
 } from "@/components/ui/sheet"
 
 
@@ -54,7 +55,7 @@ export function AudioPlayer() {
 
   return (
     <>
-      <div className="fixed bottom-16 left-0 right-0 z-40 h-20 bg-background/95 border-t backdrop-blur-sm md:bottom-0">
+      <div className="fixed bottom-16 left-0 right-0 z-[60] h-20 bg-background/95 border-t backdrop-blur-sm md:bottom-0">
         <div className="container mx-auto h-full flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 w-1/4">
                  <div className="flex-shrink-0">
@@ -95,8 +96,14 @@ export function AudioPlayer() {
       </div>
       <Sheet open={showPlaylist} onOpenChange={setShowPlaylist}>
         <SheetContent>
-            <SheetHeader>
+            <SheetHeader className="flex-row items-center justify-between">
                 <SheetTitle>Up Next</SheetTitle>
+                 <SheetClose asChild>
+                    <Button variant="ghost" size="icon">
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Close</span>
+                    </Button>
+                </SheetClose>
             </SheetHeader>
             <div className="py-4">
                 <ul className="space-y-2">
@@ -123,4 +130,3 @@ export function AudioPlayer() {
     </>
   );
 }
-

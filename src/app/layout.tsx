@@ -50,11 +50,6 @@ export default function RootLayout({
                 <ConditionalLayout>
                   {children}
                 </ConditionalLayout>
-                <ChatWidget />
-                <Toaster />
-                <InstallPwaButton />
-                <NotificationPermissionHandler />
-                <AudioPlayer />
             </ClientSideLayout>
           </AudioPlayerProvider>
         </AuthProvider>
@@ -62,3 +57,4 @@ export default function RootLayout({
     </html>
   );
 }
+
