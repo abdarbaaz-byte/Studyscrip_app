@@ -56,11 +56,11 @@ export function AudioPlayer() {
 
   return (
     <>
-      <div className="fixed bottom-16 left-0 right-0 z-[60] bg-background/95 border-t backdrop-blur-sm md:bottom-0">
-        <div className="container mx-auto h-auto md:h-20 py-2 px-4 flex flex-col md:flex-row items-center justify-between gap-2">
+      <div className="fixed bottom-16 left-0 right-0 z-[60] bg-background/95 border-t backdrop-blur-sm md:hidden">
+        <div className="container mx-auto h-auto py-2 px-4 flex flex-col items-center justify-between gap-2">
             
             {/* Title and Progress Bar */}
-            <div className="w-full md:flex-grow flex flex-col justify-center gap-1 order-1 md:order-2">
+            <div className="w-full flex flex-col justify-center gap-1">
                 <p className="font-bold text-sm truncate text-center">{currentTrack.title}</p>
                 <div className="w-full flex items-center gap-2">
                     <span className="text-xs font-mono">{formatTime(progress)}</span>
@@ -75,8 +75,32 @@ export function AudioPlayer() {
                 </div>
             </div>
 
+            {/* All Controls */}
+            <div className="flex items-center justify-between gap-1 w-full">
+                 <Button variant="ghost" size="icon" onClick={() => setShowPlaylist(true)}>
+                    <ListMusic />
+                </Button>
+                 <div className="flex items-center justify-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={prevTrack}><SkipBack /></Button>
+                    {isPlaying ? (
+                        <Button variant="ghost" size="icon" onClick={pause}><Pause className="h-7 w-7" /></Button>
+                    ) : (
+                        <Button variant="ghost" size="icon" onClick={play}><Play className="h-7 w-7" /></Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={nextTrack}><SkipForward /></Button>
+                </div>
+                <Button variant="ghost" size="icon" onClick={closePlayer}>
+                    <X className="h-6 w-6" />
+                </Button>
+            </div>
+        </div>
+      </div>
+      
+      {/* Desktop Player */}
+      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background/95 border-t backdrop-blur-sm hidden md:block">
+        <div className="container mx-auto h-20 py-2 px-4 flex items-center justify-between gap-4">
             {/* Playback Controls */}
-            <div className="flex items-center justify-center gap-1 w-full md:w-1/4 order-2 md:order-1">
+            <div className="flex items-center justify-start gap-1 w-1/4">
                  <Button variant="ghost" size="icon" onClick={prevTrack}><SkipBack /></Button>
                  {isPlaying ? (
                     <Button variant="ghost" size="icon" onClick={pause}><Pause className="h-7 w-7" /></Button>
@@ -86,8 +110,24 @@ export function AudioPlayer() {
                 <Button variant="ghost" size="icon" onClick={nextTrack}><SkipForward /></Button>
             </div>
             
+             {/* Title and Progress Bar */}
+            <div className="w-1/2 flex-grow flex flex-col justify-center gap-1">
+                <p className="font-bold text-sm truncate text-center">{currentTrack.title}</p>
+                <div className="w-full flex items-center gap-2">
+                    <span className="text-xs font-mono">{formatTime(progress)}</span>
+                    <Slider
+                        value={[progress]}
+                        max={duration}
+                        step={1}
+                        onValueChange={handleSeek}
+                        className="w-full"
+                    />
+                    <span className="text-xs font-mono">{formatTime(duration)}</span>
+                </div>
+            </div>
+
             {/* Playlist and Close Buttons */}
-            <div className="absolute top-2 right-2 flex items-center md:static md:w-1/4 md:justify-end order-3">
+            <div className="flex items-center w-1/4 justify-end">
                 <Button variant="ghost" size="icon" onClick={() => setShowPlaylist(true)}>
                     <ListMusic />
                 </Button>
@@ -97,6 +137,7 @@ export function AudioPlayer() {
             </div>
         </div>
       </div>
+
       <Sheet open={showPlaylist} onOpenChange={setShowPlaylist}>
         <SheetContent>
             <SheetHeader className="flex-row items-center justify-between">
