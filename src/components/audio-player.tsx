@@ -58,7 +58,10 @@ export function AudioPlayer() {
     <>
       <div className="fixed bottom-16 left-0 right-0 z-[60] h-20 bg-background/95 border-t backdrop-blur-sm md:bottom-0">
         <div className="container mx-auto h-full flex items-center justify-between gap-4 md:gap-6">
-            <div className="flex items-center gap-3 w-1/3 md:w-1/4">
+            <div className="flex items-center gap-3 w-1/4">
+                 <div className="flex-shrink-0">
+                    <Button variant="ghost" size="icon" onClick={prevTrack}><SkipBack /></Button>
+                 </div>
                  <div className="flex-shrink-0">
                      {isPlaying ? (
                         <Button variant="ghost" size="icon" onClick={pause}><Pause className="h-6 w-6" /></Button>
@@ -66,16 +69,15 @@ export function AudioPlayer() {
                         <Button variant="ghost" size="icon" onClick={play}><Play className="h-6 w-6" /></Button>
                     )}
                 </div>
-                <div>
-                    <p className="font-bold text-sm truncate">{currentTrack.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{formatTime(duration)}</p>
+                 <div className="flex-shrink-0">
+                    <Button variant="ghost" size="icon" onClick={nextTrack}><SkipForward /></Button>
                 </div>
             </div>
 
-            <div className="flex-grow flex items-center gap-3 w-2/3 md:w-1/2">
-                <Button variant="ghost" size="icon" onClick={prevTrack} className="hidden md:flex"><SkipBack /></Button>
-                
-                <div className="w-full flex flex-col gap-1">
+            <div className="flex-grow flex flex-col justify-center gap-1 w-1/2">
+                <p className="font-bold text-sm truncate text-center">{currentTrack.title}</p>
+                <div className="w-full flex items-center gap-2">
+                    <span className="text-xs font-mono">{formatTime(progress)}</span>
                     <Slider
                         value={[progress]}
                         max={duration}
@@ -83,16 +85,11 @@ export function AudioPlayer() {
                         onValueChange={handleSeek}
                         className="w-full"
                     />
-                     <div className="flex md:hidden text-xs font-mono justify-end">
-                        <span>{formatTime(progress)}</span>
-                    </div>
+                    <span className="text-xs font-mono">{formatTime(duration)}</span>
                 </div>
-                <span className="text-xs font-mono hidden md:inline">{formatTime(duration)}</span>
-
-                <Button variant="ghost" size="icon" onClick={nextTrack} className="hidden md:flex"><SkipForward /></Button>
             </div>
             
-             <div className="flex items-center gap-2 md:w-1/4 justify-end">
+             <div className="flex items-center gap-2 w-1/4 justify-end">
                 <Button variant="ghost" size="icon" onClick={() => setShowPlaylist(true)}>
                     <ListMusic />
                 </Button>
