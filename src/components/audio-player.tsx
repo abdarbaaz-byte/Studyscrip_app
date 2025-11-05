@@ -56,7 +56,7 @@ export function AudioPlayer() {
 
   return (
     <>
-      <div className="fixed bottom-16 left-0 right-0 z-[60] bg-background/95 border-t backdrop-blur-sm md:hidden">
+      <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 border-t backdrop-blur-sm md:hidden">
         <div className="container mx-auto h-auto py-2 px-4 flex flex-col items-center justify-between gap-2">
             
             {/* Title and Progress Bar */}
@@ -97,7 +97,7 @@ export function AudioPlayer() {
       </div>
       
       {/* Desktop Player */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background/95 border-t backdrop-blur-sm hidden md:block">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 border-t backdrop-blur-sm hidden md:block">
         <div className="container mx-auto h-20 py-2 px-4 flex items-center justify-between gap-4">
             {/* Playback Controls */}
             <div className="flex items-center justify-start gap-1 w-1/4">
@@ -140,14 +140,8 @@ export function AudioPlayer() {
 
       <Sheet open={showPlaylist} onOpenChange={setShowPlaylist}>
         <SheetContent>
-            <SheetHeader className="flex-row items-center justify-between">
+            <SheetHeader>
                 <SheetTitle>Up Next</SheetTitle>
-                 <SheetClose asChild>
-                    <Button variant="ghost" size="icon">
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Close</span>
-                    </Button>
-                </SheetClose>
             </SheetHeader>
             <div className="py-4">
                 <ul className="space-y-2">
