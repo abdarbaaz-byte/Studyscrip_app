@@ -57,8 +57,8 @@ export function AudioPlayer() {
   return (
     <>
       <div className="fixed bottom-16 left-0 right-0 z-[60] h-20 bg-background/95 border-t backdrop-blur-sm md:bottom-0">
-        <div className="container mx-auto h-full flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 w-1/4">
+        <div className="container mx-auto h-full flex items-center justify-between gap-4 md:gap-6">
+            <div className="flex items-center gap-3 w-1/3 md:w-1/4">
                  <div className="flex-shrink-0">
                      {isPlaying ? (
                         <Button variant="ghost" size="icon" onClick={pause}><Pause className="h-6 w-6" /></Button>
@@ -68,27 +68,31 @@ export function AudioPlayer() {
                 </div>
                 <div>
                     <p className="font-bold text-sm truncate">{currentTrack.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{currentTrack.duration}</p>
+                    <p className="text-xs text-muted-foreground truncate">{formatTime(duration)}</p>
                 </div>
             </div>
 
-            <div className="flex-grow flex items-center gap-3 w-1/2">
+            <div className="flex-grow flex items-center gap-3 w-2/3 md:w-1/2">
                 <Button variant="ghost" size="icon" onClick={prevTrack} className="hidden md:flex"><SkipBack /></Button>
                 
-                <span className="text-xs font-mono hidden md:inline">{formatTime(progress)}</span>
-                <Slider
-                    value={[progress]}
-                    max={duration}
-                    step={1}
-                    onValueChange={handleSeek}
-                    className="w-full"
-                />
+                <div className="w-full flex flex-col gap-1">
+                    <Slider
+                        value={[progress]}
+                        max={duration}
+                        step={1}
+                        onValueChange={handleSeek}
+                        className="w-full"
+                    />
+                     <div className="flex md:hidden text-xs font-mono justify-end">
+                        <span>{formatTime(progress)}</span>
+                    </div>
+                </div>
                 <span className="text-xs font-mono hidden md:inline">{formatTime(duration)}</span>
 
                 <Button variant="ghost" size="icon" onClick={nextTrack} className="hidden md:flex"><SkipForward /></Button>
             </div>
             
-             <div className="flex items-center gap-2 w-1/4 justify-end">
+             <div className="flex items-center gap-2 md:w-1/4 justify-end">
                 <Button variant="ghost" size="icon" onClick={() => setShowPlaylist(true)}>
                     <ListMusic />
                 </Button>
