@@ -246,7 +246,7 @@ export function ChatWidget() {
 
   return (
     <div ref={chatWidgetRef}>
-      <div className="fixed bottom-20 right-4 z-50 md:bottom-4">
+      <div className="fixed bottom-20 right-4 z-30 md:bottom-4">
         <Button id="chat-widget-toggle" onClick={handleToggleWidget} size="icon" className="rounded-full h-14 w-14 shadow-lg relative">
            {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
           {hasUnreadMessages && (
@@ -256,7 +256,7 @@ export function ChatWidget() {
       </div>
 
       {isOpen && (
-        <div className="fixed bottom-[148px] right-4 z-50 md:bottom-20">
+        <div className="fixed bottom-[148px] right-4 z-30 md:bottom-20">
           <Card className="w-[350px] h-[500px] flex flex-col shadow-2xl">
              {!user ? (
                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
