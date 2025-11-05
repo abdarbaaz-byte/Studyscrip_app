@@ -19,6 +19,7 @@ interface AudioPlayerContextType {
   nextTrack: () => void;
   prevTrack: () => void;
   seek: (time: number) => void;
+  closePlayer: () => void; // Added closePlayer function
 }
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(undefined);
@@ -78,7 +79,8 @@ export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
     
-    const trackUrl = getGoogleDriveAudioUrl(currentTrack.url);
+    // Using the public URL directly now
+    const trackUrl = currentTrack.url;
     if (audio.src !== trackUrl) {
       audio.src = trackUrl;
     }
@@ -121,6 +123,18 @@ export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const closePlayer = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+    setIsPlaying(false);
+    setCurrentTrackIndex(null);
+    setPlaylist([]);
+    setProgress(0);
+    setDuration(0);
+  };
+
   const value: AudioPlayerContextType = {
     isPlaying,
     currentTrack,
@@ -134,6 +148,7 @@ export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
     nextTrack,
     prevTrack,
     seek,
+    closePlayer,
   };
 
   return (

@@ -29,7 +29,8 @@ export function AudioPlayer() {
     seek,
     playlist,
     currentTrackIndex,
-    playPlaylist
+    playPlaylist,
+    closePlayer, // Get the new closePlayer function
   } = useAudioPlayer();
 
   const [showPlaylist, setShowPlaylist] = useState(false);
@@ -87,9 +88,12 @@ export function AudioPlayer() {
                 <Button variant="ghost" size="icon" onClick={nextTrack} className="hidden md:flex"><SkipForward /></Button>
             </div>
             
-             <div className="flex items-center gap-3 w-1/4 justify-end">
+             <div className="flex items-center gap-2 w-1/4 justify-end">
                 <Button variant="ghost" size="icon" onClick={() => setShowPlaylist(true)}>
                     <ListMusic />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={closePlayer}>
+                    <X className="h-6 w-6" />
                 </Button>
             </div>
         </div>
