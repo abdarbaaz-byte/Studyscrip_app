@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Lock, Unlock, FileText, Video, Image as ImageIcon, ChevronRight, Loader2 } from "lucide-react";
-import { type ContentItem, type Chapter, type Subject, type AcademicClass, getAcademicData } from "@/lib/academics";
+import { type ContentItem, type Chapter, type Subject, type AcademicClass, listenToAcademics } from "@/lib/academics";
 import { useParams, notFound, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { checkUserPurchase } from "@/lib/data";
@@ -33,27 +33,31 @@ export default function ChapterDetailClientPage() {
   const { toast } = useToast();
   
   useEffect(() => {
-    async function loadChapterData() {
-        if (classId && subjectId && chapterId) {
-            const classes = await getAcademicData();
-            const foundClass = classes.find(c => c.id === classId);
-            const foundSubject = foundClass?.subjects.find(s => s.id === subjectId);
-            const foundChapter = foundSubject?.chapters.find(ch => ch.id === chapterId);
-            const foundChapterIndex = foundSubject?.chapters.findIndex(ch => ch.id === chapterId) ?? -1;
+    if (!classId || !subjectId || !chapterId) return;
 
-            setAcademicClass(foundClass);
-            setSubject(foundSubject);
-            setChapter(foundChapter);
-            setChapterIndex(foundChapterIndex);
+    setLoading(true);
+    const unsubscribe = listenToAcademics((classes) => {
+        const foundClass = classes.find(c => c.id === classId);
+        const foundSubject = foundClass?.subjects.find(s => s.id === subjectId);
+        const foundChapter = foundSubject?.chapters.find(ch => ch.id === chapterId);
+        const foundChapterIndex = foundSubject?.chapters.findIndex(ch => ch.id === chapterId) ?? -1;
+        
+        setAcademicClass(foundClass);
+        setSubject(foundSubject);
+        setChapter(foundChapter);
+        setChapterIndex(foundChapterIndex);
 
-            if (user) {
-              const hasAccess = await checkUserPurchase(user.uid, subjectId);
-              setIsSubjectPurchased(hasAccess);
-            }
+        if (user && foundSubject) {
+            checkUserPurchase(user.uid, foundSubject.id).then(hasAccess => {
+                setIsSubjectPurchased(hasAccess);
+                setLoading(false);
+            });
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
-    }
-    loadChapterData();
+    });
+
+    return () => unsubscribe();
   }, [classId, subjectId, chapterId, user]);
   
   if (loading) {

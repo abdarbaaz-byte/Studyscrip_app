@@ -106,9 +106,7 @@ export const initialClasses: AcademicClass[] = [
 
 // --- New code for Firestore ---
 
-// The old getAcademicData function is now replaced by the real-time listener below.
-// It is kept here commented out for reference, but the app will use listenToAcademics.
-/*
+// This version is for build-time data fetching (e.g., generateStaticParams)
 export async function getAcademicData(): Promise<AcademicClass[]> {
     const classesCol = collection(db, 'academics');
     const classSnapshot = await getDocs(classesCol);
@@ -154,20 +152,16 @@ export async function getAcademicData(): Promise<AcademicClass[]> {
         return a.name.localeCompare(b.name);
     });
 }
-*/
 
+
+// This version is for real-time client-side updates
 export function listenToAcademics(callback: (classes: AcademicClass[]) => void): () => void {
     const classesCol = collection(db, 'academics');
     
     return onSnapshot(classesCol, (snapshot) => {
         if (snapshot.empty) {
-            console.log("No academic data found. Seeding initial data...");
-            const batch = writeBatch(db);
-            initialClasses.forEach((ac) => {
-                const docRef = doc(db, 'academics', ac.id);
-                batch.set(docRef, ac);
-            });
-            batch.commit().then(() => callback(initialClasses)); // Provide seeded data immediately
+            // Seeding logic is handled by getAcademicData, so here we can just return empty or the initial set
+            callback(initialClasses);
             return;
         }
 

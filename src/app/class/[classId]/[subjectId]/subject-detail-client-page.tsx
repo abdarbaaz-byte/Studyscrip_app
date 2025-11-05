@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { type AcademicClass, type Subject, getAcademicData } from "@/lib/academics";
+import { type AcademicClass, type Subject, listenToAcademics } from "@/lib/academics";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { FileText, ChevronRight, Lock, Unlock, Loader2, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,28 +33,35 @@ export default function SubjectDetailClientPage() {
 
 
   useEffect(() => {
-    async function loadSubjectData() {
-        if (classId && subjectId) {
-            setLoading(true);
-            const classes = await getAcademicData();
-            const foundClass = classes.find(c => c.id === classId);
-            const foundSubject = foundClass?.subjects.find(s => s.id === subjectId);
-            setAcademicClass(foundClass);
-            setSubject(foundSubject);
+    if (!classId || !subjectId) return;
+    
+    setLoading(true);
+    const unsubscribe = listenToAcademics((classes) => {
+        const foundClass = classes.find(c => c.id === classId);
+        const foundSubject = foundClass?.subjects.find(s => s.id === subjectId);
+        setAcademicClass(foundClass);
+        setSubject(foundSubject);
 
-            const scheduledClass = await getScheduledLiveClassesForItem(subjectId);
-            if (scheduledClass) {
-              setLiveClass(scheduledClass);
-            }
+        // Fetch live class and purchase status only after we have the subject
+        if (foundSubject) {
+             getScheduledLiveClassesForItem(subjectId).then(scheduledClass => {
+                if (scheduledClass) setLiveClass(scheduledClass);
+            });
 
             if (user) {
-              const hasAccess = await checkUserPurchase(user.uid, subjectId);
-              setIsPurchased(hasAccess);
+                checkUserPurchase(user.uid, subjectId).then(hasAccess => {
+                    setIsPurchased(hasAccess);
+                    setLoading(false);
+                });
+            } else {
+                 setLoading(false);
             }
+        } else {
+             setLoading(false);
         }
-        setLoading(false);
-    }
-    loadSubjectData();
+    });
+
+    return () => unsubscribe();
   }, [classId, subjectId, user]);
 
   const handleBuyClick = () => {

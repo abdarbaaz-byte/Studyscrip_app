@@ -5,11 +5,27 @@ import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc,
 import type { Course, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
-import { listenToAcademics as listenToAcademicsData, type AcademicClass, type Subject } from './academics';
+import { getAcademicData, type AcademicClass, type Subject } from './academics';
 import { UserPermission } from '@/hooks/use-auth';
 
-// Re-export listenToAcademics for components to use
-export const listenToAcademics = listenToAcademicsData;
+// Re-export for convenience
+export const listenToAcademics = (callback: (classes: AcademicClass[]) => void) => {
+    const classesCol = collection(db, 'academics');
+    return onSnapshot(classesCol, (snapshot) => {
+        const classList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AcademicClass));
+        const extractNumber = (name: string) => {
+            const match = name.match(/^\d+/);
+            return match ? parseInt(match[0], 10) : Infinity;
+        };
+        const sortedList = classList.sort((a, b) => {
+            const numA = extractNumber(a.name);
+            const numB = extractNumber(b.name);
+            return numA !== Infinity && numB !== Infinity ? numA - numB : a.name.localeCompare(b.name);
+        });
+        callback(sortedList);
+    });
+};
+export { getAcademicData };
 export type { AcademicClass, Subject } from './academics';
 
 // Re-export ContentItem for use in other modules
@@ -190,6 +206,13 @@ export function listenToCourses(callback: (courses: Course[]) => void) {
     const courseList = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() } as Course));
     callback(courseList);
   });
+}
+
+export async function getCourses(): Promise<Course[]> {
+  const coursesCol = collection(db, 'courses');
+  const q = query(coursesCol, orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() } as Course));
 }
 
 export async function getCourse(docId: string): Promise<Course | null> {
@@ -413,11 +436,11 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
     
     if (purchaseSnapshot.empty) return [];
 
-    const allCourses = await getDocs(collection(db, 'courses'));
-    const allAcademicData = await getDocs(collection(db, 'academics'));
-    const allSubjects = allAcademicData.docs.flatMap(doc => (doc.data().subjects || []).map((s: Subject) => ({...s, className: doc.data().name})));
+    const allCourses = await getCourses();
+    const allAcademicData = await getAcademicData();
+    const allSubjects = allAcademicData.flatMap(doc => (doc.subjects || []).map((s: Subject) => ({...s, className: doc.name})));
 
-    const allCoursesMap = new Map(allCourses.docs.map(doc => [doc.id, doc.data()]));
+    const allCoursesMap = new Map(allCourses.map(course => [course.docId, course]));
     const allSubjectsMap = new Map(allSubjects.map(s => [s.id, s]));
 
     const usersCol = collection(db, 'users');
@@ -459,11 +482,11 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
     if (purchaseSnapshot.empty) return [];
 
     // Fetch all courses and subjects once to avoid multiple reads
-    const allCourses = await getDocs(collection(db, 'courses'));
-    const allAcademicData = await getDocs(collection(db, 'academics'));
-    const allSubjects = allAcademicData.docs.flatMap(doc => (doc.data().subjects || []).map((s: Subject) => ({ ...s, classId: doc.id, className: doc.data().name })));
+    const allCourses = await getCourses();
+    const allAcademicData = await getAcademicData();
+    const allSubjects = allAcademicData.flatMap(doc => (doc.subjects || []).map((s: Subject) => ({ ...s, classId: doc.id, className: doc.name })));
     
-    const allCoursesMap = new Map(allCourses.docs.map(doc => [doc.id, {docId: doc.id, ...doc.data()} as Course]));
+    const allCoursesMap = new Map(allCourses.map(course => [course.docId, course]));
     const allSubjectsMap = new Map(allSubjects.map(s => [s.id, s]));
 
 
@@ -755,13 +778,11 @@ export type FreeNote = {
   content: CourseContent[];
 };
 
-export function listenToFreeNotes(callback: (notes: FreeNote[]) => void) {
+export async function getFreeNotes(): Promise<FreeNote[]> {
   const notesCol = collection(db, 'freeNotes');
   const q = query(notesCol, orderBy('title'));
-  return onSnapshot(q, (snapshot) => {
-    const notes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FreeNote));
-    callback(notes);
-  });
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FreeNote));
 }
 
 export async function saveFreeNotes(note: FreeNote): Promise<void> {
@@ -786,13 +807,11 @@ export type BookstoreItem = {
     thumbnailUrl: string; // Image URL
 };
 
-export function listenToBookstoreItems(callback: (items: BookstoreItem[]) => void) {
+export async function getBookstoreItems(): Promise<BookstoreItem[]> {
     const itemsCol = collection(db, 'bookstore');
     const q = query(itemsCol, orderBy('title'));
-    return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookstoreItem));
-        callback(items);
-    });
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookstoreItem));
 }
 
 export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
@@ -809,66 +828,60 @@ export async function deleteBookstoreItem(id: string): Promise<void> {
 }
 
 // --- GAMES ---
-export function listenToGames(callback: (games: Game[]) => void) {
+export async function getGames(): Promise<Game[]> {
     const gamesCol = collection(db, 'games');
     const q = query(gamesCol, orderBy('title'));
-    return onSnapshot(q, (snapshot) => {
-        const games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
-        if (games.length === 0) {
-            // Seed initial data if collection is empty
-            const batch = writeBatch(db);
-            const initialGames: Game[] = [
-                {
-                    id: 'hindi-opposites',
-                    title: 'Opposite Words ( विलोम शब्द )',
-                    description: 'Match the English words with their Hindi opposites.',
-                    type: 'WordMatch',
-                    pairs: [
-                        { id: 'wm-1', word: "Day", meaning: "रात" },
-                        { id: 'wm-2', word: "Happy", meaning: "दुखी" },
-                    ]
-                },
-                {
-                    id: 'sentence-scramble-1',
-                    title: 'Beginner Sentence Scramble',
-                    description: 'Unscramble the words to form a correct sentence.',
-                    type: 'SentenceScramble',
-                    sentences: [
-                        { id: 'ss-1', sentence: "The sun is shining brightly" },
-                        { id: 'ss-2', sentence: "She went to the market" },
-                    ]
-                },
-                {
-                    id: 'basic-addition',
-                    title: 'Basic Addition Runner',
-                    description: 'Solve simple addition problems while running!',
-                    type: 'MathRunner',
-                    problems: [
-                        { id: 'mr-1', question: "2+2", answer: 4 },
-                        { id: 'mr-2', question: "5+3", answer: 8 },
-                    ]
-                },
-                 {
-                    id: 'number-patterns-1',
-                    title: 'Simple Number Patterns',
-                    description: 'Find the next number in the sequence.',
-                    type: 'PatternDetective',
-                    patterns: [
-                        { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10' },
-                        { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25' },
-                    ]
-                }
-            ];
-
-            initialGames.forEach(game => {
-                const docRef = doc(db, 'games', game.id);
-                batch.set(docRef, game);
-            });
-            batch.commit().then(() => callback(initialGames));
-        } else {
-            callback(games);
-        }
-    });
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+         // Seed initial data if collection is empty
+        const batch = writeBatch(db);
+        const initialGames: Game[] = [
+            {
+                id: 'hindi-opposites',
+                title: 'Opposite Words ( विलोम शब्द )',
+                description: 'Match the English words with their Hindi opposites.',
+                type: 'WordMatch',
+                pairs: [
+                    { id: 'wm-1', word: "Day", meaning: "रात" },
+                    { id: 'wm-2', word: "Happy", meaning: "दुखी" },
+                ]
+            },
+            {
+                id: 'sentence-scramble-1',
+                title: 'Beginner Sentence Scramble',
+                description: 'Unscramble the words to form a correct sentence.',
+                type: 'SentenceScramble',
+                sentences: [
+                    { id: 'ss-1', sentence: "The sun is shining brightly" },
+                    { id: 'ss-2', sentence: "She went to the market" },
+                ]
+            },
+            {
+                id: 'basic-addition',
+                title: 'Basic Addition Runner',
+                description: 'Solve simple addition problems while running!',
+                type: 'MathRunner',
+                problems: [
+                    { id: 'mr-1', question: "2+2", answer: 4 },
+                    { id: 'mr-2', question: "5+3", answer: 8 },
+                ]
+            },
+            {
+                id: 'number-patterns-1',
+                title: 'Simple Number Patterns',
+                description: 'Find the next number in the sequence.',
+                type: 'PatternDetective',
+                patterns: [
+                    { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10' },
+                    { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25' },
+                ]
+            }
+        ];
+        initialGames.forEach(game => batch.set(doc(db, 'games', game.id), game));
+        await batch.commit();
+        return initialGames;
+    }
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
 }
 
 export async function saveGame(game: Game): Promise<void> {
@@ -881,13 +894,11 @@ export async function saveGame(game: Game): Promise<void> {
 }
 
 // --- AUDIO LECTURES ---
-export function listenToAudioLectures(callback: (lectures: AudioLecture[]) => void) {
+export async function getAudioLectures(): Promise<AudioLecture[]> {
   const lecturesCol = collection(db, 'audioLectures');
   const q = query(lecturesCol, orderBy('title'));
-  return onSnapshot(q, (snapshot) => {
-    const lectures = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AudioLecture));
-    callback(lectures);
-  });
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AudioLecture));
 }
 
 export async function saveAudioLecture(lecture: AudioLecture): Promise<void> {
@@ -928,13 +939,11 @@ export async function getQuiz(id: string): Promise<Quiz | null> {
     return null;
 }
 
-export function listenToQuizzes(callback: (quizzes: Quiz[]) => void) {
+export async function getQuizzes(): Promise<Quiz[]> {
     const quizzesCol = collection(db, 'quizzes');
     const q = query(quizzesCol, orderBy('title'));
-    return onSnapshot(q, (snapshot) => {
-        const quizzes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
-        callback(quizzes);
-    });
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
 }
 
 export async function saveQuiz(quiz: Quiz): Promise<void> {

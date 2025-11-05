@@ -3,7 +3,7 @@
 
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { getAcademicData, type AcademicClass } from "@/lib/academics";
+import { listenToAcademics, type AcademicClass } from "@/lib/academics";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Book, ChevronRight, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -16,15 +16,16 @@ export default function SubjectPageClient() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
-        if (classId) {
-            const classes = await getAcademicData();
-            const foundClass = classes.find(c => c.id === classId);
-            setAcademicClass(foundClass);
-        }
+    if (!classId) return;
+
+    setLoading(true);
+    const unsubscribe = listenToAcademics((classes) => {
+        const foundClass = classes.find(c => c.id === classId);
+        setAcademicClass(foundClass);
         setLoading(false);
-    }
-    loadData();
+    });
+    
+    return () => unsubscribe();
   }, [classId]);
 
   if (loading) {
