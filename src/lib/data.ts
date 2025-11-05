@@ -54,6 +54,7 @@ export type PatternDetectiveItem = {
   sequence: string[];
   options: string[];
   correctAnswer: string;
+  explanation?: string;
 };
 
 export type Game = {
@@ -872,8 +873,8 @@ export async function getGames(): Promise<Game[]> {
                 description: 'Find the next number in the sequence.',
                 type: 'PatternDetective',
                 patterns: [
-                    { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10' },
-                    { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25' },
+                    { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10', explanation: 'This is a simple sequence of adding 2.' },
+                    { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25', explanation: 'This is the table of 5.' },
                 ]
             }
         ];

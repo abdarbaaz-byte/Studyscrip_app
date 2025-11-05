@@ -11,6 +11,7 @@ import { Trash2, PlusCircle, Save, Loader2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "./ui/textarea";
 
 interface AdminGamesFormProps {
   initialGames: Game[];
@@ -126,14 +127,14 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
     };
 
     // Pattern Detective Handlers
-    const handlePatternChange = (gameIndex: number, patternIndex: number, field: 'sequence' | 'options' | 'correctAnswer', value: string) => {
+    const handlePatternChange = (gameIndex: number, patternIndex: number, field: keyof PatternDetectiveItem, value: string) => {
         const newGames = [...games];
         const game = newGames[gameIndex];
         if (game.patterns) {
             if (field === 'sequence' || field === 'options') {
-                game.patterns[patternIndex][field] = value.split(',').map(s => s.trim());
+                (game.patterns[patternIndex] as any)[field] = value.split(',').map(s => s.trim());
             } else {
-                game.patterns[patternIndex][field] = value;
+                (game.patterns[patternIndex] as any)[field] = value;
             }
             setGames(newGames);
         }
@@ -142,7 +143,7 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
     const handleAddPattern = (gameIndex: number) => {
         const newGames = [...games];
         if (!newGames[gameIndex].patterns) newGames[gameIndex].patterns = [];
-        newGames[gameIndex].patterns!.push({ id: generateId('pd'), sequence: [], options: [], correctAnswer: '' });
+        newGames[gameIndex].patterns!.push({ id: generateId('pd'), sequence: [], options: [], correctAnswer: '', explanation: '' });
         setGames(newGames);
     };
 
@@ -287,6 +288,10 @@ export function AdminGamesForm({ initialGames, onSave }: AdminGamesFormProps) {
                                         <Label htmlFor={`correct-answer-${pattern.id}`}>Correct Answer</Label>
                                         <Input id={`correct-answer-${pattern.id}`} value={pattern.correctAnswer} onChange={(e) => handlePatternChange(gameIndex, patternIndex, 'correctAnswer', e.target.value)} placeholder="e.g., 8"/>
                                     </div>
+                                 </div>
+                                 <div className="space-y-1.5">
+                                    <Label htmlFor={`explanation-${pattern.id}`}>Explanation (Optional)</Label>
+                                    <Textarea id={`explanation-${pattern.id}`} value={pattern.explanation || ''} onChange={(e) => handlePatternChange(gameIndex, patternIndex, 'explanation', e.target.value)} placeholder="Explain the logic of the pattern..."/>
                                  </div>
                             </div>
                         ))}
