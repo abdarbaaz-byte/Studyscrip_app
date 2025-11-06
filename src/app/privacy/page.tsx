@@ -25,7 +25,6 @@ export default function PrivacyPage() {
                         <li><strong>Account Information:</strong> When you create an account, we collect your name, email address, and password. Your password is encrypted and we cannot see it. We may also collect optional details like your mobile number, school name, and class.</li>
                         <li><strong>Payment Information:</strong> For purchases, we use third-party payment processors (e.g., Razorpay). We do not store your full credit card details. We only store a record of the transaction, including the item purchased and payment status. For UPI payments, we collect and store your UPI reference ID for verification.</li>
                         <li><strong>Purchase and Access History:</strong> We maintain a record of the courses and subjects you purchase to grant you access to the content and manage your access rights.</li>
-                        <li><strong>AI Doubt Solver Data:</strong> When you use our AI Doubt Solver, we may collect the questions you ask and the conversations you have with the AI. This data is used to improve our AI models and the quality of the service.</li>
                         <li><strong>Game and Quiz Information:</strong> When you play games or attempt a quiz, we may collect your name, school name, class, and place, along with your answers and score. This information is linked to your user account and is used to display your results and for ranking in live quizzes.</li>
                         <li><strong>Chat Data:</strong> We store your conversations with our support team to provide better service and maintain a history of your queries.</li>
                         <li><strong>Live Class Survey Information:</strong> If you participate in a survey for live classes, we collect your name and mobile number, along with your preferences for subjects and timings. This helps us plan our live classes better.</li>
@@ -41,7 +40,6 @@ export default function PrivacyPage() {
                         <li>To provide, maintain, and improve our Service.</li>
                         <li>To process your transactions and grant you access to purchased content.</li>
                         <li>To create and manage your user account.</li>
-                        <li>To improve our AI features and services based on your interactions.</li>
                         <li>To display your quiz and game results, certificates, and manage rankings.</li>
                         <li>To plan and inform you about live classes based on survey feedback.</li>
                         <li>To communicate with you, including responding to your support requests and sending important notifications.</li>

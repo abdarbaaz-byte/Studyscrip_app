@@ -25,10 +25,6 @@ const faqs = [
         answer: "Hum Razorpay ke through Card, Netbanking, aur Wallet payments accept karte hain. Saath hi, aap UPI ke through bhi payment kar sakte hain. UPI payment verification mein 24 ghante tak lag sakte hain."
     },
     {
-        question: "'AI Doubt Solver' kya hai?",
-        answer: "Yeh aapka personal AI study partner hai. Aap padhai se juda koi bhi sawaal (kisi bhi subject ka) isse pooch sakte hain aur yeh aapko aasan bhasha mein samjhane ki koshish karega. Yeh 24/7 aapki madad ke liye uplabdh hai."
-    },
-    {
         question: "'Audio Lectures' aur 'Games' kya hain?",
         answer: "Audio Lectures mein aap chalte-firte topics ko sunkar seekh sakte hain. Games section mein padhai ko mazedaar banane ke liye educational games hain, jaise Word Match aur Math Runner."
     },

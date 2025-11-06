@@ -28,9 +28,6 @@ export default function DisclaimerPage() {
                             <strong>No Guarantee of Accuracy:</strong> While we strive to provide accurate and up-to-date information, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, or suitability of the information, products, or services contained in the application. Any reliance you place on such information is strictly at your own risk.
                         </li>
                         <li className="text-justify">
-                            <strong>AI Doubt Solver:</strong> Our AI features are designed to assist with learning but may generate inaccurate or incomplete information. Please verify important information from reliable sources. We are not liable for any discrepancies in the AI-generated responses.
-                        </li>
-                        <li className="text-justify">
                             <strong>Personal Responsibility:</strong> You are responsible for your own learning and the application of knowledge. We are not liable for any academic or career outcomes. The results from quizzes and courses are for self-assessment and do not guarantee success in formal examinations.
                         </li>
                         <li className="text-justify">
@@ -56,9 +53,6 @@ export default function DisclaimerPage() {
                         </li>
                         <li className="text-justify">
                             <strong>सटीकता की कोई गारंटी नहीं:</strong> यद्यपि हम सटीक और नवीनतम जानकारी प्रदान करने का प्रयास करते हैं, हम आवेदन में निहित जानकारी, उत्पादों, या सेवाओं की पूर्णता, सटीकता, विश्वसनीयता, या उपयुक्तता के बारे में किसी भी प्रकार की कोई वारंटी, व्यक्त या निहित, नहीं देते हैं। ऐसी जानकारी पर आपका कोई भी भरोसा सख्ती से आपके अपने जोखिम पर है।
-                        </li>
-                        <li className="text-justify">
-                            <strong>एआई डाउट सॉल्वर:</strong> हमारी एआई सुविधाएँ सीखने में सहायता के लिए डिज़ाइन की गई हैं, लेकिन वे गलत या अधूरी जानकारी उत्पन्न कर सकती हैं। कृपया महत्वपूर्ण जानकारी को विश्वसनीय स्रोतों से सत्यापित करें। हम एआई द्वारा उत्पन्न प्रतिक्रियाओं में किसी भी विसंगति के लिए उत्तरदायी नहीं हैं।
                         </li>
                         <li className="text-justify">
                             <strong>व्यक्तिगत जिम्मेदारी:</strong> आप अपने सीखने और ज्ञान के उपयोग के लिए स्वयं जिम्मेदार हैं। हम किसी भी अकादमिक या करियर परिणाम के लिए उत्तरदायी नहीं हैं। क्विज़ और पाठ्यक्रमों के परिणाम स्व-मूल्यांकन के लिए हैं और औपचारिक परीक्षाओं में सफलता की गारंटी नहीं देते हैं।
