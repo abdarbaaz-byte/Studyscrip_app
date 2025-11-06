@@ -1,3 +1,0 @@
-// This file is required for OneSignal service worker updates.
-// It will be populated by OneSignal SDK at runtime.
-// Do not modify this file.

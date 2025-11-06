@@ -10,7 +10,7 @@ const faqs = [
     },
     {
         question: "Kya main koi content free mein dekh sakta hoon?",
-        answer: "Haan! Hamare structured academic courses mein, har subject ka pehla chapter bilkul free hai. Yeh aapko hamare teaching style ko samajhne mein madad karta hai."
+        answer: "Haan! Hamare structured academic courses mein, har subject ka pehla chapter bilkul free hai. Iske alawa 'Free Notes', 'Bookstore', 'Games', aur 'Audio Lectures' sections bhi sabhi ke liye free hain."
     },
     {
         question: "Poora subject ya course kaise unlock karun?",
@@ -25,12 +25,16 @@ const faqs = [
         answer: "Hum Razorpay ke through Card, Netbanking, aur Wallet payments accept karte hain. Saath hi, aap UPI ke through bhi payment kar sakte hain. UPI payment verification mein 24 ghante tak lag sakte hain."
     },
     {
-        question: "Quizzes kaise kaam karte hain? Kya live quizzes mein rank aati hai?",
-        answer: "Humare paas do tarah ke quizzes hain: Practice aur Live. Practice quizzes aap kabhi bhi de sakte hain apni taiyari check karne ke liye. Live quizzes ek fix time par hote hain aur sabhi students ek saath hissa lete hain. Live quiz ke baad aapki rank bhi list mein dikhai jaati hai."
-    },
-    {
         question: "'AI Doubt Solver' kya hai?",
         answer: "Yeh aapka personal AI study partner hai. Aap padhai se juda koi bhi sawaal (kisi bhi subject ka) isse pooch sakte hain aur yeh aapko aasan bhasha mein samjhane ki koshish karega. Yeh 24/7 aapki madad ke liye uplabdh hai."
+    },
+    {
+        question: "'Audio Lectures' aur 'Games' kya hain?",
+        answer: "Audio Lectures mein aap chalte-firte topics ko sunkar seekh sakte hain. Games section mein padhai ko mazedaar banane ke liye educational games hain, jaise Word Match aur Math Runner."
+    },
+    {
+        question: "Quizzes kaise kaam karte hain? Kya live quizzes mein rank aati hai?",
+        answer: "Humare paas do tarah ke quizzes hain: Practice aur Live. Practice quizzes aap kabhi bhi de sakte hain apni taiyari check karne ke liye. Live quizzes ek fix time par hote hain aur sabhi students ek saath hissa lete hain. Live quiz ke baad aapki rank bhi list mein dikhai jaati hai."
     },
     {
         question: "'Free Notes' aur 'Bookstore' structured courses se kaise alag hain?",

@@ -25,8 +25,9 @@ export default function PrivacyPage() {
                         <li><strong>Account Information:</strong> When you create an account, we collect your name, email address, and password. Your password is encrypted and we cannot see it. We may also collect optional details like your mobile number, school name, and class.</li>
                         <li><strong>Payment Information:</strong> For purchases, we use third-party payment processors (e.g., Razorpay). We do not store your full credit card details. We only store a record of the transaction, including the item purchased and payment status. For UPI payments, we collect and store your UPI reference ID for verification.</li>
                         <li><strong>Purchase and Access History:</strong> We maintain a record of the courses and subjects you purchase to grant you access to the content and manage your access rights.</li>
+                        <li><strong>AI Doubt Solver Data:</strong> When you use our AI Doubt Solver, we may collect the questions you ask and the conversations you have with the AI. This data is used to improve our AI models and the quality of the service.</li>
+                        <li><strong>Game and Quiz Information:</strong> When you play games or attempt a quiz, we may collect your name, school name, class, and place, along with your answers and score. This information is linked to your user account and is used to display your results and for ranking in live quizzes.</li>
                         <li><strong>Chat Data:</strong> We store your conversations with our support team to provide better service and maintain a history of your queries.</li>
-                        <li><strong>Quiz Information:</strong> When you attempt a quiz, we may collect your name, school name, class, and place, along with your quiz answers and score. This information is linked to your user account and is used to display your results and for ranking in live quizzes.</li>
                         <li><strong>Live Class Survey Information:</strong> If you participate in a survey for live classes, we collect your name and mobile number, along with your preferences for subjects and timings. This helps us plan our live classes better.</li>
                         <li><strong>Review Information:</strong> If you choose to submit a review, we collect your name, class name, and the comment you provide. Your review will be stored and may be displayed publicly on our website after it has been approved by our team.</li>
                         <li><strong>Certificate Information:</strong> We may assign certificates to your profile. We store the certificate's title and its image URL, which are linked to your user account.</li>
@@ -40,7 +41,8 @@ export default function PrivacyPage() {
                         <li>To provide, maintain, and improve our Service.</li>
                         <li>To process your transactions and grant you access to purchased content.</li>
                         <li>To create and manage your user account.</li>
-                        <li>To display your quiz results, certificates, and manage rankings.</li>
+                        <li>To improve our AI features and services based on your interactions.</li>
+                        <li>To display your quiz and game results, certificates, and manage rankings.</li>
                         <li>To plan and inform you about live classes based on survey feedback.</li>
                         <li>To communicate with you, including responding to your support requests and sending important notifications.</li>
                         <li>To personalize your learning experience.</li>
@@ -53,7 +55,7 @@ export default function PrivacyPage() {
                     <h2 className="font-headline text-2xl font-semibold">3. Information Sharing</h2>
                     <p>We do not sell or rent your personal information to third parties. We may share information with:</p>
                      <ul className="list-disc list-inside space-y-2 pl-4">
-                        <li>Service providers who perform services on our behalf, such as payment processing (Razorpay) and database management (Firebase).</li>
+                        <li>Service providers who perform services on our behalf, such as payment processing (Razorpay), database management (Firebase), and AI model hosting.</li>
                         <li>Our authorized employees who require access to data to perform their duties, such as providing support or managing the platform. Access is granted on a need-to-know basis.</li>
                         <li>If required by law or to protect the rights and safety of our users and the public.</li>
                     </ul>
