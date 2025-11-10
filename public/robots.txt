@@ -6,4 +6,4 @@ Allow: /
 Disallow: /admin/
 
 # Location of sitemap
-Sitemap: https://your-domain.com/sitemap.xml
+Sitemap: https://studyscript.netlify.app/sitemap.xml
