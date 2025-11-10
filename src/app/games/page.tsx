@@ -6,12 +6,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Gamepad2, Loader2, ArrowRight, Puzzle, AlignHorizontalJustify, Orbit, Search } from "lucide-react";
+import { Gamepad2, Loader2, ArrowRight, Puzzle, AlignJustify, Orbit, Search } from "lucide-react";
 import { getGames, type Game } from "@/lib/data";
 
 const gameIcons: { [key: string]: React.ElementType } = {
   WordMatch: Puzzle,
-  SentenceScramble: AlignHorizontalJustify,
+  SentenceScramble: AlignJustify,
   MathRunner: Orbit,
   PatternDetective: Search,
   Default: Gamepad2,
