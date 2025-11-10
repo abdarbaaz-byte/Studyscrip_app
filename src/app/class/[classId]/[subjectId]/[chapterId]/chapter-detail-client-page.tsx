@@ -47,7 +47,7 @@ export default function ChapterDetailClientPage() {
         setChapter(foundChapter);
         setChapterIndex(foundChapterIndex);
 
-        if (user && foundSubject) {
+        if (user && foundSubject && foundSubject.price > 0) {
             checkUserPurchase(user.uid, foundSubject.id).then(hasAccess => {
                 setIsSubjectPurchased(hasAccess);
                 setLoading(false);
@@ -72,8 +72,9 @@ export default function ChapterDetailClientPage() {
     notFound();
   }
 
+  const isFree = subject.price === 0;
   const isFirstChapter = chapterIndex === 0;
-  const hasAccess = isFirstChapter || isSubjectPurchased;
+  const hasAccess = isFree || isFirstChapter || isSubjectPurchased;
 
   const getContentIcon = (type: ContentItem['type']) => {
     if (type === 'pdf') return <FileText className="h-5 w-5 text-primary" />;
@@ -184,7 +185,7 @@ export default function ChapterDetailClientPage() {
           <h1 className="font-headline text-3xl md:text-5xl font-bold mt-2 flex items-center gap-4">
             {chapter.name}
             {!hasAccess && <Lock className="h-8 w-8 text-muted-foreground" />}
-            {isFirstChapter && !isSubjectPurchased && <Badge className="bg-green-600 hover:bg-green-700">Free Preview</Badge>}
+            {(isFirstChapter || isFree) && !isSubjectPurchased && <Badge className="bg-green-600 hover:bg-green-700">{isFree ? 'Free Subject' : 'Free Preview'}</Badge>}
           </h1>
           <p className="text-lg text-muted-foreground">Content for this chapter.</p>
         </div>
@@ -233,9 +234,13 @@ export default function ChapterDetailClientPage() {
                   <CardDescription>Full Subject</CardDescription>
               </CardHeader>
               <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">Purchase this subject to get access to all its chapters and content.</p>
+                  {isFree ? (
+                    <p className="text-sm text-green-600 font-semibold mb-4">This is a free subject. All chapters are unlocked.</p>
+                  ) : (
+                     <p className="text-sm text-muted-foreground mb-4">Purchase this subject to get access to all its chapters and content.</p>
+                  )}
                    <Button onClick={handleUnlockSubject} size="lg" className="w-full">
-                       <Unlock className="mr-2 h-4 w-4" /> View Purchase Options
+                       <Unlock className="mr-2 h-4 w-4" /> View Subject Details
                     </Button>
               </CardContent>
             </Card>

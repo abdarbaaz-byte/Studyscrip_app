@@ -48,7 +48,7 @@ export default function SubjectDetailClientPage() {
                 if (scheduledClass) setLiveClass(scheduledClass);
             });
 
-            if (user) {
+            if (user && foundSubject.price > 0) {
                 checkUserPurchase(user.uid, subjectId).then(hasAccess => {
                     setIsPurchased(hasAccess);
                     setLoading(false);
@@ -121,6 +121,7 @@ export default function SubjectDetailClientPage() {
   }
 
   const isLiveClassActive = liveClass && new Date() >= liveClass.startTime.toDate() && new Date() <= liveClass.endTime.toDate();
+  const isFree = subject.price === 0;
 
   return (
     <>
@@ -136,7 +137,7 @@ export default function SubjectDetailClientPage() {
 
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {subject.chapters.map((chapter, index) => {
-          const isLocked = index > 0 && !isPurchased;
+          const isLocked = !isFree && index > 0 && !isPurchased;
           return (
             <Link 
               href={`/class/${academicClass.id}/${subject.id}/${chapter.id}`} 
@@ -172,7 +173,7 @@ export default function SubjectDetailClientPage() {
         )}
       </div>
 
-      {!isPurchased && subject.chapters.length > 0 && (
+      {!isPurchased && !isFree && subject.chapters.length > 0 && (
          <Card className="mt-12 max-w-2xl mx-auto">
             <CardHeader className="text-center">
               <CardTitle className="font-headline text-2xl">Unlock All Chapters</CardTitle>
@@ -193,10 +194,10 @@ export default function SubjectDetailClientPage() {
             </CardContent>
          </Card>
       )}
-       {isPurchased && subject.chapters.length > 0 && (
+       {(isPurchased || isFree) && subject.chapters.length > 0 && (
         <div className="mt-12 max-w-2xl mx-auto">
           <div className="text-center font-semibold text-green-600 p-4 rounded-md bg-green-100">
-              You have access to all chapters in this subject!
+              {isFree ? 'This subject is free. You have access to all chapters!' : 'You have access to all chapters in this subject!'}
           </div>
 
           {liveClass && (
