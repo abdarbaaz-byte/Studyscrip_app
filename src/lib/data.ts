@@ -1,5 +1,3 @@
-
-
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove, increment } from 'firebase/firestore';
 import type { Course, CourseContent } from './courses';
@@ -806,11 +804,12 @@ export type BookstoreItem = {
     title: string;
     url: string; // PDF URL
     thumbnailUrl: string; // Image URL
+    createdAt?: Timestamp;
 };
 
 export async function getBookstoreItems(): Promise<BookstoreItem[]> {
     const itemsCol = collection(db, 'bookstore');
-    const q = query(itemsCol, orderBy('title'));
+    const q = query(itemsCol, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookstoreItem));
 }
@@ -820,7 +819,7 @@ export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
     if (id) {
         await setDoc(doc(db, 'bookstore', id), data, { merge: true });
     } else {
-        await addDoc(collection(db, 'bookstore'), data);
+        await addDoc(collection(db, 'bookstore'), { ...data, createdAt: serverTimestamp() });
     }
 }
 

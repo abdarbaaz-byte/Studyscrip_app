@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   keywords: ["online classes", "e-learning India", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "NCERT solutions", "MP Board", "previous year question papers", "academic courses", "live classes", "online quiz", "free study material", "free notes pdf", "AI doubt solver", "online padhai", "digital learning", "education platform", "professional courses", "exam preparation"],
   authors: [{ name: "StudyScript" }],
   robots: "index, follow",
+  verification: {
+      google: "AP1STnDfS5TmnaOq0PNHyAoeCyOhmcHimMI0Z5MgCbk",
+      },
 };
 
 export const viewport: Viewport = {
