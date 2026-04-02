@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -36,7 +34,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Gamepad2, Headphones } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -45,7 +43,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getGames, saveGame, type Game, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture, getBatches, saveBatch, deleteBatch, type Batch } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -58,8 +56,8 @@ import { format } from "date-fns";
 import { AdminFreeNotesForm } from "@/components/admin-freenotes-form";
 import { AdminBookstoreForm } from "@/components/admin-bookstore-form";
 import { AdminQuizForm } from "@/components/admin-quiz-form";
-import { AdminGamesForm } from "@/components/admin-games-form";
 import { AdminAudioLecturesForm } from "@/components/admin-audio-lectures-form";
+import { AdminBatchForm } from "@/components/admin-batch-form";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -68,13 +66,14 @@ type FormattedPayment = Omit<Payment, 'paymentDate'> & { paymentDate: string };
 type SelectableItem = {
     id: string;
     name: string;
-    type: 'course' | 'subject';
+    type: 'course' | 'subject' | 'batch';
     classId?: string; // For subjects
 };
 
 
 export default function AdminDashboardPage() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [purchases, setPurchases] = useState<EnrichedPurchase[]>([]);
@@ -84,7 +83,6 @@ export default function AdminDashboardPage() {
   const [bookstoreItems, setBookstoreItems] = useState<BookstoreItem[]>([]);
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [games, setGames] = useState<Game[]>([]);
   const [audioLectures, setAudioLectures] = useState<AudioLecture[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([]);
   const [liveSurveys, setLiveSurveys] = useState<LiveClassSurvey[]>([]);
@@ -184,11 +182,11 @@ export default function AdminDashboardPage() {
           const promises = [];
           if (hasPermission('manage_academics')) promises.push(getAcademicData()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_courses')) promises.push(getCourses()); else promises.push(Promise.resolve([]));
+          if (hasPermission('manage_batches')) promises.push(getBatches()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_payments')) promises.push(getPayments()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_purchases')) promises.push(getAllPurchases()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_free_notes')) promises.push(getFreeNotes()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_bookstore')) promises.push(getBookstoreItems()); else promises.push(Promise.resolve([]));
-          if (hasPermission('manage_games')) promises.push(getGames()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_audio_lectures')) promises.push(getAudioLectures()); else promises.push(Promise.resolve([]));
           if (hasPermission('manage_quizzes')) promises.push(getQuizzes()); else promises.push(Promise.resolve([]));
           if (hasPermission('view_quiz_attempts')) promises.push(getQuizAttempts()); else promises.push(Promise.resolve([]));
@@ -200,15 +198,15 @@ export default function AdminDashboardPage() {
           if (userRole === 'admin') promises.push(getEmployees()); else promises.push(Promise.resolve([]));
           
 
-          const [academicsData, coursesData, paymentsData, purchasesData, freeNotesData, bookstoreData, gamesData, audioLecturesData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, liveClassesData, schoolsData, employeesData] = await Promise.all(promises);
+          const [academicsData, coursesData, batchesData, paymentsData, purchasesData, freeNotesData, bookstoreData, audioLecturesData, quizzesData, quizAttemptsData, surveysData, bannerData, reviewsData, liveClassesData, schoolsData, employeesData] = await Promise.all(promises);
           
           setAcademicClasses(academicsData as AcademicClass[]);
           setCourses(coursesData as Course[]);
+          setBatches(batchesData as Batch[]);
           setPayments(paymentsData as Payment[]);
           setPurchases(purchasesData as EnrichedPurchase[]);
           setFreeNotes(freeNotesData as FreeNote[]);
           setBookstoreItems(bookstoreData as BookstoreItem[]);
-          setGames(gamesData as Game[]);
           setAudioLectures(audioLecturesData as AudioLecture[]);
           setQuizzes(quizzesData as Quiz[]);
           setQuizAttempts(quizAttemptsData as QuizAttempt[]);
@@ -222,10 +220,11 @@ export default function AdminDashboardPage() {
           // Populate selectable items for manual access & live classes
           if (hasPermission('manage_manual_access') || hasPermission('manage_live_classes')) {
             const courseItems: SelectableItem[] = (coursesData as Course[]).map(c => ({ id: c.docId!, name: `(Course) ${c.title}`, type: 'course' }));
+            const batchItems: SelectableItem[] = (batchesData as Batch[]).map(b => ({ id: b.id, name: `(Batch) ${b.title}`, type: 'batch' }));
             const subjectItems: SelectableItem[] = (academicsData as AcademicClass[]).flatMap(ac => 
                 ac.subjects.map(s => ({ id: s.id, name: `(${ac.name}) ${s.name}`, type: 'subject', classId: ac.id }))
             );
-            setSelectableItems([...courseItems, ...subjectItems]);
+            setSelectableItems([...courseItems, ...batchItems, ...subjectItems]);
           }
 
       } catch (error) {
@@ -263,6 +262,28 @@ export default function AdminDashboardPage() {
     }
     setEditingCourse(null);
     setIsFormDialogOpen(false);
+  };
+
+  const handleSaveBatch = async (batchData: Batch) => {
+    try {
+        await saveBatch(batchData);
+        await loadAdminData();
+        toast({ title: "Batch saved successfully!" });
+    } catch (error) {
+        console.error("Failed to save batch:", error);
+        toast({ variant: "destructive", title: "Failed to save batch" });
+    }
+  };
+
+  const handleDeleteBatch = async (batchId: string) => {
+    try {
+        await deleteBatch(batchId);
+        await loadAdminData();
+        toast({ title: "Batch deleted." });
+    } catch (error) {
+        console.error("Failed to delete batch:", error);
+        toast({ variant: "destructive", title: "Failed to delete batch." });
+    }
   };
 
   const handleSaveAcademics = async (updatedClasses: AcademicClass[]) => {
@@ -320,17 +341,6 @@ export default function AdminDashboardPage() {
     }
   };
   
-  const handleSaveGame = async (game: Game) => {
-    try {
-      await saveGame(game);
-      await loadAdminData();
-      toast({ title: "Game saved successfully!" });
-    } catch (error) {
-      console.error("Failed to save game:", error);
-      toast({ variant: "destructive", title: "Failed to save Game" });
-    }
-  };
-
   const handleSaveAudioLecture = async (lecture: AudioLecture) => {
     try {
       await saveAudioLecture(lecture);
@@ -406,7 +416,7 @@ export default function AdminDashboardPage() {
         endTime: liveClassEndTime as any,
         meetingLink: liveClassMeetingLink,
         associatedItemId: selectedItem.id,
-        itemType: selectedItem.type,
+        itemType: selectedItem.type as any,
         associatedItemName: selectedItem.name,
     };
     if (selectedItem.classId) {
@@ -615,7 +625,7 @@ export default function AdminDashboardPage() {
         const selectedItem = selectableItems.find(item => item.id === accessItemId);
         if (!selectedItem) throw new Error("Selected item not found.");
         
-        await grantManualAccess(accessEmail, selectedItem.id, selectedItem.type, accessExpiryDate);
+        await grantManualAccess(accessEmail, selectedItem.id, selectedItem.type as any, accessExpiryDate);
         toast({ title: "Access Granted!", description: `Access to ${selectedItem.name} granted to ${accessEmail} until ${format(accessExpiryDate, "PPP")}.`});
         setAccessEmail("");
         setAccessItemId("");
@@ -916,6 +926,23 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderBatchManagement = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">Batch Management</CardTitle>
+        <CardDescription>Create and manage learning batches (Notes, Quizzes, Info).</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AdminBatchForm 
+          initialBatches={batches}
+          allQuizzes={quizzes}
+          onSave={handleSaveBatch}
+          onDelete={handleDeleteBatch}
+        />
+      </CardContent>
+    </Card>
+  );
+
   const renderCourseManagement = () => (
     <Card>
       <CardHeader>
@@ -1032,21 +1059,6 @@ export default function AdminDashboardPage() {
     </Card>
   );
   
-  const renderGameManagement = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">Game Management</CardTitle>
-        <CardDescription>Manage educational games and their content.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <AdminGamesForm
-            initialGames={games}
-            onSave={handleSaveGame}
-        />
-      </CardContent>
-    </Card>
-  );
-
   const renderAudioLectureManagement = () => (
     <Card>
       <CardHeader>
@@ -1094,7 +1106,7 @@ export default function AdminDashboardPage() {
                     <Input id="live-class-title" value={liveClassTitle} onChange={(e) => setLiveClassTitle(e.target.value)} required />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="live-class-item">Associated Course/Subject</Label>
+                    <Label htmlFor="live-class-item">Associated Item</Label>
                     <Select value={liveClassAssociatedItem} onValueChange={setLiveClassAssociatedItem} required>
                         <SelectTrigger id="live-class-item">
                             <SelectValue placeholder="Select an item..." />
@@ -1468,7 +1480,7 @@ export default function AdminDashboardPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Manual Access Management</CardTitle>
-        <CardDescription>Grant access to a course or subject to a user manually without payment.</CardDescription>
+        <CardDescription>Grant access to a course, subject, or batch to a user manually without payment.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleGrantAccess} className="space-y-6">
@@ -1485,10 +1497,10 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="space-y-2">
-                 <label htmlFor="access-item" className="font-medium">Course or Subject to Grant</label>
+                 <label htmlFor="access-item" className="font-medium">Item to Grant</label>
                 <Select value={accessItemId} onValueChange={setAccessItemId} required>
                     <SelectTrigger id="access-item">
-                        <SelectValue placeholder="Select a course or subject..." />
+                        <SelectValue placeholder="Select a course, subject, or batch..." />
                     </SelectTrigger>
                     <SelectContent>
                          {selectableItems.map(item => (
@@ -1849,14 +1861,14 @@ export default function AdminDashboardPage() {
              {hasPermission('manage_courses') && <Button variant={activeTab === 'courses' ? 'default' : 'outline'} onClick={() => setActiveTab('courses')}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Courses
             </Button>}
+            {hasPermission('manage_batches') && <Button variant={activeTab === 'batches' ? 'default' : 'outline'} onClick={() => setActiveTab('batches')}>
+                <Layers className="mr-2 h-4 w-4" /> Batches
+            </Button>}
              {hasPermission('manage_free_notes') && <Button variant={activeTab === 'free-notes' ? 'default' : 'outline'} onClick={() => setActiveTab('free-notes')}>
                 <FileText className="mr-2 h-4 w-4" /> Free Notes
             </Button>}
             {hasPermission('manage_bookstore') && <Button variant={activeTab === 'bookstore' ? 'default' : 'outline'} onClick={() => setActiveTab('bookstore')}>
                 <BookOpen className="mr-2 h-4 w-4" /> Bookstore
-            </Button>}
-            {hasPermission('manage_games') && <Button variant={activeTab === 'games' ? 'default' : 'outline'} onClick={() => setActiveTab('games')}>
-                <Gamepad2 className="mr-2 h-4 w-4" /> Games
             </Button>}
             {hasPermission('manage_audio_lectures') && <Button variant={activeTab === 'audio-lectures' ? 'default' : 'outline'} onClick={() => setActiveTab('audio-lectures')}>
                 <Headphones className="mr-2 h-4 w-4" /> Audio Lectures
@@ -1906,9 +1918,9 @@ export default function AdminDashboardPage() {
 
         {activeTab === 'academics' && hasPermission('manage_academics') && renderAcademicsManagement()}
         {activeTab === 'courses' && hasPermission('manage_courses') && renderCourseManagement()}
+        {activeTab === 'batches' && hasPermission('manage_batches') && renderBatchManagement()}
         {activeTab === 'free-notes' && hasPermission('manage_free_notes') && renderFreeNotesManagement()}
         {activeTab === 'bookstore' && hasPermission('manage_bookstore') && renderBookstoreManagement()}
-        {activeTab === 'games' && hasPermission('manage_games') && renderGameManagement()}
         {activeTab === 'audio-lectures' && hasPermission('manage_audio_lectures') && renderAudioLectureManagement()}
         {activeTab === 'quizzes' && hasPermission('manage_quizzes') && renderQuizManagement()}
         {activeTab === 'live-classes' && hasPermission('manage_live_classes') && renderLiveClassManagement()}
@@ -2206,21 +2218,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,9 +1,8 @@
-
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, BrainCircuit, Gamepad2, User, School } from "lucide-react";
+import { Home, LayoutGrid, BrainCircuit, Users, User, School } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -20,7 +19,7 @@ export function BottomNavigation() {
   const baseNavItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/my-courses", label: "Courses", icon: LayoutGrid },
-    { href: "/games", label: "Games", icon: Gamepad2 },
+    { href: "/batches", label: "Batches", icon: Users },
     { href: "/quizzes", label: "Quizzes", icon: BrainCircuit },
     { href: "/my-profile", label: "Profile", icon: User },
   ];
@@ -36,7 +35,7 @@ export function BottomNavigation() {
   }
 
   // Filter out items that require auth if user is not logged in
-  const visibleNavItems = user ? navItems : navItems.filter(item => ["/", "/quizzes", "/games"].includes(item.href));
+  const visibleNavItems = user ? navItems : navItems.filter(item => ["/", "/quizzes", "/batches"].includes(item.href));
 
 
   return (

@@ -29,42 +29,85 @@ export type { AcademicClass, Subject } from './academics';
 // Re-export ContentItem for use in other modules
 export type { ContentItem } from './academics';
 
-// --- GAMES ---
-export type WordMatchPair = {
+// --- BATCHES ---
+export type BatchNote = {
     id: string;
-    word: string;
-    meaning: string;
+    title: string;
+    content: ContentItem[];
 };
 
-export type SentenceScrambleItem = {
+export type BatchInformation = {
     id: string;
-    sentence: string;
+    title: string;
+    message: string;
+    createdAt: Timestamp;
 };
 
-export type MathProblem = {
-    id: string;
-    question: string; // e.g., "5 + 3"
-    answer: number;   // e.g., 8
-};
-
-export type PatternDetectiveItem = {
-  id: string;
-  sequence: string[];
-  options: string[];
-  correctAnswer: string;
-  explanation?: string;
-};
-
-export type Game = {
+export type Batch = {
     id: string; // docId
     title: string;
     description: string;
-    type: 'WordMatch' | 'SentenceScramble' | 'MathRunner' | 'PatternDetective';
-    pairs?: WordMatchPair[];
-    sentences?: SentenceScrambleItem[];
-    problems?: MathProblem[];
-    patterns?: PatternDetectiveItem[];
+    price: number;
+    thumbnail: string;
+    createdAt: Timestamp;
+    notes: BatchNote[];
+    quizIds: string[]; // List of quiz IDs assigned to this batch
 };
+
+export async function getBatches(): Promise<Batch[]> {
+    const batchesCol = collection(db, 'batches');
+    const q = query(batchesCol, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Batch));
+}
+
+export function listenToBatches(callback: (batches: Batch[]) => void) {
+    const batchesCol = collection(db, 'batches');
+    const q = query(batchesCol, orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        const batchList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Batch));
+        callback(batchList);
+    });
+}
+
+export async function getBatch(id: string): Promise<Batch | null> {
+    const docRef = doc(db, 'batches', id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        return { id: docSnap.id, ...data } as Batch;
+    }
+    return null;
+}
+
+export async function saveBatch(batch: Omit<Batch, 'id' | 'createdAt'> & { id?: string }): Promise<void> {
+    const { id, ...data } = batch;
+    if (id) {
+        await setDoc(doc(db, 'batches', id), data, { merge: true });
+    } else {
+        await addDoc(collection(db, 'batches'), { ...data, createdAt: serverTimestamp() });
+    }
+}
+
+export async function deleteBatch(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'batches', id));
+}
+
+export async function getBatchInformation(batchId: string): Promise<BatchInformation[]> {
+    const infoCol = collection(db, 'batches', batchId, 'information');
+    const q = query(infoCol, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BatchInformation));
+}
+
+export async function saveBatchInformation(batchId: string, info: Omit<BatchInformation, 'id' | 'createdAt'>): Promise<void> {
+    const infoCol = collection(db, 'batches', batchId, 'information');
+    await addDoc(infoCol, { ...info, createdAt: serverTimestamp() });
+}
+
+export async function deleteBatchInformation(batchId: string, infoId: string): Promise<void> {
+    await deleteDoc(doc(db, 'batches', batchId, 'information', infoId));
+}
 
 // --- AUDIO LECTURES ---
 export type AudioTrack = {
@@ -260,8 +303,8 @@ export async function deleteCourse(docId: string): Promise<void> {
 export type Purchase = {
   id: string; // The document ID
   userId: string;
-  itemId: string; // Can be courseId or subjectId
-  itemType: 'course' | 'subject';
+  itemId: string; // Can be courseId, subjectId, or batchId
+  itemType: 'course' | 'subject' | 'batch';
   purchaseDate: Timestamp;
   expiryDate: Timestamp;
 };
@@ -269,7 +312,7 @@ export type Purchase = {
 // This type is enriched with full object details for displaying in "My Courses"
 export type EnrichedPurchase = Omit<Purchase, 'itemId'> & {
     itemId: string;
-    item: any; // Can be a Course or Subject object
+    item: any; // Can be a Course, Subject, or Batch object
     userEmail: string;
     itemName: string;
 };
@@ -280,7 +323,7 @@ export type Payment = {
   userName: string;
   itemId: string;
   itemTitle: string;
-  itemType: 'course' | 'subject';
+  itemType: 'course' | 'subject' | 'batch';
   amount: number;
   status: 'succeeded' | 'pending' | 'failed';
   paymentDate: Timestamp;
@@ -294,7 +337,7 @@ export type PaymentRequest = {
     userName: string;
     itemId: string;
     itemTitle: string;
-    itemType: 'course' | 'subject';
+    itemType: 'course' | 'subject' | 'batch';
     itemPrice: number;
     upiReferenceId: string;
     status: 'pending' | 'approved' | 'rejected';
@@ -308,7 +351,7 @@ export async function createPurchase(
     userName: string,
     itemId: string, 
     itemTitle: string,
-    itemType: 'course' | 'subject',
+    itemType: 'course' | 'subject' | 'batch',
     amount: number,
     razorpayPaymentId: string
 ): Promise<string> {
@@ -355,7 +398,7 @@ export async function createPurchase(
 export async function grantManualAccess(
   userEmail: string,
   itemId: string,
-  itemType: 'course' | 'subject',
+  itemType: 'course' | 'subject' | 'batch',
   expiryDate: Date
 ): Promise<void> {
   // 1. Find user by email
@@ -437,10 +480,12 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
 
     const allCourses = await getCourses();
     const allAcademicData = await getAcademicData();
+    const allBatches = await getBatches();
     const allSubjects = allAcademicData.flatMap(doc => (doc.subjects || []).map((s: Subject) => ({...s, className: doc.name})));
 
     const allCoursesMap = new Map(allCourses.map(course => [course.docId, course]));
     const allSubjectsMap = new Map(allSubjects.map(s => [s.id, s]));
+    const allBatchesMap = new Map(allBatches.map(b => [b.id, b]));
 
     const usersCol = collection(db, 'users');
     const usersSnapshot = await getDocs(usersCol);
@@ -453,9 +498,12 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
         if(purchase.itemType === 'course') {
             const course = allCoursesMap.get(purchase.itemId);
             itemName = course ? course.title : purchase.itemId;
-        } else {
+        } else if (purchase.itemType === 'subject') {
             const subject = allSubjectsMap.get(purchase.itemId);
             itemName = subject ? `${subject.name} (${subject.className})` : purchase.itemId;
+        } else if (purchase.itemType === 'batch') {
+            const batch = allBatchesMap.get(purchase.itemId);
+            itemName = batch ? batch.title : purchase.itemId;
         }
 
         return {
@@ -480,13 +528,15 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
     
     if (purchaseSnapshot.empty) return [];
 
-    // Fetch all courses and subjects once to avoid multiple reads
+    // Fetch all courses, subjects, and batches once to avoid multiple reads
     const allCourses = await getCourses();
     const allAcademicData = await getAcademicData();
+    const allBatches = await getBatches();
     const allSubjects = allAcademicData.flatMap(doc => (doc.subjects || []).map((s: Subject) => ({ ...s, classId: doc.id, className: doc.name })));
     
     const allCoursesMap = new Map(allCourses.map(course => [course.docId, course]));
     const allSubjectsMap = new Map(allSubjects.map(s => [s.id, s]));
+    const allBatchesMap = new Map(allBatches.map(b => [b.id, b]));
 
 
     const now = new Date();
@@ -503,8 +553,10 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
         let itemData: any = null;
         if (purchase.itemType === 'course') {
             itemData = allCoursesMap.get(purchase.itemId);
-        } else {
+        } else if (purchase.itemType === 'subject') {
             itemData = allSubjectsMap.get(purchase.itemId);
+        } else if (purchase.itemType === 'batch') {
+            itemData = allBatchesMap.get(purchase.itemId);
         }
 
         if (itemData) {
@@ -825,72 +877,6 @@ export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
 
 export async function deleteBookstoreItem(id: string): Promise<void> {
     await deleteDoc(doc(db, 'bookstore', id));
-}
-
-// --- GAMES ---
-export async function getGames(): Promise<Game[]> {
-    const gamesCol = collection(db, 'games');
-    const q = query(gamesCol, orderBy('title'));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-         // Seed initial data if collection is empty
-        const batch = writeBatch(db);
-        const initialGames: Game[] = [
-            {
-                id: 'hindi-opposites',
-                title: 'Opposite Words ( विलोम शब्द )',
-                description: 'Match the English words with their Hindi opposites.',
-                type: 'WordMatch',
-                pairs: [
-                    { id: 'wm-1', word: "Day", meaning: "रात" },
-                    { id: 'wm-2', word: "Happy", meaning: "दुखी" },
-                ]
-            },
-            {
-                id: 'sentence-scramble-1',
-                title: 'Beginner Sentence Scramble',
-                description: 'Unscramble the words to form a correct sentence.',
-                type: 'SentenceScramble',
-                sentences: [
-                    { id: 'ss-1', sentence: "The sun is shining brightly" },
-                    { id: 'ss-2', sentence: "She went to the market" },
-                ]
-            },
-            {
-                id: 'basic-addition',
-                title: 'Basic Addition Runner',
-                description: 'Solve simple addition problems while running!',
-                type: 'MathRunner',
-                problems: [
-                    { id: 'mr-1', question: "2+2", answer: 4 },
-                    { id: 'mr-2', question: "5+3", answer: 8 },
-                ]
-            },
-            {
-                id: 'number-patterns-1',
-                title: 'Simple Number Patterns',
-                description: 'Find the next number in the sequence.',
-                type: 'PatternDetective',
-                patterns: [
-                    { id: 'pd-1', sequence: ['2', '4', '6', '8'], options: ['9', '10', '12'], correctAnswer: '10', explanation: 'This is a simple sequence of adding 2.' },
-                    { id: 'pd-2', sequence: ['5', '10', '15', '20'], options: ['22', '30', '25'], correctAnswer: '25', explanation: 'This is the table of 5.' },
-                ]
-            }
-        ];
-        initialGames.forEach(game => batch.set(doc(db, 'games', game.id), game));
-        await batch.commit();
-        return initialGames;
-    }
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
-}
-
-export async function saveGame(game: Game): Promise<void> {
-    const { id, ...data } = game;
-    if (id) {
-        await setDoc(doc(db, 'games', id), data, { merge: true });
-    } else {
-        await addDoc(collection(db, 'games'), data);
-    }
 }
 
 // --- AUDIO LECTURES ---
