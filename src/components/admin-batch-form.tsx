@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Batch, BatchNote, BatchInformation, Quiz, ContentItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { saveBatchInformation, getBatchInformation, deleteBatchInformation } from "@/lib/data";
+import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface AdminBatchFormProps {
   initialBatches: Batch[];
@@ -25,13 +35,12 @@ interface AdminBatchFormProps {
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
 export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }: AdminBatchFormProps) {
-  const [editingBatch, setEditingCourse] = useState<Batch | null>(null);
+  const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
 
   const handleAddNew = () => {
-    setEditingCourse({
+    setEditingBatch({
         id: '',
         title: '',
         description: '',
@@ -45,7 +54,7 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
   };
 
   const handleEdit = (batch: Batch) => {
-    setEditingCourse(batch);
+    setEditingBatch(batch);
     setIsDialogOpen(true);
   };
 
@@ -113,8 +122,8 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Batch?</AlertDialogTitle>
-                      <AlertDialogDescription>This will delete "{batch.title}" and all its content associations.</AlertDialogDescription>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>This will delete "{batch.title}" and all its content associations. This action cannot be undone.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -262,7 +271,7 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <Label className="text-xs">Content Items</Label>
-                            <Button type="button" variant="outline" size="xs" className="h-7 text-xs" onClick={() => addContentItem(nIdx)}>Add Link/File</Button>
+                            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => addContentItem(nIdx)}>Add Link/File</Button>
                         </div>
                         {note.content.map((item, iIdx) => (
                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end p-2 border rounded-sm bg-secondary/20">
@@ -347,13 +356,3 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
     </div>
   );
 }
-
-// Table helper for layout
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
