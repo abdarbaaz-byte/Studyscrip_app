@@ -6,7 +6,7 @@ import { checkUserPurchase, getBatchInformation, createPurchase, getQuiz, type B
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Download, Video, ImageIcon, Info, CheckCircle } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -26,6 +26,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const [infoList, setInfoList] = useState<BatchInformation[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
+  const [hasNewInfo, setHasNewInfo] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -36,10 +37,17 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         setIsPurchased(hasAccess);
       }
       
-      const [infoData] = await Promise.all([
-        getBatchInformation(batch.id),
-      ]);
+      const infoData = await getBatchInformation(batch.id);
       setInfoList(infoData);
+
+      // Check for new info badge
+      if (infoData.length > 0) {
+        const lastViewed = localStorage.getItem(`batch-info-viewed-${batch.id}`);
+        const latestTime = infoData[0].createdAt.toMillis();
+        if (!lastViewed || parseInt(lastViewed) < latestTime) {
+          setHasNewInfo(true);
+        }
+      }
 
       // Load quizzes data
       if (batch.quizIds.length > 0) {
@@ -76,6 +84,13 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     setIsPaymentDialogOpen(false);
   };
 
+  const handleInfoTabClick = () => {
+    setHasNewInfo(false);
+    if (infoList.length > 0) {
+      localStorage.setItem(`batch-info-viewed-${batch.id}`, infoList[0].createdAt.toMillis().toString());
+    }
+  };
+
   const getContentIcon = (type: string) => {
     if (type === 'pdf') return <FileText className="h-5 w-5 text-primary" />;
     if (type === 'video') return <Video className="h-5 w-5 text-primary" />;
@@ -106,59 +121,53 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
             <p className="text-lg text-muted-foreground">{batch.description}</p>
           </div>
 
-          <Tabs defaultValue="information" className="w-full">
+          <Tabs defaultValue="notes" className="w-full">
             <TabsList className="grid w-full grid-cols-4 h-12 bg-secondary/50">
-              <TabsTrigger value="information" className="gap-2"><Megaphone className="h-4 w-4"/> Info</TabsTrigger>
               <TabsTrigger value="notes" className="gap-2"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
               <TabsTrigger value="quizzes" className="gap-2"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
               <TabsTrigger value="chats" className="gap-2"><MessageSquare className="h-4 w-4"/> Chat</TabsTrigger>
+              <TabsTrigger value="information" onClick={handleInfoTabClick} className="gap-2 relative">
+                <Megaphone className="h-4 w-4"/> Info
+                {hasNewInfo && <Circle className="h-2 w-2 fill-red-600 text-red-600 absolute top-1 right-1" />}
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="information" className="pt-6">
+            <TabsContent value="notes" className="pt-6">
               <Card>
-                <CardHeader><CardTitle>Latest Announcements</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  {infoList.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-10">No announcements yet.</p>
-                  ) : infoList.map(info => (
-                    <div key={info.id} className="p-4 border rounded-lg bg-secondary/20">
-                      <h4 className="font-bold">{info.title}</h4>
-                      <p className="text-sm mt-1 whitespace-pre-wrap">{info.message}</p>
-                      <p className="text-[10px] text-muted-foreground mt-2">{format(info.createdAt.toDate(), "PPP p")}</p>
-                    </div>
-                  ))}
+                <CardContent className="pt-6">
+                  <Accordion type="single" collapsible className="w-full space-y-3">
+                    {batch.notes.map(topic => (
+                      <AccordionItem value={topic.id} key={topic.id} className="border rounded-md px-4 bg-secondary/20">
+                        <AccordionTrigger className="hover:no-underline font-medium">
+                          <div className="flex items-center gap-2">
+                            {topic.title}
+                            {!isPurchased && <Lock className="h-3 w-3 text-muted-foreground" />}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 space-y-2">
+                          {topic.content.map(item => (
+                            <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                              <div className="flex items-center gap-3">
+                                {getContentIcon(item.type)}
+                                <span className="text-sm font-medium">{item.title}</span>
+                              </div>
+                              {isPurchased ? (
+                                <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>View</Button>
+                              ) : (
+                                <Button variant="ghost" size="sm" onClick={handleBuyClick}>
+                                  <Lock className="h-4 w-4 text-muted-foreground mr-2" />
+                                  Unlock
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                    {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground">No notes assigned yet.</p>}
+                  </Accordion>
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            <TabsContent value="notes" className="pt-6">
-              {!isPurchased ? (
-                <LockedContent title="Enroll to access Batch Notes" onBuy={handleBuyClick} />
-              ) : (
-                <Card>
-                  <CardContent className="pt-6">
-                    <Accordion type="single" collapsible className="w-full space-y-3">
-                      {batch.notes.map(topic => (
-                        <AccordionItem value={topic.id} key={topic.id} className="border rounded-md px-4 bg-secondary/20">
-                          <AccordionTrigger className="hover:no-underline font-medium">{topic.title}</AccordionTrigger>
-                          <AccordionContent className="pt-2 space-y-2">
-                            {topic.content.map(item => (
-                              <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
-                                <div className="flex items-center gap-3">
-                                  {getContentIcon(item.type)}
-                                  <span className="text-sm font-medium">{item.title}</span>
-                                </div>
-                                <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>View</Button>
-                              </div>
-                            ))}
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                      {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground">No notes assigned yet.</p>}
-                    </Accordion>
-                  </CardContent>
-                </Card>
-              )}
             </TabsContent>
 
             <TabsContent value="quizzes" className="pt-6">
@@ -198,6 +207,23 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+
+            <TabsContent value="information" className="pt-6">
+              <Card>
+                <CardHeader><CardTitle>Latest Announcements</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {infoList.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-10">No announcements yet.</p>
+                  ) : infoList.map(info => (
+                    <div key={info.id} className="p-4 border rounded-lg bg-secondary/20">
+                      <h4 className="font-bold">{info.title}</h4>
+                      <p className="text-sm mt-1 whitespace-pre-wrap">{info.message}</p>
+                      <p className="text-[10px] text-muted-foreground mt-2">{format(info.createdAt.toDate(), "PPP p")}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
