@@ -6,10 +6,11 @@ import { checkUserPurchase, getBatchInformation, createPurchase, getQuiz, type B
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Download, Video, ImageIcon, Info } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Download, Video, ImageIcon, Info, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { format } from "date-fns";
 import { PaymentDialog } from "@/components/payment-dialog";
@@ -262,5 +263,3 @@ function LockedContent({ title, onBuy }: { title: string, onBuy: () => void }) {
     </Card>
   );
 }
-
-import { CheckCircle } from "lucide-react";
