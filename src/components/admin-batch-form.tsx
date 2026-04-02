@@ -45,6 +45,7 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
         title: '',
         description: '',
         price: 0,
+        originalPrice: 0,
         thumbnail: '',
         notes: [],
         quizIds: [],
@@ -169,7 +170,7 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'price' ? parseFloat(value) || 0 : value }));
+    setFormData(prev => ({ ...prev, [name]: (name === 'price' || name === 'originalPrice') ? parseFloat(value) || 0 : value }));
   };
 
   const handleNoteChange = (index: number, field: string, value: any) => {
@@ -259,8 +260,12 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
           <Input name="title" value={formData.title} onChange={handleChange} required />
         </div>
         <div className="space-y-2">
-          <Label>Price (Rs.) - Set 0 for Free</Label>
+          <Label>Selling Price (Rs.) - Set 0 for Free</Label>
           <Input name="price" type="number" value={formData.price} onChange={handleChange} required />
+        </div>
+        <div className="space-y-2">
+          <Label>Original Price (Rs.) - For Discount display</Label>
+          <Input name="originalPrice" type="number" value={formData.originalPrice || 0} onChange={handleChange} placeholder="e.g. 1999" />
         </div>
         <div className="space-y-2 col-span-2">
           <Label>Description</Label>

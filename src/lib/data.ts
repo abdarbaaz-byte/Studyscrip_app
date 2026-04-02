@@ -1,6 +1,6 @@
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove, increment } from 'firebase/firestore';
-import type { Course, CourseContent } from './courses';
+import type { Course, CourseFolder, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
 import { getAcademicData, type AcademicClass, type Subject } from './academics';
@@ -48,6 +48,7 @@ export type Batch = {
     title: string;
     description: string;
     price: number;
+    originalPrice?: number; // Added for discount display
     thumbnail: string;
     createdAt: Timestamp;
     notes: BatchNote[];

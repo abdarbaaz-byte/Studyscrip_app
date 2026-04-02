@@ -54,7 +54,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
       }
 
       // Load quizzes data
-      if (batch.quizIds.length > 0) {
+      if (batch.quizIds && batch.quizIds.length > 0) {
           const quizPromises = batch.quizIds.map(id => getQuiz(id));
           const quizResults = await Promise.all(quizPromises);
           setQuizzes(quizResults.filter((q): q is Quiz => q !== null));
@@ -112,12 +112,16 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     );
   };
 
+  const discountPercentage = (batch.originalPrice && batch.price < batch.originalPrice) 
+    ? Math.round(((batch.originalPrice - batch.price) / batch.originalPrice) * 100) 
+    : null;
+
   if (loading || authLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pb-32">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <div className="space-y-4">
@@ -240,9 +244,14 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-sm font-medium text-muted-foreground">Enrollment Fee</span>
-                <span className="text-3xl font-bold text-primary">
-                    {isFree ? <Badge className="text-xl bg-green-600 px-4 py-1">Free</Badge> : `Rs. ${batch.price}`}
-                </span>
+                <div className="text-right">
+                    <span className="text-3xl font-bold text-primary block">
+                        {isFree ? <Badge className="text-xl bg-green-600 px-4 py-1">Free</Badge> : `Rs. ${batch.price}`}
+                    </span>
+                    {batch.originalPrice && batch.originalPrice > batch.price && (
+                        <span className="text-sm text-muted-foreground line-through">Rs. {batch.originalPrice}</span>
+                    )}
+                </div>
               </div>
               {!hasAccess ? (
                 <Button size="lg" className="w-full" onClick={handleBuyClick}>Enroll Now <ArrowRight className="ml-2"/></Button>
@@ -275,6 +284,32 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
           </Card>
         </aside>
       </div>
+
+      {/* Sticky Bottom Purchase Card */}
+      {!hasAccess && !isFree && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 bg-[#0a1118] border-t border-white/10 px-4 py-3 md:bottom-0">
+            <div className="container mx-auto flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-white">₹ {batch.price}</span>
+                    </div>
+                    {batch.originalPrice && batch.originalPrice > batch.price && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-400 line-through">₹ {batch.originalPrice}</span>
+                            {discountPercentage && <span className="text-sm font-bold text-orange-500">{discountPercentage}% OFF</span>}
+                        </div>
+                    )}
+                </div>
+                <Button 
+                    size="lg" 
+                    onClick={handleBuyClick} 
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all active:scale-95"
+                >
+                    Buy Now
+                </Button>
+            </div>
+        </div>
+      )}
 
       <PaymentDialog
         open={isPaymentDialogOpen}
