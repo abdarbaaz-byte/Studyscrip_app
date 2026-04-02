@@ -5,10 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Layers, Loader2, ArrowRight, Star, Users } from "lucide-react";
+import { Layers, Loader2, ArrowRight, FileText, BrainCircuit } from "lucide-react";
 import { listenToBatches, type Batch } from "@/lib/data";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { ScrollAnimation } from "@/components/scroll-animation";
+import { Badge } from "@/components/ui/badge";
 
 export default function BatchesPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -65,7 +66,9 @@ export default function BatchesPage() {
                 <CardHeader className="flex-grow p-6">
                   <div className="flex justify-between items-start mb-2">
                     <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">Active Batch</Badge>
-                    <p className="text-xl font-bold text-primary">Rs. {batch.price}</p>
+                    <p className="text-xl font-bold text-primary">
+                        {batch.price === 0 ? <Badge className="bg-green-600">Free</Badge> : `Rs. ${batch.price}`}
+                    </p>
                   </div>
                   <CardTitle className="font-headline text-2xl leading-tight mb-2">
                     {batch.title}
@@ -93,6 +96,3 @@ export default function BatchesPage() {
     </div>
   );
 }
-
-import { Badge } from "@/components/ui/badge";
-import { FileText, BrainCircuit } from "lucide-react";

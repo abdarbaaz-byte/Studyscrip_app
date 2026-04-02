@@ -52,6 +52,7 @@ export type Batch = {
     createdAt: Timestamp;
     notes: BatchNote[];
     quizIds: string[]; // List of quiz IDs assigned to this batch
+    includes: string[]; // Added: Dynamic feature points for the batch
 };
 
 export async function getBatches(): Promise<Batch[]> {

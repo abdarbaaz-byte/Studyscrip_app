@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, BrainCircuit } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, BrainCircuit, ListPlus } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -48,6 +48,7 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
         thumbnail: '',
         notes: [],
         quizIds: [],
+        includes: [], // Initialize includes
         createdAt: null as any
     });
     setIsDialogOpen(true);
@@ -103,7 +104,7 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
           {initialBatches.map((batch) => (
             <TableRow key={batch.id}>
               <TableCell className="font-medium">{batch.title}</TableCell>
-              <TableCell>Rs. {batch.price}</TableCell>
+              <TableCell>{batch.price === 0 ? <Badge className="bg-green-600">Free</Badge> : `Rs. ${batch.price}`}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   <Badge variant="outline">{batch.notes.length} Topics</Badge>
@@ -146,7 +147,10 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
 }
 
 function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: Batch, allQuizzes: Quiz[], onSave: (batch: Batch) => void, onCancel: () => void, isSaving: boolean }) {
-  const [formData, setFormData] = useState<Batch>(batch);
+  const [formData, setFormData] = useState<Batch>({
+    ...batch,
+    includes: batch.includes || []
+  });
   const [infoTitle, setInfoTitle] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [infoList, setInfoList] = useState<BatchInformation[]>([]);
@@ -210,6 +214,21 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
     setFormData(prev => ({ ...prev, quizIds: newQuizIds }));
   };
 
+  // Includes points handlers
+  const addIncludePoint = () => {
+    setFormData(prev => ({ ...prev, includes: [...prev.includes, ''] }));
+  };
+
+  const updateIncludePoint = (index: number, value: string) => {
+    const newIncludes = [...formData.includes];
+    newIncludes[index] = value;
+    setFormData(prev => ({ ...prev, includes: newIncludes }));
+  };
+
+  const removeIncludePoint = (index: number) => {
+    setFormData(prev => ({ ...prev, includes: prev.includes.filter((_, i) => i !== index) }));
+  };
+
   const handlePostInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!batch.id) {
@@ -240,7 +259,7 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
           <Input name="title" value={formData.title} onChange={handleChange} required />
         </div>
         <div className="space-y-2">
-          <Label>Price (Rs.)</Label>
+          <Label>Price (Rs.) - Set 0 for Free</Label>
           <Input name="price" type="number" value={formData.price} onChange={handleChange} required />
         </div>
         <div className="space-y-2 col-span-2">
@@ -254,6 +273,25 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
       </div>
 
       <Accordion type="single" collapsible className="w-full space-y-4">
+        <AccordionItem value="includes" className="border rounded-md px-4 bg-secondary/30">
+          <AccordionTrigger><div className="flex items-center gap-2"><ListPlus className="h-4 w-4"/> Includes / Features</div></AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-4">
+            <div className="flex justify-between items-center">
+                <h4 className="font-semibold text-sm">Feature Points (e.g. Lifetime access)</h4>
+                <Button type="button" variant="outline" size="sm" onClick={addIncludePoint}><PlusCircle className="h-4 w-4 mr-2"/> Add Point</Button>
+            </div>
+            <div className="space-y-2">
+                {formData.includes.map((point, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                        <Input value={point} onChange={(e) => updateIncludePoint(idx, e.target.value)} placeholder={`Point ${idx + 1}`} />
+                        <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeIncludePoint(idx)}><Trash2 className="h-4 w-4"/></Button>
+                    </div>
+                ))}
+                {formData.includes.length === 0 && <p className="text-xs text-muted-foreground text-center">No includes points added.</p>}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
         <AccordionItem value="notes" className="border rounded-md px-4 bg-secondary/30">
           <AccordionTrigger><div className="flex items-center gap-2"><FileText className="h-4 w-4"/> Notes Management</div></AccordionTrigger>
           <AccordionContent className="space-y-4 pt-4">

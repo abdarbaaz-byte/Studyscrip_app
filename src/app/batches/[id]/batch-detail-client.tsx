@@ -30,11 +30,14 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const { toast } = useToast();
   const router = useRouter();
 
+  const isFree = batch.price === 0;
+  const hasAccess = isPurchased || isFree;
+
   useEffect(() => {
     async function loadData() {
       if (user) {
-        const hasAccess = await checkUserPurchase(user.uid, batch.id);
-        setIsPurchased(hasAccess);
+        const hasAccessRecord = await checkUserPurchase(user.uid, batch.id);
+        setIsPurchased(hasAccessRecord);
       }
       
       const infoData = await getBatchInformation(batch.id);
@@ -141,7 +144,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                         <AccordionTrigger className="hover:no-underline font-medium">
                           <div className="flex items-center gap-2">
                             {topic.title}
-                            {!isPurchased && <Lock className="h-3 w-3 text-muted-foreground" />}
+                            {!hasAccess && <Lock className="h-3 w-3 text-muted-foreground" />}
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-2 space-y-2">
@@ -151,7 +154,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                 {getContentIcon(item.type)}
                                 <span className="text-sm font-medium">{item.title}</span>
                               </div>
-                              {isPurchased ? (
+                              {hasAccess ? (
                                 <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>View</Button>
                               ) : (
                                 <Button variant="ghost" size="sm" onClick={handleBuyClick}>
@@ -171,7 +174,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
             </TabsContent>
 
             <TabsContent value="quizzes" className="pt-6">
-              {!isPurchased ? (
+              {!hasAccess ? (
                 <LockedContent title="Enroll to access Batch Quizzes" onBuy={handleBuyClick} />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,7 +197,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
             </TabsContent>
 
             <TabsContent value="chats" className="pt-6">
-              {!isPurchased ? (
+              {!hasAccess ? (
                 <LockedContent title="Enroll to chat with Batch Instructors" onBuy={handleBuyClick} />
               ) : (
                 <Card>
@@ -236,22 +239,35 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-sm font-medium text-muted-foreground">Enrollment Fee</span>
-                <span className="text-3xl font-bold text-primary">Rs. {batch.price}</span>
+                <span className="text-3xl font-bold text-primary">
+                    {isFree ? <Badge className="text-xl bg-green-600 px-4 py-1">Free</Badge> : `Rs. ${batch.price}`}
+                </span>
               </div>
-              {!isPurchased ? (
+              {!hasAccess ? (
                 <Button size="lg" className="w-full" onClick={handleBuyClick}>Enroll Now <ArrowRight className="ml-2"/></Button>
               ) : (
                 <div className="flex items-center justify-center gap-2 p-3 bg-green-100 text-green-700 rounded-lg font-bold">
-                  <Unlock className="h-5 w-5"/> Enrolled
+                  <Unlock className="h-5 w-5"/> {isFree ? "Free Access" : "Enrolled"}
                 </div>
               )}
               <div className="mt-6 space-y-3">
                 <p className="text-sm font-semibold border-b pb-2">Includes:</p>
                 <ul className="text-sm space-y-2 text-muted-foreground">
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Lifetime access to Batch content</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Direct Support Chat</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Specialized Practice Tests</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Downloadable PDF Notes</li>
+                  {(batch.includes && batch.includes.length > 0) ? (
+                      batch.includes.map((point, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0"/> 
+                            <span>{point}</span>
+                        </li>
+                      ))
+                  ) : (
+                    <>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Lifetime access to Batch content</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Direct Support Chat</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Specialized Practice Tests</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Downloadable PDF Notes</li>
+                    </>
+                  )}
                 </ul>
               </div>
             </CardContent>
