@@ -285,27 +285,27 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         </aside>
       </div>
 
-      {/* Sticky Bottom Purchase Card */}
+      {/* Sticky Bottom Purchase Bar */}
       {!hasAccess && !isFree && (
-        <div className="fixed bottom-16 left-0 right-0 z-40 bg-[#0a1118] border-t border-white/10 px-4 py-3 md:bottom-0">
+        <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-white">₹ {batch.price}</span>
+                        <span className="text-2xl font-bold text-primary">Rs. {batch.price}</span>
                     </div>
                     {batch.originalPrice && batch.originalPrice > batch.price && (
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-400 line-through">₹ {batch.originalPrice}</span>
-                            {discountPercentage && <span className="text-sm font-bold text-orange-500">{discountPercentage}% OFF</span>}
+                            <span className="text-sm text-muted-foreground line-through">Rs. {batch.originalPrice}</span>
+                            {discountPercentage && <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded ml-1">{discountPercentage}% OFF</span>}
                         </div>
                     )}
                 </div>
                 <Button 
                     size="lg" 
                     onClick={handleBuyClick} 
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all active:scale-95"
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl transition-all active:scale-95 h-12 shadow-md"
                 >
-                    Buy Now
+                    Enroll Now
                 </Button>
             </div>
         </div>
