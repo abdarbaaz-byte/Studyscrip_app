@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck } from "lucide-react";
 import { getQuizzes, type Quiz } from "@/lib/data";
 
+const ACADEMIC_CLASSES = ["5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+
 export default function QuizzesPage() {
   const [liveQuizzes, setLiveQuizzes] = useState<Quiz[]>([]);
   const [practiceQuizzes, setPracticeQuizzes] = useState<Quiz[]>([]);
@@ -17,8 +19,21 @@ export default function QuizzesPage() {
     async function loadQuizzes() {
       setLoading(true);
       const allQuizzes = await getQuizzes();
-      const live = allQuizzes.filter(q => q.startTime || q.endTime);
-      const practice = allQuizzes.filter(q => !q.startTime && !q.endTime);
+      
+      // Filter quizzes to only show those targeted at academic classes
+      // This prevents Batch-only quizzes from appearing in the general list
+      const generalQuizzes = allQuizzes.filter(quiz => {
+        const targets = quiz.targetClasses || [];
+        // Check if any selected target is an academic class
+        const hasAcademicTarget = targets.some(t => ACADEMIC_CLASSES.includes(t));
+        // Legacy support: also check singular targetClass
+        const isLegacyAcademic = quiz.targetClass && ACADEMIC_CLASSES.includes(quiz.targetClass);
+        
+        return hasAcademicTarget || isLegacyAcademic;
+      });
+
+      const live = generalQuizzes.filter(q => q.startTime || q.endTime);
+      const practice = generalQuizzes.filter(q => !q.startTime && !q.endTime);
       setLiveQuizzes(live);
       setPracticeQuizzes(practice);
       setLoading(false);
@@ -27,10 +42,10 @@ export default function QuizzesPage() {
   }, []);
 
   const QuizCard = ({ quiz, isLive }: { quiz: Quiz, isLive: boolean }) => (
-     <Card key={quiz.id} className="flex flex-col">
+     <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">{quiz.title}</CardTitle>
-          <CardDescription>{quiz.description}</CardDescription>
+          <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
         </CardHeader>
         <CardContent className="flex-grow space-y-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -71,8 +86,8 @@ export default function QuizzesPage() {
                 <h2 className="font-headline text-3xl font-bold">Live Quizzes</h2>
             </div>
             {liveQuizzes.length === 0 ? (
-                 <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No live quizzes are available right now. Check back later!</p>
+                 <div className="text-center py-10 border-2 border-dashed rounded-lg bg-secondary/10">
+                    <p className="text-muted-foreground">No live quizzes are available right now for your class. Check back later!</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -87,8 +102,8 @@ export default function QuizzesPage() {
                 <h2 className="font-headline text-3xl font-bold">Practice Quizzes</h2>
             </div>
             {practiceQuizzes.length === 0 ? (
-                 <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No practice quizzes available right now.</p>
+                 <div className="text-center py-10 border-2 border-dashed rounded-lg bg-secondary/10">
+                    <p className="text-muted-foreground">No practice quizzes found. Please try another category.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

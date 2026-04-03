@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -138,7 +139,7 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                     <span>{quiz.questions.length} Questions</span>
                     <span>{quiz.duration ? `${quiz.duration} Minutes` : 'No time limit'}</span>
                     <span className="font-semibold flex items-center gap-1">
-                        Targets: {quiz.targetClasses && quiz.targetClasses.length > 0 ? quiz.targetClasses.join(', ') : 'All Classes'}
+                        Targets: {quiz.targetClasses && quiz.targetClasses.length > 0 ? quiz.targetClasses.join(', ') : 'None selected (Hidden)'}
                     </span>
                 </div>
                  <div className="flex justify-between text-xs text-muted-foreground mt-2">
@@ -189,7 +190,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
         const { id, startTime: st, endTime: et, ...rest } = quiz;
         const initialData = { ...rest };
         if (!initialData.targetClasses) {
-            initialData.targetClasses = initialData.targetClass === 'all' ? [] : [initialData.targetClass];
+            initialData.targetClasses = (initialData.targetClass && initialData.targetClass !== 'all') ? [initialData.targetClass] : [];
         }
         setFormData(initialData);
         setStartTime(st ? (st as Timestamp).toDate() : undefined);
@@ -287,10 +288,11 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Legacy support: set targetClass to first selection or 'all'
+    
+    // Explicitly handle empty targets to ensure it doesn't default to 'all' everywhere
     const finalTargetClass = formData.targetClasses && formData.targetClasses.length > 0 
         ? formData.targetClasses[0] 
-        : 'all';
+        : ''; // Empty string means no specific singular target
 
     onSave({ 
         ...formData, 
@@ -366,11 +368,11 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
           </div>
           <div className="space-y-2 col-span-full">
             <Label className="text-lg font-bold">Assign to Classes & Batches</Label>
-            <p className="text-xs text-muted-foreground mb-2">Select one or more targets where this quiz will be available. If none selected, it appears everywhere (legacy 'all').</p>
+            <p className="text-xs text-muted-foreground mb-2">Select one or more targets. If none selected, the quiz will not be visible to users.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-secondary/20">
                 <div>
-                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Academic Classes</h4>
+                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Academic Classes (Visible in Quizzes library)</h4>
                     <div className="grid grid-cols-2 gap-2">
                         {CLASS_OPTIONS.map(opt => (
                             <div key={opt} className="flex items-center space-x-2">
@@ -385,7 +387,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                     </div>
                 </div>
                 <div>
-                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Active Batches</h4>
+                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Specific Batches (Visible only inside Batch)</h4>
                     {loadingBatches ? <Loader2 className="animate-spin h-4 w-4"/> : (
                         <div className="grid grid-cols-1 gap-2">
                             {availableBatches.map(batch => (
