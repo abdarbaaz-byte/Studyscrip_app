@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -33,30 +31,24 @@ function QuizResultsContent() {
   const [answers, setAnswers] = useState<AnswersState>({});
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [canShowAnalysis, setCanShowAnalysis] = useState(quizType === 'practice');
+  const [canShowAnalysis, setCanShowAnalysis] = useState(false);
   const [allAttempts, setAllAttempts] = useState<QuizAttempt[]>([]);
   const [userRank, setUserRank] = useState<number | null>(null);
-  
-  // New state to control rank visibility
   const [canShowRank, setCanShowRank] = useState(false);
 
   useEffect(() => {
-    if (!answersString) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not load answers.' });
-      router.push(`/quizzes/${quizId}?type=${quizType}`);
-      return;
+    if (answersString) {
+      try {
+        setAnswers(JSON.parse(decodeURIComponent(answersString)));
+      } catch (e) {
+        console.error("Failed to parse answers", e);
+      }
     }
-    try {
-      setAnswers(JSON.parse(decodeURIComponent(answersString)));
-    } catch (e) {
-      console.error("Failed to parse answers", e);
-      router.push(`/quizzes/${quizId}?type=${quizType}`);
-    }
-  }, [answersString, quizId, router, toast, quizType]);
+  }, [answersString]);
 
   useEffect(() => {
     async function loadQuizAndResults() {
-      if (!quizId || Object.keys(answers).length === 0) return;
+      if (!quizId) return;
       setLoading(true);
 
       const loadedQuiz = await getQuiz(quizId);
@@ -64,57 +56,58 @@ function QuizResultsContent() {
       if (loadedQuiz) {
         setQuiz(loadedQuiz);
 
+        const now = new Date();
+        const endTime = loadedQuiz.endTime?.toDate();
+        
         let showAnalysis = quizType === 'practice';
         let showRank = false;
 
         if (quizType === 'live') {
-            const now = new Date();
-            const endTime = loadedQuiz.endTime?.toDate();
-            
             // Logic to determine if analysis and ranks can be shown
             if (endTime && now > endTime) {
                 showAnalysis = true;
-                showRank = true; // Only show rank if an end time is set and has passed
+                showRank = true;
             } else if (!endTime) {
-                // If no end time, it's like a practice quiz, show analysis but no rank
                 showAnalysis = true;
                 showRank = false;
             }
 
-            if (showRank) {
-                // Fetch all attempts for ranking only if ranks can be shown
-                const attempts = await getQuizAttemptsForQuiz(quizId);
-                setAllAttempts(attempts);
-                
-                // Find current user's rank
-                const rank = attempts.findIndex(attempt => attempt.userId === user?.uid) + 1;
-                setUserRank(rank > 0 ? rank : null);
-            }
+            // Fetch attempts for leaderboard
+            const attempts = await getQuizAttemptsForQuiz(quizId);
+            setAllAttempts(attempts);
+            
+            // Find current user's rank
+            const rank = attempts.findIndex(attempt => attempt.userId === user?.uid) + 1;
+            setUserRank(rank > 0 ? rank : null);
         }
-        setCanShowAnalysis(showAnalysis);
-        setCanShowRank(showRank);
 
-        let currentScore = 0;
-        loadedQuiz.questions.forEach(q => {
-            const userAnswer = answers[q.id];
-            if (q.type === 'mcq' || q.type === 'true_false') {
-                if (parseInt(userAnswer?.toString() || '-1') === q.correctAnswer) {
-                    currentScore++;
-                }
-            } else if (q.type === 'fill_in_blank') {
-                if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
-                    currentScore++;
-                }
-            } else if (q.type === 'match') {
-                 if (typeof userAnswer === 'object' && userAnswer !== null) {
-                    const allCorrect = q.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
-                    if (allCorrect) {
+        // If user provided answers, calculate score
+        if (Object.keys(answers).length > 0) {
+            let currentScore = 0;
+            loadedQuiz.questions.forEach(q => {
+                const userAnswer = answers[q.id];
+                if (q.type === 'mcq' || q.type === 'true_false') {
+                    if (parseInt(userAnswer?.toString() || '-1') === q.correctAnswer) {
                         currentScore++;
                     }
+                } else if (q.type === 'fill_in_blank') {
+                    if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
+                        currentScore++;
+                    }
+                } else if (q.type === 'match') {
+                     if (typeof userAnswer === 'object' && userAnswer !== null) {
+                        const allCorrect = q.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
+                        if (allCorrect) {
+                            currentScore++;
+                        }
+                    }
                 }
-            }
-        });
-        setScore(currentScore);
+            });
+            setScore(currentScore);
+        }
+
+        setCanShowAnalysis(showAnalysis && Object.keys(answers).length > 0);
+        setCanShowRank(showRank || quizType === 'live');
         
       } else {
         toast({ variant: 'destructive', title: 'Quiz not found.' });
@@ -122,9 +115,7 @@ function QuizResultsContent() {
       setLoading(false);
     }
 
-    if (Object.keys(answers).length > 0) {
-      loadQuizAndResults();
-    }
+    loadQuizAndResults();
   
   }, [quizId, answers, toast, quizType, user]);
 
@@ -154,17 +145,25 @@ function QuizResultsContent() {
             <div className="flex justify-center mb-4">
                 <GraduationCap className="h-16 w-16 text-primary" />
             </div>
-            <CardTitle className="font-headline text-3xl">Quiz Results: {quiz.title}</CardTitle>
-            <CardDescription>Well done, {name}! {userClass && `(Class: ${userClass})`} Here's how you did.</CardDescription>
+            <CardTitle className="font-headline text-3xl">
+                {Object.keys(answers).length > 0 ? `Results: ${quiz.title}` : `Leaderboard: ${quiz.title}`}
+            </CardTitle>
+            <CardDescription>
+                {Object.keys(answers).length > 0 ? `Well done, ${name}! Here's how you did.` : `Check out the top performers for this quiz!`}
+            </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
-            <div className="text-5xl font-bold text-primary">
-                {score} / {quiz.questions.length}
-            </div>
-            <div className="w-full max-w-sm">
-                 <Progress value={scorePercentage} className="h-4" />
-            </div>
-            <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Correct</p>
+            {Object.keys(answers).length > 0 && (
+                <>
+                    <div className="text-5xl font-bold text-primary">
+                        {score} / {quiz.questions.length}
+                    </div>
+                    <div className="w-full max-w-sm">
+                         <Progress value={scorePercentage} className="h-4" />
+                    </div>
+                    <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Correct</p>
+                </>
+            )}
 
             {canShowRank && userRank && (
                 <div className="font-bold text-2xl p-4 bg-secondary rounded-lg">
@@ -185,7 +184,7 @@ function QuizResultsContent() {
         </CardContent>
       </Card>
 
-      {canShowRank && topThree.length > 0 && (
+      {topThree.length > 0 && (
           <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-100 dark:from-yellow-900/20 dark:to-orange-900/20">
               <CardHeader className="text-center">
                    <div className="flex justify-center mb-4">
@@ -334,12 +333,14 @@ function QuizResultsContent() {
             })}
         </div>
       ) : (
-         <Card className="text-center p-8 bg-secondary">
-            <Clock className="h-12 w-12 mx-auto text-primary mb-4" />
-            <CardTitle className="text-2xl font-bold">Analysis Pending</CardTitle>
-            <CardDescription>Detailed results and explanations will be available after the quiz period ends.</CardDescription>
-            {quiz.endTime && <p className="font-bold text-lg mt-2">Available after: {format(quiz.endTime.toDate(), "PPP p")}</p>}
-        </Card>
+         Object.keys(answers).length > 0 && !canShowAnalysis && (
+            <Card className="text-center p-8 bg-secondary">
+                <Clock className="h-12 w-12 mx-auto text-primary mb-4" />
+                <CardTitle className="text-2xl font-bold">Analysis Pending</CardTitle>
+                <CardDescription>Detailed results and explanations will be available after the quiz period ends.</CardDescription>
+                {quiz.endTime && <p className="font-bold text-lg mt-2">Available after: {format(quiz.endTime.toDate(), "PPP p")}</p>}
+            </Card>
+         )
       )}
 
     </div>
@@ -354,5 +355,3 @@ export default function QuizResultsPage() {
         </Suspense>
     )
 }
-
-    

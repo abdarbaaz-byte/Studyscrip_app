@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -27,6 +26,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [infoList, setInfoList] = useState<BatchInformation[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [attemptedQuizzes, setAttemptedQuizzes] = useState<{[key: string]: string | null}>({});
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
   const [hasNewInfo, setHasNewInfo] = useState(false);
   const { toast } = useToast();
@@ -54,9 +54,24 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         }
       }
 
-      // Load quizzes data dynamically based on batch target
+      // Load quizzes data
       const quizResults = await getQuizzesForTarget(batch.id);
       setQuizzes(quizResults);
+
+      // Check local storage for attempts
+      const attempts: {[key: string]: string | null} = {};
+      quizResults.forEach(q => {
+        const savedData = localStorage.getItem(`quiz-data-${q.id}`);
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            attempts[q.id] = parsed.answers;
+          } catch (e) {
+            attempts[q.id] = null;
+          }
+        }
+      });
+      setAttemptedQuizzes(attempts);
 
       setLoading(false);
     }
@@ -188,6 +203,8 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     const isUpcoming = start && now < start;
                     const isExpired = end && now > end;
                     const isCurrentlyLive = start && end && now >= start && now <= end;
+                    const userAttemptAnswers = attemptedQuizzes[quiz.id];
+                    const hasAttempted = userAttemptAnswers !== undefined;
 
                     return (
                       <Card key={quiz.id} className="flex flex-col relative">
@@ -214,14 +231,33 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                     <Lock className="h-3 w-3" /> Expired
                                 </Badge>
                             )}
+                            {hasAttempted && (
+                                <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 w-fit">
+                                    <CheckCircle className="h-3 w-3" /> Attempted
+                                </Badge>
+                            )}
                         </CardContent>
                         <CardFooter className="mt-auto">
-                          <Button asChild className="w-full" disabled={isUpcoming || isExpired}>
-                            <Link href={isUpcoming || isExpired ? "#" : `/quizzes/${quiz.id}?type=live`}>
-                                {isUpcoming ? "Not Started" : isExpired ? "Locked" : "Start Quiz"} 
-                                <ArrowRight className="ml-2 h-4 w-4"/>
-                            </Link>
-                          </Button>
+                          {hasAttempted ? (
+                            <Button asChild variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50">
+                                <Link href={`/quizzes/${quiz.id}/results?type=live&answers=${encodeURIComponent(userAttemptAnswers || '')}`}>
+                                    View Analysis <Trophy className="ml-2 h-4 w-4"/>
+                                </Link>
+                            </Button>
+                          ) : isExpired ? (
+                            <Button asChild variant="secondary" className="w-full">
+                                <Link href={`/quizzes/${quiz.id}/results?type=live`}>
+                                    View Winners <Trophy className="ml-2 h-4 w-4"/>
+                                </Link>
+                            </Button>
+                          ) : (
+                            <Button asChild className="w-full" disabled={isUpcoming}>
+                                <Link href={isUpcoming ? "#" : `/quizzes/${quiz.id}?type=live`}>
+                                    {isUpcoming ? "Not Started" : "Start Quiz"} 
+                                    <ArrowRight className="ml-2 h-4 w-4"/>
+                                </Link>
+                            </Button>
+                          )}
                         </CardFooter>
                       </Card>
                     )
