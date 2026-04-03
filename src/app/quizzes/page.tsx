@@ -5,8 +5,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck } from "lucide-react";
+import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle } from "lucide-react";
 import { getQuizzes, type Quiz } from "@/lib/data";
+import { Badge } from "@/components/ui/badge";
 
 const ACADEMIC_CLASSES = ["5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
@@ -41,10 +42,24 @@ export default function QuizzesPage() {
     loadQuizzes();
   }, []);
 
-  const QuizCard = ({ quiz, isLive }: { quiz: Quiz, isLive: boolean }) => (
-     <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md">
+  const QuizCard = ({ quiz, isLiveType }: { quiz: Quiz, isLiveType: boolean }) => {
+    const now = new Date();
+    const start = quiz.startTime?.toDate();
+    const end = quiz.endTime?.toDate();
+    const isCurrentlyLive = start && end && now >= start && now <= end;
+
+    return (
+      <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md relative">
+        {isCurrentlyLive && (
+          <div className="absolute top-3 right-3 z-10">
+            <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-3">
+              <Circle className="h-2 w-2 fill-white animate-pulse" />
+              LIVE
+            </Badge>
+          </div>
+        )}
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">{quiz.title}</CardTitle>
+          <CardTitle className="font-headline text-2xl pr-16">{quiz.title}</CardTitle>
           <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
         </CardHeader>
         <CardContent className="flex-grow space-y-3">
@@ -59,13 +74,14 @@ export default function QuizzesPage() {
         </CardContent>
         <CardFooter>
           <Button asChild className="w-full">
-            <Link href={`/quizzes/${quiz.id}?type=${isLive ? 'live' : 'practice'}`}>
-              {isLive ? 'Take Live Quiz' : 'Start Practice'} <ArrowRight className="ml-2 h-4 w-4" />
+            <Link href={`/quizzes/${quiz.id}?type=${isLiveType ? 'live' : 'practice'}`}>
+              {isLiveType ? 'Take Live Quiz' : 'Start Practice'} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </CardFooter>
       </Card>
-  );
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -91,7 +107,7 @@ export default function QuizzesPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {liveQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLive={true} />)}
+                    {liveQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={true} />)}
                 </div>
             )}
           </section>
@@ -107,7 +123,7 @@ export default function QuizzesPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {practiceQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLive={false} />)}
+                    {practiceQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={false} />)}
                 </div>
             )}
           </section>

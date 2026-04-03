@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -186,11 +187,20 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     const end = quiz.endTime?.toDate();
                     const isUpcoming = start && now < start;
                     const isExpired = end && now > end;
+                    const isCurrentlyLive = start && end && now >= start && now <= end;
 
                     return (
-                      <Card key={quiz.id} className="flex flex-col">
+                      <Card key={quiz.id} className="flex flex-col relative">
+                        {isCurrentlyLive && (
+                          <div className="absolute top-3 right-3 z-10">
+                            <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-2 py-0.5 text-[10px]">
+                              <Circle className="h-1.5 w-1.5 fill-white animate-pulse" />
+                              LIVE
+                            </Badge>
+                          </div>
+                        )}
                         <CardHeader>
-                          <CardTitle className="text-lg">{quiz.title}</CardTitle>
+                          <CardTitle className="text-lg pr-12">{quiz.title}</CardTitle>
                           <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2 pb-4">
