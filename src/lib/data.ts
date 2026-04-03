@@ -48,12 +48,12 @@ export type Batch = {
     title: string;
     description: string;
     price: number;
-    originalPrice?: number; // Added for discount display
+    originalPrice?: number;
     thumbnail: string;
     createdAt: Timestamp;
     notes: BatchNote[];
-    quizIds: string[]; // List of quiz IDs assigned to this batch
-    includes: string[]; // Added: Dynamic feature points for the batch
+    quizIds: string[]; // Keep for legacy, though we'll use targetClasses in Quizzes now
+    includes: string[];
 };
 
 export async function getBatches(): Promise<Batch[]> {
@@ -191,7 +191,8 @@ export type Quiz = {
     questions: Question[];
     startTime?: Timestamp; // Optional start time for the quiz
     endTime?: Timestamp;   // Optional end time for the quiz
-    targetClass: string;
+    targetClass: string; // Legacy
+    targetClasses?: string[]; // New: support multiple targets
 };
 
 // This type will be used to store a user's attempt in Firestore
@@ -930,6 +931,14 @@ export async function getQuiz(id: string): Promise<Quiz | null> {
 export async function getQuizzes(): Promise<Quiz[]> {
     const quizzesCol = collection(db, 'quizzes');
     const q = query(quizzesCol, orderBy('title'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+}
+
+export async function getQuizzesForTarget(targetId: string): Promise<Quiz[]> {
+    const quizzesCol = collection(db, 'quizzes');
+    // Query quizzes where targetClasses array contains targetId
+    const q = query(quizzesCol, where('targetClasses', 'array-contains', targetId));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
 }

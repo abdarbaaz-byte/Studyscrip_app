@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { checkUserPurchase, getBatchInformation, createPurchase, getQuiz, type Batch, type BatchInformation, type Quiz, type ContentItem } from "@/lib/data";
+import { checkUserPurchase, getBatchInformation, createPurchase, getQuizzesForTarget, type Batch, type BatchInformation, type Quiz, type ContentItem } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -53,17 +53,14 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         }
       }
 
-      // Load quizzes data
-      if (batch.quizIds && batch.quizIds.length > 0) {
-          const quizPromises = batch.quizIds.map(id => getQuiz(id));
-          const quizResults = await Promise.all(quizPromises);
-          setQuizzes(quizResults.filter((q): q is Quiz => q !== null));
-      }
+      // Load quizzes data dynamically based on batch target
+      const quizResults = await getQuizzesForTarget(batch.id);
+      setQuizzes(quizResults);
 
       setLoading(false);
     }
     loadData();
-  }, [user, batch.id, batch.quizIds]);
+  }, [user, batch.id]);
 
   const handleBuyClick = () => {
     if (!user) {
@@ -183,19 +180,42 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                 <LockedContent title="Enroll to access Batch Quizzes" onBuy={handleBuyClick} />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {quizzes.map(quiz => (
-                    <Card key={quiz.id} className="flex flex-col">
-                      <CardHeader>
-                        <CardTitle className="text-lg">{quiz.title}</CardTitle>
-                        <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
-                      </CardHeader>
-                      <CardFooter className="mt-auto">
-                        <Button asChild className="w-full">
-                          <Link href={`/quizzes/${quiz.id}?type=live`}>Start Quiz <ArrowRight className="ml-2 h-4 w-4"/></Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                  {quizzes.map(quiz => {
+                    const now = new Date();
+                    const start = quiz.startTime?.toDate();
+                    const end = quiz.endTime?.toDate();
+                    const isUpcoming = start && now < start;
+                    const isExpired = end && now > end;
+
+                    return (
+                      <Card key={quiz.id} className="flex flex-col">
+                        <CardHeader>
+                          <CardTitle className="text-lg">{quiz.title}</CardTitle>
+                          <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2 pb-4">
+                            {isUpcoming && (
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 flex items-center gap-1 w-fit">
+                                    <Clock className="h-3 w-3" /> Upcoming: {format(start, "p, MMM d")}
+                                </Badge>
+                            )}
+                            {isExpired && (
+                                <Badge variant="destructive" className="flex items-center gap-1 w-fit">
+                                    <Lock className="h-3 w-3" /> Expired
+                                </Badge>
+                            )}
+                        </CardContent>
+                        <CardFooter className="mt-auto">
+                          <Button asChild className="w-full" disabled={isUpcoming || isExpired}>
+                            <Link href={isUpcoming || isExpired ? "#" : `/quizzes/${quiz.id}?type=live`}>
+                                {isUpcoming ? "Not Started" : isExpired ? "Locked" : "Start Quiz"} 
+                                <ArrowRight className="ml-2 h-4 w-4"/>
+                            </Link>
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    )
+                  })}
                   {quizzes.length === 0 && <p className="col-span-2 text-center py-10 text-muted-foreground">No quizzes assigned yet.</p>}
                 </div>
               )}

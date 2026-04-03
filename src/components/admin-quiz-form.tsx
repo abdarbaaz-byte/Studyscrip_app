@@ -1,14 +1,13 @@
-
-
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Quiz, Question, QuestionType, MatchOption } from "@/lib/data";
+import type { Quiz, Question, QuestionType, Batch } from "@/lib/data";
+import { getBatches } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit, Calendar as CalendarIcon, GripVertical } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Calendar as CalendarIcon, GripVertical, CheckCircle2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   AlertDialog,
@@ -29,6 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 interface AdminQuizFormProps {
@@ -37,7 +37,7 @@ interface AdminQuizFormProps {
   onDelete: (id: string) => Promise<void>;
 }
 
-const CLASS_OPTIONS = ["all", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+const CLASS_OPTIONS = ["5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
 const emptyQuiz: Omit<Quiz, 'id'> = {
   title: "",
@@ -47,6 +47,7 @@ const emptyQuiz: Omit<Quiz, 'id'> = {
   startTime: undefined,
   endTime: undefined,
   targetClass: 'all',
+  targetClasses: [],
 };
 
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -133,12 +134,14 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
             </div>
             <AccordionContent>
               <div className="space-y-4 p-2 border-t mt-3">
-                <div className="flex justify-between text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <span>{quiz.questions.length} Questions</span>
                     <span>{quiz.duration ? `${quiz.duration} Minutes` : 'No time limit'}</span>
-                    <span className="font-semibold">For: {quiz.targetClass === 'all' ? 'All Classes' : quiz.targetClass}</span>
+                    <span className="font-semibold flex items-center gap-1">
+                        Targets: {quiz.targetClasses && quiz.targetClasses.length > 0 ? quiz.targetClasses.join(', ') : 'All Classes'}
+                    </span>
                 </div>
-                 <div className="flex justify-between text-xs text-muted-foreground">
+                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
                     <span>
                         Starts: {quiz.startTime ? format((quiz.startTime as any).toDate(), "PPP p") : 'Always open'}
                     </span>
@@ -164,17 +167,29 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
       description: "",
       duration: 10,
       questions: [],
-      targetClass: 'all'
+      targetClass: 'all',
+      targetClasses: [],
   });
   const [startTime, setStartTime] = useState<Date | undefined>();
   const [endTime, setEndTime] = useState<Date | undefined>();
+  const [availableBatches, setAvailableBatches] = useState<Batch[]>([]);
+  const [loadingBatches, setLoadingBatches] = useState(true);
+
+  useEffect(() => {
+    async function loadBatches() {
+        const batches = await getBatches();
+        setAvailableBatches(batches);
+        setLoadingBatches(false);
+    }
+    loadBatches();
+  }, []);
 
   useEffect(() => {
     if (quiz) {
         const { id, startTime: st, endTime: et, ...rest } = quiz;
         const initialData = { ...rest };
-        if (!initialData.targetClass) {
-            initialData.targetClass = 'all';
+        if (!initialData.targetClasses) {
+            initialData.targetClasses = initialData.targetClass === 'all' ? [] : [initialData.targetClass];
         }
         setFormData(initialData);
         setStartTime(st ? (st as Timestamp).toDate() : undefined);
@@ -191,8 +206,15 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
     setFormData(prev => ({ ...prev, [name]: name === 'duration' ? parseInt(value) || 0 : value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleTargetToggle = (targetId: string, checked: boolean) => {
+    setFormData(prev => {
+        const currentTargets = prev.targetClasses || [];
+        const newTargets = checked 
+            ? [...currentTargets, targetId]
+            : currentTargets.filter(id => id !== targetId);
+        
+        return { ...prev, targetClasses: newTargets };
+    });
   };
 
   const handleTimeChange = (date: Date | undefined, timeString: string, setter: (d: Date | undefined) => void) => {
@@ -265,11 +287,17 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Legacy support: set targetClass to first selection or 'all'
+    const finalTargetClass = formData.targetClasses && formData.targetClasses.length > 0 
+        ? formData.targetClasses[0] 
+        : 'all';
+
     onSave({ 
         ...formData, 
         id: quiz?.id || '',
         startTime: startTime,
         endTime: endTime,
+        targetClass: finalTargetClass,
     });
   };
 
@@ -336,20 +364,47 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                     />
                 </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="targetClass">Target Class</Label>
-             <Select value={formData.targetClass} onValueChange={(value) => handleSelectChange('targetClass', value)}>
-                <SelectTrigger id="targetClass">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    {CLASS_OPTIONS.map(opt => (
-                        <SelectItem key={opt} value={opt}>{opt === 'all' ? 'For All Classes' : opt}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+          <div className="space-y-2 col-span-full">
+            <Label className="text-lg font-bold">Assign to Classes & Batches</Label>
+            <p className="text-xs text-muted-foreground mb-2">Select one or more targets where this quiz will be available. If none selected, it appears everywhere (legacy 'all').</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-secondary/20">
+                <div>
+                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Academic Classes</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                        {CLASS_OPTIONS.map(opt => (
+                            <div key={opt} className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id={`target-${opt}`} 
+                                    checked={formData.targetClasses?.includes(opt)}
+                                    onCheckedChange={(checked) => handleTargetToggle(opt, !!checked)}
+                                />
+                                <Label htmlFor={`target-${opt}`} className="cursor-pointer">{opt}</Label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Active Batches</h4>
+                    {loadingBatches ? <Loader2 className="animate-spin h-4 w-4"/> : (
+                        <div className="grid grid-cols-1 gap-2">
+                            {availableBatches.map(batch => (
+                                <div key={batch.id} className="flex items-center space-x-2">
+                                    <Checkbox 
+                                        id={`target-${batch.id}`} 
+                                        checked={formData.targetClasses?.includes(batch.id)}
+                                        onCheckedChange={(checked) => handleTargetToggle(batch.id, !!checked)}
+                                    />
+                                    <Label htmlFor={`target-${batch.id}`} className="cursor-pointer truncate">{batch.title}</Label>
+                                </div>
+                            ))}
+                            {availableBatches.length === 0 && <p className="text-xs text-muted-foreground">No active batches found.</p>}
+                        </div>
+                    )}
+                </div>
+            </div>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 col-span-full">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" value={formData.description} onChange={handleChange} required />
           </div>

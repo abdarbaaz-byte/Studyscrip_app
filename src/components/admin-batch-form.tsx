@@ -1,18 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Batch, BatchNote, BatchInformation, Quiz, ContentItem } from "@/lib/data";
+import type { Batch, BatchNote, BatchInformation, ContentItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, BrainCircuit, ListPlus } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, ListPlus } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { saveBatchInformation, getBatchInformation, deleteBatchInformation } from "@/lib/data";
 import { format } from "date-fns";
@@ -27,14 +26,13 @@ import {
 
 interface AdminBatchFormProps {
   initialBatches: Batch[];
-  allQuizzes: Quiz[];
   onSave: (batch: Batch) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
-export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }: AdminBatchFormProps) {
+export function AdminBatchForm({ initialBatches, onSave, onDelete }: AdminBatchFormProps) {
   const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,7 +47,7 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
         thumbnail: '',
         notes: [],
         quizIds: [],
-        includes: [], // Initialize includes
+        includes: [],
         createdAt: null as any
     });
     setIsDialogOpen(true);
@@ -83,7 +81,6 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
           {editingBatch && (
             <BatchForm 
               batch={editingBatch} 
-              allQuizzes={allQuizzes} 
               onSave={handleSaveBatch} 
               onCancel={() => setIsDialogOpen(false)} 
               isSaving={isSaving}
@@ -109,7 +106,6 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
               <TableCell>
                 <div className="flex gap-2">
                   <Badge variant="outline">{batch.notes.length} Topics</Badge>
-                  <Badge variant="outline">{batch.quizIds.length} Quizzes</Badge>
                 </div>
               </TableCell>
               <TableCell className="text-right space-x-2">
@@ -147,7 +143,7 @@ export function AdminBatchForm({ initialBatches, allQuizzes, onSave, onDelete }:
   );
 }
 
-function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: Batch, allQuizzes: Quiz[], onSave: (batch: Batch) => void, onCancel: () => void, isSaving: boolean }) {
+function BatchForm({ batch, onSave, onCancel, isSaving }: { batch: Batch, onSave: (batch: Batch) => void, onCancel: () => void, isSaving: boolean }) {
   const [formData, setFormData] = useState<Batch>({
     ...batch,
     includes: batch.includes || []
@@ -208,14 +204,6 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
     setFormData(prev => ({ ...prev, notes: newNotes }));
   };
 
-  const handleQuizToggle = (quizId: string, checked: boolean) => {
-    const newQuizIds = checked 
-        ? [...formData.quizIds, quizId]
-        : formData.quizIds.filter(id => id !== quizId);
-    setFormData(prev => ({ ...prev, quizIds: newQuizIds }));
-  };
-
-  // Includes points handlers
   const addIncludePoint = () => {
     setFormData(prev => ({ ...prev, includes: [...prev.includes, ''] }));
   };
@@ -338,24 +326,6 @@ function BatchForm({ batch, allQuizzes, onSave, onCancel, isSaving }: { batch: B
                     </div>
                 </div>
             ))}
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="quizzes" className="border rounded-md px-4 bg-secondary/30">
-          <AccordionTrigger><div className="flex items-center gap-2"><BrainCircuit className="h-4 w-4"/> Quizzes Management</div></AccordionTrigger>
-          <AccordionContent className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {allQuizzes.map(quiz => (
-                    <div key={quiz.id} className="flex items-center space-x-2 p-2 border rounded-md hover:bg-secondary/50">
-                        <Checkbox 
-                            id={`quiz-${quiz.id}`} 
-                            checked={formData.quizIds.includes(quiz.id)}
-                            onCheckedChange={checked => handleQuizToggle(quiz.id, !!checked)}
-                        />
-                        <label htmlFor={`quiz-${quiz.id}`} className="text-sm font-medium leading-none cursor-pointer">{quiz.title}</label>
-                    </div>
-                ))}
-            </div>
           </AccordionContent>
         </AccordionItem>
 
