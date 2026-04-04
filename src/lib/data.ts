@@ -43,6 +43,14 @@ export type BatchInformation = {
     createdAt: Timestamp;
 };
 
+export type BatchMessage = {
+    id: string;
+    senderId: string;
+    senderName: string;
+    text: string;
+    timestamp: Timestamp;
+};
+
 export type Batch = {
     id: string; // docId
     title: string;
@@ -109,6 +117,25 @@ export async function saveBatchInformation(batchId: string, info: Omit<BatchInfo
 
 export async function deleteBatchInformation(batchId: string, infoId: string): Promise<void> {
     await deleteDoc(doc(db, 'batches', batchId, 'information', infoId));
+}
+
+export function listenToBatchMessages(batchId: string, callback: (messages: BatchMessage[]) => void) {
+    const messagesCol = collection(db, 'batches', batchId, 'messages');
+    const q = query(messagesCol, orderBy('timestamp', 'asc'), limit(100));
+    return onSnapshot(q, (snapshot) => {
+        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BatchMessage));
+        callback(messages);
+    });
+}
+
+export async function sendBatchMessage(batchId: string, senderId: string, senderName: string, text: string) {
+    const messagesCol = collection(db, 'batches', batchId, 'messages');
+    await addDoc(messagesCol, {
+        senderId,
+        senderName,
+        text,
+        timestamp: serverTimestamp(),
+    });
 }
 
 // --- AUDIO LECTURES ---

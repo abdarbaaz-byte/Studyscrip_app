@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { checkUserPurchase, getBatchInformation, createPurchase, getQuizzesForTarget, type Batch, type BatchInformation, type Quiz, type ContentItem } from "@/lib/data";
+import { checkUserPurchase, getBatchInformation, createPurchase, getQuizzesForTarget, listenToBatchMessages, sendBatchMessage, type Batch, type BatchInformation, type Quiz, type ContentItem, type BatchMessage } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy, Send, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -17,6 +17,9 @@ import { format } from "date-fns";
 import { PaymentDialog } from "@/components/payment-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const { user, loading: authLoading } = useAuth();
@@ -29,6 +32,13 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const [attemptedQuizzes, setAttemptedQuizzes] = useState<{[key: string]: string | null}>({});
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
   const [hasNewInfo, setHasNewInfo] = useState(false);
+  
+  // Chat State
+  const [batchMessages, setBatchMessages] = useState<BatchMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
   const { toast } = useToast();
   const router = useRouter();
 
@@ -77,6 +87,41 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     }
     loadData();
   }, [user, batch.id]);
+
+  // Group Chat Effect
+  useEffect(() => {
+    if (hasAccess && batch.id) {
+        const unsubscribe = listenToBatchMessages(batch.id, (messages) => {
+            setBatchMessages(messages);
+            scrollToBottom();
+        });
+        return () => unsubscribe();
+    }
+  }, [hasAccess, batch.id]);
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+        if (chatScrollRef.current) {
+            const viewport = chatScrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+            if (viewport) viewport.scrollTop = viewport.scrollHeight;
+        }
+    }, 100);
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !user || isSending) return;
+
+    setIsSending(true);
+    try {
+        await sendBatchMessage(batch.id, user.uid, user.displayName || user.email?.split('@')[0] || 'Anonymous', newMessage);
+        setNewMessage("");
+        scrollToBottom();
+    } catch (error) {
+        toast({ variant: "destructive", title: "Failed to send message." });
+    }
+    setIsSending(false);
+  };
 
   const handleBuyClick = () => {
     if (!user) {
@@ -264,16 +309,58 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
 
             <TabsContent value="chats" className="pt-6">
               {!hasAccess ? (
-                <LockedContent title="Enroll to chat with Batch Instructors" onBuy={handleBuyClick} />
+                <LockedContent title="Enroll to chat with Batch Students" onBuy={handleBuyClick} />
               ) : (
-                <Card>
-                  <CardHeader><CardTitle>Direct Support Chat</CardTitle><CardDescription>Need help with a topic? Message the instructor here.</CardDescription></CardHeader>
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="bg-primary/10 p-6 rounded-full mb-4">
-                        <MessageSquare className="h-12 w-12 text-primary"/>
+                <Card className="flex flex-col h-[600px]">
+                  <CardHeader className="border-b pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-full"><Users className="h-5 w-5 text-primary"/></div>
+                        <div>
+                            <CardTitle className="text-lg">Group Discussion</CardTitle>
+                            <CardDescription>Chat with other students in this batch.</CardDescription>
+                        </div>
                     </div>
-                    <p className="text-muted-foreground max-w-sm">Use the floating chat button at the bottom right to talk directly with us about this batch.</p>
+                  </CardHeader>
+                  <CardContent className="flex-1 p-0 overflow-hidden">
+                    <ScrollArea className="h-full p-4" ref={chatScrollRef}>
+                        <div className="space-y-4">
+                            {batchMessages.map((msg) => {
+                                const isMe = msg.senderId === user?.uid;
+                                return (
+                                    <div key={msg.id} className={cn("flex flex-col max-w-[80%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[10px] font-bold text-muted-foreground">{msg.senderName}</span>
+                                            {msg.timestamp && <span className="text-[10px] text-muted-foreground">{format(msg.timestamp.toDate(), "p")}</span>}
+                                        </div>
+                                        <div className={cn("px-3 py-2 rounded-2xl text-sm break-words", isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-secondary rounded-tl-none")}>
+                                            {msg.text}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {batchMessages.length === 0 && (
+                                <div className="text-center py-20 text-muted-foreground">
+                                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                    <p>Start the conversation! Send the first message.</p>
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
                   </CardContent>
+                  <CardFooter className="p-4 border-t">
+                    <form onSubmit={handleSendMessage} className="flex w-full gap-2">
+                        <Input 
+                            placeholder="Type your message..." 
+                            value={newMessage} 
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            disabled={isSending}
+                            autoComplete="off"
+                        />
+                        <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending}>
+                            {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
+                        </Button>
+                    </form>
+                  </CardFooter>
                 </Card>
               )}
             </TabsContent>
@@ -334,7 +421,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                   ) : (
                     <>
                         <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Lifetime access to Batch content</li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Direct Support Chat</li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Batch Discussion Group Chat</li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Specialized Practice Tests</li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Downloadable PDF Notes</li>
                     </>
