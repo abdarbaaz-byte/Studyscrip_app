@@ -56,7 +56,6 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
       const infoData = await getBatchInformation(batch.id);
       setInfoList(infoData);
 
-      // Check for new info badge
       if (infoData.length > 0) {
         const lastViewed = localStorage.getItem(`batch-info-viewed-${batch.id}`);
         const latestTime = infoData[0].createdAt.toMillis();
@@ -65,11 +64,9 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         }
       }
 
-      // Load quizzes data
       const quizResults = await getQuizzesForTarget(batch.id);
       setQuizzes(quizResults);
 
-      // Check local storage for attempts
       const attempts: {[key: string]: string | null} = {};
       quizResults.forEach(q => {
         const savedData = localStorage.getItem(`quiz-data-${q.id}`);
@@ -89,7 +86,6 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     loadData();
   }, [user, batch.id]);
 
-  // Group Chat Effect
   useEffect(() => {
     if (hasAccess && batch.id && activeTab === 'chats') {
         const unsubscribe = listenToBatchMessages(batch.id, (messages) => {
@@ -182,11 +178,11 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const isChatting = activeTab === 'chats' && hasAccess;
 
   return (
-    <div className={cn("container mx-auto px-4 py-8", isChatting ? "pb-4 h-[calc(100dvh-80px)] overflow-hidden" : "pb-32")}>
+    <div className={cn("container mx-auto px-4 py-4 md:py-8", isChatting ? "h-[calc(100dvh-128px)] overflow-hidden" : "pb-32")}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-        <div className={cn(isChatting ? "lg:col-span-3 h-full" : "lg:col-span-2", "space-y-8 h-full flex flex-col")}>
+        <div className={cn(isChatting ? "lg:col-span-3 h-full" : "lg:col-span-2", "h-full flex flex-col")}>
           <Tabs defaultValue="notes" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 h-12 bg-secondary/50 shrink-0">
+            <TabsList className="grid w-full grid-cols-4 h-12 bg-secondary/50 shrink-0 mb-4">
               <TabsTrigger value="notes" className="gap-2"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
               <TabsTrigger value="quizzes" className="gap-2"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
               <TabsTrigger value="chats" className="gap-2"><MessageSquare className="h-4 w-4"/> Chat</TabsTrigger>
@@ -196,201 +192,203 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="notes" className="pt-6 overflow-y-auto">
-              <Card>
-                <CardContent className="pt-6">
-                  <Accordion type="single" collapsible className="w-full space-y-3">
-                    {batch.notes.map(topic => (
-                      <AccordionItem value={topic.id} key={topic.id} className="border rounded-md px-4 bg-secondary/20">
-                        <AccordionTrigger className="hover:no-underline font-medium">
-                          <div className="flex items-center gap-2">
-                            {topic.title}
-                            {!hasAccess && <Lock className="h-3 w-3 text-muted-foreground" />}
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pt-2 space-y-2">
-                          {topic.content.map(item => (
-                            <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
-                              <div className="flex items-center gap-3">
-                                {getContentIcon(item.type)}
-                                <span className="text-sm font-medium">{item.title}</span>
-                              </div>
-                              {hasAccess ? (
-                                <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>View</Button>
-                              ) : (
-                                <Button variant="ghost" size="sm" onClick={handleBuyClick}>
-                                  <Lock className="h-4 w-4 text-muted-foreground mr-2" />
-                                  Unlock
-                                </Button>
-                              )}
+            <div className="flex-1 min-h-0 relative">
+                <TabsContent value="notes" className="h-full mt-0 overflow-y-auto">
+                <Card>
+                    <CardContent className="pt-6">
+                    <Accordion type="single" collapsible className="w-full space-y-3">
+                        {batch.notes.map(topic => (
+                        <AccordionItem value={topic.id} key={topic.id} className="border rounded-md px-4 bg-secondary/20">
+                            <AccordionTrigger className="hover:no-underline font-medium">
+                            <div className="flex items-center gap-2">
+                                {topic.title}
+                                {!hasAccess && <Lock className="h-3 w-3 text-muted-foreground" />}
                             </div>
-                          ))}
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                    {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground">No notes assigned yet.</p>}
-                  </Accordion>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="quizzes" className="pt-6 overflow-y-auto">
-              {!hasAccess ? (
-                <LockedContent title="Enroll to access Batch Quizzes" onBuy={handleBuyClick} />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
-                  {quizzes.map(quiz => {
-                    const now = new Date();
-                    const start = quiz.startTime?.toDate();
-                    const end = quiz.endTime?.toDate();
-                    const isUpcoming = start && now < start;
-                    const isExpired = end && now > end;
-                    const isCurrentlyLive = start && end && now >= start && now <= end;
-                    const userAttemptAnswers = attemptedQuizzes[quiz.id];
-                    const hasAttempted = userAttemptAnswers !== undefined;
-
-                    return (
-                      <Card key={quiz.id} className="flex flex-col relative">
-                        {isCurrentlyLive && (
-                          <div className="absolute top-3 right-3 z-10">
-                            <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-2 py-0.5 text-[10px]">
-                              <Circle className="h-1.5 w-1.5 fill-white animate-pulse" />
-                              LIVE
-                            </Badge>
-                          </div>
-                        )}
-                        <CardHeader>
-                          <CardTitle className="text-lg pr-12">{quiz.title}</CardTitle>
-                          <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2 pb-4">
-                            {isUpcoming && (
-                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 flex items-center gap-1 w-fit">
-                                    <Clock className="h-3 w-3" /> Upcoming: {format(start, "p, MMM d")}
-                                </Badge>
-                            )}
-                            {isExpired && (
-                                <Badge variant="destructive" className="flex items-center gap-1 w-fit">
-                                    <Lock className="h-3 w-3" /> Expired
-                                </Badge>
-                            )}
-                            {hasAttempted && (
-                                <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 w-fit">
-                                    <CheckCircle className="h-3 w-3" /> Attempted
-                                </Badge>
-                            )}
-                        </CardContent>
-                        <CardFooter className="mt-auto">
-                          {hasAttempted ? (
-                            <Button asChild variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50">
-                                <Link href={`/quizzes/${quiz.id}/results?type=live&answers=${encodeURIComponent(userAttemptAnswers || '')}`}>
-                                    View Analysis <Trophy className="ml-2 h-4 w-4"/>
-                                </Link>
-                            </Button>
-                          ) : isExpired ? (
-                            <Button asChild variant="secondary" className="w-full">
-                                <Link href={`/quizzes/${quiz.id}/results?type=live`}>
-                                    View Winners <Trophy className="ml-2 h-4 w-4"/>
-                                </Link>
-                            </Button>
-                          ) : (
-                            <Button asChild className="w-full" disabled={isUpcoming}>
-                                <Link href={isUpcoming ? "#" : `/quizzes/${quiz.id}?type=live`}>
-                                    {isUpcoming ? "Not Started" : "Start Quiz"} 
-                                    <ArrowRight className="ml-2 h-4 w-4"/>
-                                </Link>
-                            </Button>
-                          )}
-                        </CardFooter>
-                      </Card>
-                    )
-                  })}
-                  {quizzes.length === 0 && <p className="col-span-2 text-center py-10 text-muted-foreground">No quizzes assigned yet.</p>}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="chats" className="pt-6 h-full overflow-hidden">
-              {!hasAccess ? (
-                <LockedContent title="Enroll to chat with Batch Students" onBuy={handleBuyClick} />
-              ) : (
-                <Card className="flex flex-col h-full border-none shadow-none md:border md:shadow-sm overflow-hidden">
-                  <CardHeader className="border-b pb-4 bg-background/50 backdrop-blur-sm sticky top-0 z-10 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 p-2 rounded-full"><Users className="h-5 w-5 text-primary"/></div>
-                        <div>
-                            <CardTitle className="text-lg">Group Discussion</CardTitle>
-                            <CardDescription className="text-xs">Real-time chat with fellow students</CardDescription>
-                        </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-1 p-0 overflow-hidden bg-secondary/5 relative">
-                    <ScrollArea className="h-full p-4 md:p-6" ref={chatScrollRef}>
-                        <div className="space-y-6">
-                            {batchMessages.map((msg) => {
-                                const isMe = msg.senderId === user?.uid;
-                                return (
-                                    <div key={msg.id} className={cn("flex flex-col max-w-[85%] md:max-w-[75%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
-                                        <div className="flex items-center gap-2 mb-1 px-1">
-                                            <span className="text-[10px] font-bold text-muted-foreground">{isMe ? "You" : msg.senderName}</span>
-                                            {msg.timestamp && <span className="text-[10px] text-muted-foreground">{format(msg.timestamp.toDate(), "p")}</span>}
-                                        </div>
-                                        <div className={cn(
-                                            "px-4 py-2.5 rounded-2xl text-sm break-words shadow-sm", 
-                                            isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-white dark:bg-secondary rounded-tl-none border"
-                                        )}>
-                                            {msg.text}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                            {batchMessages.length === 0 && (
-                                <div className="text-center py-20 text-muted-foreground h-full flex flex-col items-center justify-center">
-                                    <div className="bg-secondary/20 p-6 rounded-full mb-4">
-                                        <MessageSquare className="h-12 w-12 opacity-20" />
-                                    </div>
-                                    <p className="font-medium">Welcome to the Batch Group!</p>
-                                    <p className="text-xs">Start the conversation by sending a message.</p>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-2 space-y-2">
+                            {topic.content.map(item => (
+                                <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                                <div className="flex items-center gap-3">
+                                    {getContentIcon(item.type)}
+                                    <span className="text-sm font-medium">{item.title}</span>
                                 </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                  </CardContent>
-                  <CardFooter className="p-4 border-t bg-background shrink-0">
-                    <form onSubmit={handleSendMessage} className="flex w-full gap-2 items-center">
-                        <Input 
-                            placeholder="Type your message here..." 
-                            value={newMessage} 
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            disabled={isSending}
-                            autoComplete="off"
-                            className="flex-1 h-11 bg-secondary/20 border-none focus-visible:ring-primary"
-                        />
-                        <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-full" disabled={!newMessage.trim() || isSending}>
-                            {isSending ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-5 w-5" />}
-                        </Button>
-                    </form>
-                  </CardFooter>
+                                {hasAccess ? (
+                                    <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>View</Button>
+                                ) : (
+                                    <Button variant="ghost" size="sm" onClick={handleBuyClick}>
+                                    <Lock className="h-4 w-4 text-muted-foreground mr-2" />
+                                    Unlock
+                                    </Button>
+                                )}
+                                </div>
+                            ))}
+                            </AccordionContent>
+                        </AccordionItem>
+                        ))}
+                        {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground">No notes assigned yet.</p>}
+                    </Accordion>
+                    </CardContent>
                 </Card>
-              )}
-            </TabsContent>
+                </TabsContent>
 
-            <TabsContent value="information" className="pt-6 overflow-y-auto">
-              <Card>
-                <CardHeader><CardTitle>Latest Announcements</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  {infoList.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-10">No announcements yet.</p>
-                  ) : infoList.map(info => (
-                    <div key={info.id} className="p-4 border rounded-lg bg-secondary/20">
-                      <h4 className="font-bold">{info.title}</h4>
-                      <p className="text-sm mt-1 whitespace-pre-wrap">{info.message}</p>
-                      <p className="text-[10px] text-muted-foreground mt-2">{format(info.createdAt.toDate(), "PPP p")}</p>
+                <TabsContent value="quizzes" className="h-full mt-0 overflow-y-auto">
+                {!hasAccess ? (
+                    <LockedContent title="Enroll to access Batch Quizzes" onBuy={handleBuyClick} />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+                    {quizzes.map(quiz => {
+                        const now = new Date();
+                        const start = quiz.startTime?.toDate();
+                        const end = quiz.endTime?.toDate();
+                        const isUpcoming = start && now < start;
+                        const isExpired = end && now > end;
+                        const isCurrentlyLive = start && end && now >= start && now <= end;
+                        const userAttemptAnswers = attemptedQuizzes[quiz.id];
+                        const hasAttempted = userAttemptAnswers !== undefined;
+
+                        return (
+                        <Card key={quiz.id} className="flex flex-col relative">
+                            {isCurrentlyLive && (
+                            <div className="absolute top-3 right-3 z-10">
+                                <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-2 py-0.5 text-[10px]">
+                                <Circle className="h-1.5 w-1.5 fill-white animate-pulse" />
+                                LIVE
+                                </Badge>
+                            </div>
+                            )}
+                            <CardHeader>
+                            <CardTitle className="text-lg pr-12">{quiz.title}</CardTitle>
+                            <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-2 pb-4">
+                                {isUpcoming && (
+                                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 flex items-center gap-1 w-fit">
+                                        <Clock className="h-3 w-3" /> Upcoming: {format(start, "p, MMM d")}
+                                    </Badge>
+                                )}
+                                {isExpired && (
+                                    <Badge variant="destructive" className="flex items-center gap-1 w-fit">
+                                        <Lock className="h-3 w-3" /> Expired
+                                    </Badge>
+                                )}
+                                {hasAttempted && (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 w-fit">
+                                        <CheckCircle className="h-3 w-3" /> Attempted
+                                    </Badge>
+                                )}
+                            </CardContent>
+                            <CardFooter className="mt-auto">
+                            {hasAttempted ? (
+                                <Button asChild variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50">
+                                    <Link href={`/quizzes/${quiz.id}/results?type=live&answers=${encodeURIComponent(userAttemptAnswers || '')}`}>
+                                        View Analysis <Trophy className="ml-2 h-4 w-4"/>
+                                    </Link>
+                                </Button>
+                            ) : isExpired ? (
+                                <Button asChild variant="secondary" className="w-full">
+                                    <Link href={`/quizzes/${quiz.id}/results?type=live`}>
+                                        View Winners <Trophy className="ml-2 h-4 w-4"/>
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <Button asChild className="w-full" disabled={isUpcoming}>
+                                    <Link href={isUpcoming ? "#" : `/quizzes/${quiz.id}?type=live`}>
+                                        {isUpcoming ? "Not Started" : "Start Quiz"} 
+                                        <ArrowRight className="ml-2 h-4 w-4"/>
+                                    </Link>
+                                </Button>
+                            )}
+                            </CardFooter>
+                        </Card>
+                        )
+                    })}
+                    {quizzes.length === 0 && <p className="col-span-2 text-center py-10 text-muted-foreground">No quizzes assigned yet.</p>}
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                )}
+                </TabsContent>
+
+                <TabsContent value="chats" className="h-full mt-0 overflow-hidden">
+                {!hasAccess ? (
+                    <LockedContent title="Enroll to chat with Batch Students" onBuy={handleBuyClick} />
+                ) : (
+                    <Card className="flex flex-col h-full border shadow-sm rounded-xl overflow-hidden bg-background">
+                    <CardHeader className="border-b py-3 px-4 bg-secondary/10 shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-primary/10 p-2 rounded-full"><Users className="h-5 w-5 text-primary"/></div>
+                            <div>
+                                <CardTitle className="text-base">Group Discussion</CardTitle>
+                                <CardDescription className="text-[10px]">Real-time chat with fellow students</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 p-0 min-h-0 bg-secondary/5 relative overflow-hidden">
+                        <ScrollArea className="h-full" ref={chatScrollRef}>
+                            <div className="p-4 space-y-6">
+                                {batchMessages.map((msg) => {
+                                    const isMe = msg.senderId === user?.uid;
+                                    return (
+                                        <div key={msg.id} className={cn("flex flex-col max-w-[85%] md:max-w-[75%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
+                                            <div className="flex items-center gap-2 mb-1 px-1">
+                                                <span className="text-[10px] font-bold text-muted-foreground">{isMe ? "You" : msg.senderName}</span>
+                                                {msg.timestamp && <span className="text-[10px] text-muted-foreground">{format(msg.timestamp.toDate(), "p")}</span>}
+                                            </div>
+                                            <div className={cn(
+                                                "px-4 py-2.5 rounded-2xl text-sm break-words shadow-sm", 
+                                                isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-white dark:bg-secondary rounded-tl-none border"
+                                            )}>
+                                                {msg.text}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {batchMessages.length === 0 && (
+                                    <div className="text-center py-20 text-muted-foreground h-full flex flex-col items-center justify-center">
+                                        <div className="bg-secondary/20 p-6 rounded-full mb-4">
+                                            <MessageSquare className="h-12 w-12 opacity-20" />
+                                        </div>
+                                        <p className="font-medium">Welcome to the Batch Group!</p>
+                                        <p className="text-xs">Start the conversation by sending a message.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                    <CardFooter className="p-3 border-t bg-background shrink-0">
+                        <form onSubmit={handleSendMessage} className="flex w-full gap-2 items-center">
+                            <Input 
+                                placeholder="Type your message here..." 
+                                value={newMessage} 
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                disabled={isSending}
+                                autoComplete="off"
+                                className="flex-1 h-11 bg-secondary/20 border-none focus-visible:ring-1 focus-visible:ring-primary rounded-full px-5"
+                            />
+                            <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-full shadow-md" disabled={!newMessage.trim() || isSending}>
+                                {isSending ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-5 w-5 ml-0.5" />}
+                            </Button>
+                        </form>
+                    </CardFooter>
+                    </Card>
+                )}
+                </TabsContent>
+
+                <TabsContent value="information" className="h-full mt-0 overflow-y-auto">
+                <Card>
+                    <CardHeader><CardTitle>Latest Announcements</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                    {infoList.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-10">No announcements yet.</p>
+                    ) : infoList.map(info => (
+                        <div key={info.id} className="p-4 border rounded-lg bg-secondary/20">
+                        <h4 className="font-bold">{info.title}</h4>
+                        <p className="text-sm mt-1 whitespace-pre-wrap">{info.message}</p>
+                        <p className="text-[10px] text-muted-foreground mt-2">{format(info.createdAt.toDate(), "PPP p")}</p>
+                        </div>
+                    ))}
+                    </CardContent>
+                </Card>
+                </TabsContent>
+            </div>
           </Tabs>
         </div>
 
@@ -445,7 +443,6 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         )}
       </div>
 
-      {/* Sticky Bottom Purchase Bar - Hide when chatting */}
       {!hasAccess && !isFree && !isChatting && (
         <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
             <div className="container mx-auto flex items-center justify-between gap-4">
