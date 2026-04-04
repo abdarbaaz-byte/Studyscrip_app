@@ -6,22 +6,34 @@ import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Layers, Loader2, ArrowRight, FileText, BrainCircuit } from "lucide-react";
-import { listenToBatches, type Batch } from "@/lib/data";
+import { listenToBatches, getQuizzes, type Batch, type Quiz } from "@/lib/data";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { Badge } from "@/components/ui/badge";
 
 export default function BatchesPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = listenToBatches((data) => {
-      setBatches(data);
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    async function loadInitialData() {
+      setLoading(true);
+      const allQuizzes = await getQuizzes();
+      setQuizzes(allQuizzes);
+      
+      const unsubscribe = listenToBatches((data) => {
+        setBatches(data);
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    }
+    loadInitialData();
   }, []);
+
+  const getQuizCountForBatch = (batchId: string) => {
+    return quizzes.filter(q => q.targetClasses?.includes(batchId)).length;
+  };
 
   if (loading) {
     return (
@@ -50,47 +62,55 @@ export default function BatchesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {batches.map((batch, index) => (
-            <ScrollAnimation key={batch.id} delay={index * 100}>
-              <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
-                <Link href={`/batches/${batch.id}`} className="aspect-[16/9] overflow-hidden block">
-                  <Image
-                    src={getGoogleDriveImageUrl(batch.thumbnail)}
-                    alt={batch.title}
-                    width={600}
-                    height={400}
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                    data-ai-hint="learning batch"
-                  />
-                </Link>
-                <CardHeader className="flex-grow p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">Active Batch</Badge>
-                    <p className="text-xl font-bold text-primary">
-                        {batch.price === 0 ? <Badge className="bg-green-600">Free</Badge> : `Rs. ${batch.price}`}
-                    </p>
-                  </div>
-                  <CardTitle className="font-headline text-2xl leading-tight mb-2">
-                    {batch.title}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-3">
-                    {batch.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardFooter className="p-6 pt-0 flex flex-col gap-3">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                    <div className="flex items-center gap-1"><FileText className="h-4 w-4" /> {batch.notes.length} Topics</div>
-                    <div className="flex items-center gap-1"><BrainCircuit className="h-4 w-4" /> {batch.quizIds.length} Quizzes</div>
-                  </div>
-                  <Button asChild className="w-full h-11">
-                    <Link href={`/batches/${batch.id}`}>
-                      View Details & Enroll <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </ScrollAnimation>
-          ))}
+          {batches.map((batch, index) => {
+            const quizCount = getQuizCountForBatch(batch.id);
+            return (
+              <ScrollAnimation key={batch.id} delay={index * 100}>
+                <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
+                  <Link href={`/batches/${batch.id}`} className="aspect-[16/9] overflow-hidden block">
+                    <Image
+                      src={getGoogleDriveImageUrl(batch.thumbnail)}
+                      alt={batch.title}
+                      width={600}
+                      height={400}
+                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                      data-ai-hint="learning batch"
+                    />
+                  </Link>
+                  <CardHeader className="flex-grow p-6">
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">Active Batch</Badge>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-primary">
+                            {batch.price === 0 ? <Badge className="bg-green-600">Free</Badge> : `Rs. ${batch.price}`}
+                        </p>
+                        {batch.originalPrice && batch.originalPrice > batch.price && (
+                          <p className="text-xs text-muted-foreground line-through">Rs. {batch.originalPrice}</p>
+                        )}
+                      </div>
+                    </div>
+                    <CardTitle className="font-headline text-2xl leading-tight mb-2">
+                      {batch.title}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-3">
+                      {batch.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter className="p-6 pt-0 flex flex-col gap-3">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                      <div className="flex items-center gap-1"><FileText className="h-4 w-4" /> {batch.notes?.length || 0} Topics</div>
+                      <div className="flex items-center gap-1"><BrainCircuit className="h-4 w-4" /> {quizCount} Quizzes</div>
+                    </div>
+                    <Button asChild className="w-full h-11">
+                      <Link href={`/batches/${batch.id}`}>
+                        View Details & Enroll <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </ScrollAnimation>
+            )
+          })}
         </div>
       )}
     </div>
