@@ -311,53 +311,60 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
               {!hasAccess ? (
                 <LockedContent title="Enroll to chat with Batch Students" onBuy={handleBuyClick} />
               ) : (
-                <Card className="flex flex-col h-[600px]">
-                  <CardHeader className="border-b pb-4">
+                <Card className="flex flex-col h-[calc(100vh-250px)] min-h-[500px] border-none shadow-none md:border md:shadow-sm">
+                  <CardHeader className="border-b pb-4 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <div className="bg-primary/10 p-2 rounded-full"><Users className="h-5 w-5 text-primary"/></div>
                         <div>
                             <CardTitle className="text-lg">Group Discussion</CardTitle>
-                            <CardDescription>Chat with other students in this batch.</CardDescription>
+                            <CardDescription>Real-time chat with fellow students</CardDescription>
                         </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="flex-1 p-0 overflow-hidden">
-                    <ScrollArea className="h-full p-4" ref={chatScrollRef}>
-                        <div className="space-y-4">
+                  <CardContent className="flex-1 p-0 overflow-hidden bg-secondary/5">
+                    <ScrollArea className="h-full p-4 md:p-6" ref={chatScrollRef}>
+                        <div className="space-y-6">
                             {batchMessages.map((msg) => {
                                 const isMe = msg.senderId === user?.uid;
                                 return (
-                                    <div key={msg.id} className={cn("flex flex-col max-w-[80%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-[10px] font-bold text-muted-foreground">{msg.senderName}</span>
+                                    <div key={msg.id} className={cn("flex flex-col max-w-[85%] md:max-w-[75%]", isMe ? "ml-auto items-end" : "mr-auto items-start")}>
+                                        <div className="flex items-center gap-2 mb-1 px-1">
+                                            <span className="text-[10px] font-bold text-muted-foreground">{isMe ? "You" : msg.senderName}</span>
                                             {msg.timestamp && <span className="text-[10px] text-muted-foreground">{format(msg.timestamp.toDate(), "p")}</span>}
                                         </div>
-                                        <div className={cn("px-3 py-2 rounded-2xl text-sm break-words", isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-secondary rounded-tl-none")}>
+                                        <div className={cn(
+                                            "px-4 py-2.5 rounded-2xl text-sm break-words shadow-sm", 
+                                            isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-white dark:bg-secondary rounded-tl-none border"
+                                        )}>
                                             {msg.text}
                                         </div>
                                     </div>
                                 );
                             })}
                             {batchMessages.length === 0 && (
-                                <div className="text-center py-20 text-muted-foreground">
-                                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                    <p>Start the conversation! Send the first message.</p>
+                                <div className="text-center py-20 text-muted-foreground h-full flex flex-col items-center justify-center">
+                                    <div className="bg-secondary/20 p-6 rounded-full mb-4">
+                                        <MessageSquare className="h-12 w-12 opacity-20" />
+                                    </div>
+                                    <p className="font-medium">Welcome to the Batch Group!</p>
+                                    <p className="text-xs">Start the conversation by sending a message.</p>
                                 </div>
                             )}
                         </div>
                     </ScrollArea>
                   </CardContent>
-                  <CardFooter className="p-4 border-t">
-                    <form onSubmit={handleSendMessage} className="flex w-full gap-2">
+                  <CardFooter className="p-4 border-t bg-background/50 backdrop-blur-sm">
+                    <form onSubmit={handleSendMessage} className="flex w-full gap-2 items-center">
                         <Input 
-                            placeholder="Type your message..." 
+                            placeholder="Type your message here..." 
                             value={newMessage} 
                             onChange={(e) => setNewMessage(e.target.value)}
                             disabled={isSending}
                             autoComplete="off"
+                            className="flex-1 h-11 bg-secondary/20 border-none focus-visible:ring-primary"
                         />
-                        <Button type="submit" size="icon" disabled={!newMessage.trim() || isSending}>
-                            {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
+                        <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-full" disabled={!newMessage.trim() || isSending}>
+                            {isSending ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-5 w-5" />}
                         </Button>
                     </form>
                   </CardFooter>
