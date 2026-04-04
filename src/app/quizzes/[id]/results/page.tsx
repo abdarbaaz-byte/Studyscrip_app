@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -80,7 +79,6 @@ function QuizResultsContent() {
             setUserRank(rank > 0 ? rank : null);
         }
 
-        // Calculate marks based on question configuration
         let earnedMarks = 0;
         let totalPossibleMarks = 0;
 
@@ -107,6 +105,7 @@ function QuizResultsContent() {
                 if (isCorrect) {
                     earnedMarks += qMarks;
                 } else {
+                    // Correct implementation: Subtract negative marks only if attempted and wrong
                     earnedMarks -= qNegMarks;
                 }
             }
@@ -149,8 +148,8 @@ function QuizResultsContent() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Card className="mb-8">
-        <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
+        <CardHeader>
+          <div className="flex justify-center mb-4">
                 <GraduationCap className="h-16 w-16 text-primary" />
             </div>
             <CardTitle className="font-headline text-3xl">

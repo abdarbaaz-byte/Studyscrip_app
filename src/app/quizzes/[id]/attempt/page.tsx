@@ -28,12 +28,9 @@ type AnswersState = { [questionId: string]: number | string | { [matchId: string
 const shuffleArray = (array: any[]) => {
   let currentIndex = array.length, randomIndex;
   const newArray = [...array]; // Create a copy to avoid mutating the original
-  // While there remain elements to shuffle.
   while (currentIndex !== 0) {
-    // Pick a remaining element.
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
-    // And swap it with the current element.
     [newArray[currentIndex], newArray[randomIndex]] = [newArray[randomIndex], newArray[currentIndex]];
   }
   return newArray;
@@ -43,39 +40,25 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
     
     // State for re-orderable list
     const [orderedAnswers, setOrderedAnswers] = useState<MatchOption[]>([]);
-    const initialAnswerSetRef = useRef(false);
+    const initialShuffleRef = useRef(false);
 
     useEffect(() => {
-        if (question.type === 'match' && question.matchOptions && !initialAnswerSetRef.current) {
-            const initialOrder = shuffleArray([...question.matchOptions]);
-            setOrderedAnswers(initialOrder);
-
-            // IMPORTANT FIX: Immediately set the initial shuffled order as the answer.
-            // This ensures an answer is recorded even if the user doesn't interact.
-            const initialAnswerObject: { [matchId: string]: string } = {};
-            question.matchOptions.forEach((qOpt, idx) => {
-                initialAnswerObject[qOpt.id] = initialOrder[idx].answer;
-            });
-            onAnswerChange(question.id, initialAnswerObject);
-            initialAnswerSetRef.current = true; // Mark as set to prevent re-shuffling on re-renders
+        if (question.type === 'match' && question.matchOptions && !initialShuffleRef.current) {
+            // We shuffle the options once but don't record an answer yet
+            // This ensures the question remains "unattempted" until the user reorders.
+            setOrderedAnswers(shuffleArray([...question.matchOptions]));
+            initialShuffleRef.current = true;
         }
-    }, [question, onAnswerChange]);
+    }, [question]);
     
     useEffect(() => {
         const preventPullToRefresh = (event: TouchEvent) => {
           if (window.scrollY === 0) {
-            // Check if user is swiping down from the top
-            const touch = event.touches[0];
-            if (touch.screenY < window.innerHeight) {
-               // A simple check to prevent pull-to-refresh gesture
-               // You can make this more robust if needed
-            }
+            // Simple check to prevent pull-to-refresh gesture
           }
         };
-
         const options = { passive: false };
         window.addEventListener('touchmove', preventPullToRefresh, options);
-
         return () => {
             window.removeEventListener('touchmove', preventPullToRefresh);
         };
@@ -92,7 +75,7 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
 
         setOrderedAnswers(newOrder);
 
-        // Update the main `answers` state after reordering
+        // Record the answer because the user has interacted
         const newAnswerObject: { [matchId: string]: string } = {};
         question.matchOptions.forEach((qOpt, idx) => {
             newAnswerObject[qOpt.id] = newOrder[idx].answer;
@@ -209,9 +192,8 @@ function QuizAttemptContent() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const hasSubmittedRef = useRef(false);
 
-  // User details & quiz type from query params
   const quizType = searchParams.get('type') || 'practice';
-  const schoolId = searchParams.get('schoolId'); // For school tests
+  const schoolId = searchParams.get('schoolId');
   const name = searchParams.get('name') || 'Anonymous';
   const userClass = searchParams.get('class') || 'N/A';
   const userSchool = searchParams.get('school') || '';
@@ -252,12 +234,12 @@ function QuizAttemptContent() {
             if (isCorrect) {
                 earnedMarks += qMarks;
             } else {
+                // Negative marking only if attempted and wrong
                 earnedMarks -= qNegMarks;
             }
         }
     });
 
-    // Score can't be less than 0
     const finalScore = Math.max(0, earnedMarks);
     const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
 
@@ -280,14 +262,13 @@ function QuizAttemptContent() {
         
         try {
             await saveQuizAttempt(attemptData);
-            // Store attempt flag and data in localStorage for redirection
             localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
             const dataToSave = { answers: encodedAnswers, name, class: userClass, school: userSchool };
             localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify(dataToSave));
         } catch(error) {
             console.error("Failed to save quiz attempt:", error);
             toast({ variant: "destructive", title: "Error saving results. Please try again."})
-            hasSubmittedRef.current = false; // Allow retry if saving fails
+            hasSubmittedRef.current = false;
             return;
         }
     }
@@ -298,9 +279,7 @@ function QuizAttemptContent() {
         name: name,
         class: userClass,
     });
-    if (schoolId) {
-        queryParams.set('schoolId', schoolId);
-    }
+    if (schoolId) queryParams.set('schoolId', schoolId);
     
     router.replace(`/quizzes/${quizId}/results?${queryParams.toString()}`);
   }, [quiz, quizId, quizType, name, userClass, userSchool, userId, userEmail, schoolId, router, toast]);
@@ -321,7 +300,6 @@ function QuizAttemptContent() {
         } else {
             setQuiz(loadedQuiz);
         }
-
         if (loadedQuiz.duration) {
           setTimeLeft(loadedQuiz.duration * 60);
         }
@@ -332,7 +310,6 @@ function QuizAttemptContent() {
       setLoading(false);
     }
     loadQuiz();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizId, router, toast, quizType]);
 
 
@@ -340,23 +317,17 @@ function QuizAttemptContent() {
     if (timeLeft === null || timeLeft <= 0) {
       if (timerRef.current) clearInterval(timerRef.current);
       if (timeLeft === 0 && !hasSubmittedRef.current) {
-        toast({
-          title: "Time's Up!",
-          description: "Your quiz has been automatically submitted.",
-        });
+        toast({ title: "Time's Up!", description: "Your quiz has been automatically submitted." });
         triggerSubmit();
       }
       return;
     }
-
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => (prev ? prev - 1 : 0));
     }, 1000);
-
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, triggerSubmit]);
 
   useEffect(() => {
@@ -371,7 +342,6 @@ function QuizAttemptContent() {
         }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
