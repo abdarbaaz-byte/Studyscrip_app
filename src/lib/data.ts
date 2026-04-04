@@ -180,6 +180,8 @@ export type Question = {
     correctAnswer: number; // Index for MCQ, 0 for True/1 for False
     answerText: string; // Used for fill_in_blank
     explanation: string;
+    marks: number; // Points for correct answer
+    negativeMarks: number; // Points to deduct for incorrect answer
 };
 
 
@@ -206,8 +208,9 @@ export type QuizAttempt = {
   userClass: string;
   userSchool?: string; // For general live quizzes
   answers: { [questionId: string]: number | string | { [matchId: string]: string } };
-  score: number;
+  score: number; // This is the total marks earned
   totalQuestions: number;
+  maxMarks: number; // Sum of all question marks
   percentage: number;
   submittedAt: Timestamp;
   schoolId?: string | null;
@@ -449,7 +452,7 @@ export async function checkUserPurchase(userId: string, itemId: string): Promise
   for (const docSnap of querySnapshot.docs) {
     const purchase = docSnap.data() as Purchase;
     if (purchase.expiryDate.toDate() > now) {
-      return true; // Found a valid, non-expired purchase
+      return true; // Found a valid, many-expired purchase
     }
   }
 

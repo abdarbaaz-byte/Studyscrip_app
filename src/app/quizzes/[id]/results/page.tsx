@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
+import { Badge } from "@/components/ui/badge";
 
 type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
@@ -25,11 +27,11 @@ function QuizResultsContent() {
   const quizType = searchParams.get('type') || 'practice';
   const answersString = searchParams.get('answers');
   const name = searchParams.get('name') || 'Student';
-  const userClass = searchParams.get('class');
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<AnswersState>({});
   const [score, setScore] = useState(0);
+  const [maxMarks, setMaxMarks] = useState(0);
   const [loading, setLoading] = useState(true);
   const [canShowAnalysis, setCanShowAnalysis] = useState(false);
   const [allAttempts, setAllAttempts] = useState<QuizAttempt[]>([]);
@@ -63,7 +65,6 @@ function QuizResultsContent() {
         let showRank = false;
 
         if (quizType === 'live') {
-            // Logic to determine if analysis and ranks can be shown
             if (endTime && now > endTime) {
                 showAnalysis = true;
                 showRank = true;
@@ -72,40 +73,47 @@ function QuizResultsContent() {
                 showRank = false;
             }
 
-            // Fetch attempts for leaderboard
             const attempts = await getQuizAttemptsForQuiz(quizId);
             setAllAttempts(attempts);
             
-            // Find current user's rank
             const rank = attempts.findIndex(attempt => attempt.userId === user?.uid) + 1;
             setUserRank(rank > 0 ? rank : null);
         }
 
-        // If user provided answers, calculate score
-        if (Object.keys(answers).length > 0) {
-            let currentScore = 0;
-            loadedQuiz.questions.forEach(q => {
-                const userAnswer = answers[q.id];
+        // Calculate marks based on question configuration
+        let earnedMarks = 0;
+        let totalPossibleMarks = 0;
+
+        loadedQuiz.questions.forEach(q => {
+            const qMarks = q.marks ?? 1;
+            const qNegMarks = q.negativeMarks ?? 0;
+            totalPossibleMarks += qMarks;
+
+            const userAnswer = answers[q.id];
+            let isCorrect = false;
+            let isAttempted = userAnswer !== undefined && userAnswer !== null && userAnswer !== "";
+
+            if (isAttempted) {
                 if (q.type === 'mcq' || q.type === 'true_false') {
-                    if (parseInt(userAnswer?.toString() || '-1') === q.correctAnswer) {
-                        currentScore++;
-                    }
+                    isCorrect = parseInt(userAnswer?.toString() || '-1') === q.correctAnswer;
                 } else if (q.type === 'fill_in_blank') {
-                    if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
-                        currentScore++;
-                    }
+                    isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase();
                 } else if (q.type === 'match') {
-                     if (typeof userAnswer === 'object' && userAnswer !== null) {
-                        const allCorrect = q.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
-                        if (allCorrect) {
-                            currentScore++;
-                        }
+                    if (typeof userAnswer === 'object' && userAnswer !== null) {
+                        isCorrect = q.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
                     }
                 }
-            });
-            setScore(currentScore);
-        }
 
+                if (isCorrect) {
+                    earnedMarks += qMarks;
+                } else {
+                    earnedMarks -= qNegMarks;
+                }
+            }
+        });
+
+        setScore(Math.max(0, earnedMarks));
+        setMaxMarks(totalPossibleMarks);
         setCanShowAnalysis(showAnalysis && Object.keys(answers).length > 0);
         setCanShowRank(showRank || quizType === 'live');
         
@@ -127,7 +135,7 @@ function QuizResultsContent() {
     return <div className="text-center py-16">Quiz results not found or invalid.</div>;
   }
 
-  const scorePercentage = (score / quiz.questions.length) * 100;
+  const scorePercentage = maxMarks > 0 ? (score / maxMarks) * 100 : 0;
   const isPractice = quizType === 'practice';
   const topThree = allAttempts.slice(0, 3);
   
@@ -156,12 +164,12 @@ function QuizResultsContent() {
             {Object.keys(answers).length > 0 && (
                 <>
                     <div className="text-5xl font-bold text-primary">
-                        {score} / {quiz.questions.length}
+                        {score} / {maxMarks} <span className="text-xl font-normal text-muted-foreground ml-1">Marks</span>
                     </div>
                     <div className="w-full max-w-sm">
                          <Progress value={scorePercentage} className="h-4" />
                     </div>
-                    <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Correct</p>
+                    <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Score</p>
                 </>
             )}
 
@@ -206,7 +214,7 @@ function QuizResultsContent() {
                                 </div>
                               </div>
                                <div className="text-lg font-bold">
-                                    {attempt.score} / {attempt.totalQuestions}
+                                    {attempt.score} / {attempt.maxMarks || attempt.totalQuestions} Marks
                                </div>
                            </div>
                       ))}
@@ -221,22 +229,32 @@ function QuizResultsContent() {
             {quiz.questions.map((question, index) => {
                 const userAnswer = answers[question.id];
                 let isCorrect = false;
-                if(question.type === 'mcq' || question.type === 'true_false') {
-                    isCorrect = parseInt(userAnswer?.toString() || '-1') === question.correctAnswer;
-                } else if (question.type === 'fill_in_blank') {
-                    isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
-                } else if (question.type === 'match') {
-                     if (typeof userAnswer === 'object' && userAnswer !== null) {
-                        isCorrect = question.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
+                let isAttempted = userAnswer !== undefined && userAnswer !== null && userAnswer !== "";
+                
+                if (isAttempted) {
+                    if(question.type === 'mcq' || question.type === 'true_false') {
+                        isCorrect = parseInt(userAnswer?.toString() || '-1') === question.correctAnswer;
+                    } else if (question.type === 'fill_in_blank') {
+                        isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
+                    } else if (question.type === 'match') {
+                        if (typeof userAnswer === 'object' && userAnswer !== null) {
+                            isCorrect = question.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
+                        }
                     }
                 }
 
                 return (
-                    <Card key={question.id} className={cn("border-l-4", isCorrect ? "border-green-500" : "border-red-500")}>
+                    <Card key={question.id} className={cn("border-l-4", isAttempted ? (isCorrect ? "border-green-500" : "border-red-500") : "border-gray-300")}>
                         <CardHeader>
-                            <CardTitle className="text-lg flex items-start gap-4">
-                            <span className="text-primary">{index + 1}.</span> 
-                            <span className="flex-1">{question.text}</span>
+                            <div className="flex justify-between items-center mb-2">
+                                <Badge variant="outline">Q{index + 1}</Badge>
+                                <div className="flex gap-2">
+                                    <Badge variant="secondary">+{question.marks} Marks</Badge>
+                                    {question.negativeMarks > 0 && <Badge variant="destructive">-{question.negativeMarks} Negative</Badge>}
+                                </div>
+                            </div>
+                            <CardTitle className="text-lg">
+                                {question.text}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -278,9 +296,9 @@ function QuizResultsContent() {
 
                             {question.type === 'fill_in_blank' && (
                                 <div className="space-y-2">
-                                     <div className={cn("flex items-center gap-3 p-3 rounded-md border", !isCorrect && "bg-red-100 border-red-300")}>
-                                        {isCorrect ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : <XCircle className="h-5 w-5 text-red-600"/>}
-                                        <span className="flex-1">Your Answer: <span className="font-mono">{userAnswer as string || '""'}</span></span>
+                                     <div className={cn("flex items-center gap-3 p-3 rounded-md border", isAttempted && !isCorrect && "bg-red-100 border-red-300")}>
+                                        {isAttempted ? (isCorrect ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : <XCircle className="h-5 w-5 text-red-600"/>) : <FileQuestion className="h-5 w-5 text-muted-foreground"/>}
+                                        <span className="flex-1">Your Answer: <span className="font-mono">{userAnswer as string || '(Skipped)'}</span></span>
                                      </div>
                                       <div className={cn("flex items-center gap-3 p-3 rounded-md border bg-green-100 border-green-300")}>
                                         <CheckCircle2 className="h-5 w-5 text-green-600"/>
@@ -300,7 +318,7 @@ function QuizResultsContent() {
                                         const studentAnswer = (userAnswer as any)?.[opt.id];
                                         const isPairCorrect = studentAnswer === opt.answer;
                                         return (
-                                            <div key={opt.id} className={cn("grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-2 rounded-md border", isPairCorrect ? "bg-green-100/60" : "bg-red-100/60")}>
+                                            <div key={opt.id} className={cn("grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-2 rounded-md border", isAttempted ? (isPairCorrect ? "bg-green-100/60" : "bg-red-100/60") : "bg-gray-50")}>
                                                 <div className="text-center">{opt.question}</div>
                                                 <ArrowRight className="h-4 w-4 text-muted-foreground"/>
                                                 <div className="text-center">

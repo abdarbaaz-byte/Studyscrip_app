@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
@@ -224,29 +223,42 @@ function QuizAttemptContent() {
     hasSubmittedRef.current = true;
     
     if (timerRef.current) clearInterval(timerRef.current);
-    let score = 0;
+    
+    let earnedMarks = 0;
+    let maxPossibleMarks = 0;
+
     quiz.questions.forEach(q => {
+        const qMarks = q.marks ?? 1;
+        const qNegMarks = q.negativeMarks ?? 0;
+        maxPossibleMarks += qMarks;
+
         const userAnswer = currentAnswers[q.id];
-        if (q.type === 'mcq' || q.type === 'true_false') {
-            if (userAnswer?.toString() === q.correctAnswer?.toString()) {
-                score++;
-            }
-        } else if (q.type === 'fill_in_blank') {
-            if (typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase()) {
-                score++;
-            }
-        } else if (q.type === 'match') {
-            if (typeof userAnswer === 'object' && userAnswer !== null && Object.keys(userAnswer).length > 0) {
-                const correctMatches = q.matchOptions.every(
-                    (opt) => (userAnswer as any)[opt.id] === opt.answer
-                );
-                if (correctMatches) {
-                    score++;
+        let isCorrect = false;
+        let isAttempted = userAnswer !== undefined && userAnswer !== null && userAnswer !== "";
+
+        if (isAttempted) {
+            if (q.type === 'mcq' || q.type === 'true_false') {
+                isCorrect = userAnswer?.toString() === q.correctAnswer?.toString();
+            } else if (q.type === 'fill_in_blank') {
+                isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase();
+            } else if (q.type === 'match') {
+                if (typeof userAnswer === 'object' && userAnswer !== null && Object.keys(userAnswer).length > 0) {
+                    isCorrect = q.matchOptions.every(
+                        (opt) => (userAnswer as any)[opt.id] === opt.answer
+                    );
                 }
+            }
+
+            if (isCorrect) {
+                earnedMarks += qMarks;
+            } else {
+                earnedMarks -= qNegMarks;
             }
         }
     });
 
+    // Score can't be less than 0
+    const finalScore = Math.max(0, earnedMarks);
     const encodedAnswers = encodeURIComponent(JSON.stringify(currentAnswers));
 
     if (quizType === 'live') {
@@ -259,9 +271,10 @@ function QuizAttemptContent() {
           userClass: userClass,
           userSchool: userSchool,
           answers: currentAnswers,
-          score: score,
+          score: finalScore,
+          maxMarks: maxPossibleMarks,
           totalQuestions: quiz.questions.length,
-          percentage: (score / quiz.questions.length) * 100,
+          percentage: (finalScore / maxPossibleMarks) * 100,
           schoolId: schoolId || null,
         };
         
@@ -422,6 +435,12 @@ function QuizAttemptContent() {
         </CardHeader>
         <CardContent>
           <div className="py-6 min-h-[300px]">
+            <div className="flex justify-between items-center mb-4">
+                <Badge variant="outline" className="bg-primary/5">Marks: {currentQuestion.marks}</Badge>
+                {currentQuestion.negativeMarks > 0 && (
+                    <Badge variant="destructive" className="bg-red-50 text-red-600 border-red-200">Negative: -{currentQuestion.negativeMarks}</Badge>
+                )}
+            </div>
             <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
             <QuizQuestion
                 key={currentQuestion.id} 

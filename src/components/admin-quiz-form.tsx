@@ -192,6 +192,12 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
         if (!initialData.targetClasses) {
             initialData.targetClasses = (initialData.targetClass && initialData.targetClass !== 'all') ? [initialData.targetClass] : [];
         }
+        // Ensure all questions have marks and negativeMarks initialized
+        initialData.questions = initialData.questions.map(q => ({
+            ...q,
+            marks: q.marks ?? 1,
+            negativeMarks: q.negativeMarks ?? 0,
+        }));
         setFormData(initialData);
         setStartTime(st ? (st as Timestamp).toDate() : undefined);
         setEndTime(et ? (et as Timestamp).toDate() : undefined);
@@ -238,7 +244,9 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
         matchOptions: [{id: generateId('match'), question: '', answer: ''}],
         correctAnswer: 0,
         answerText: '',
-        explanation: ''
+        explanation: '',
+        marks: 1,
+        negativeMarks: 0
     };
     setFormData(prev => ({...prev, questions: [...prev.questions, newQuestion]}));
   };
@@ -425,9 +433,34 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 text-destructive" onClick={() => removeQuestion(qIndex)}>
                   <Trash2 className="h-4 w-4" />
                </Button>
-               <div className="space-y-2">
-                 <Label htmlFor={`q-text-${qIndex}`}>Question {qIndex + 1}</Label>
-                 <Textarea id={`q-text-${qIndex}`} value={q.text} onChange={e => handleQuestionChange(qIndex, 'text', e.target.value)} required />
+               
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-2">
+                        <Label htmlFor={`q-text-${qIndex}`}>Question {qIndex + 1}</Label>
+                        <Textarea id={`q-text-${qIndex}`} value={q.text} onChange={e => handleQuestionChange(qIndex, 'text', e.target.value)} required />
+                    </div>
+                    <div className="space-y-4 bg-background p-3 rounded-lg border">
+                        <div className="space-y-1.5">
+                            <Label htmlFor={`q-marks-${qIndex}`}>Marks for Correct</Label>
+                            <Input 
+                                id={`q-marks-${qIndex}`} 
+                                type="number" 
+                                value={q.marks} 
+                                onChange={e => handleQuestionChange(qIndex, 'marks', parseFloat(e.target.value) || 0)} 
+                                required 
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor={`q-neg-marks-${qIndex}`}>Negative Marks (Optional)</Label>
+                            <Input 
+                                id={`q-neg-marks-${qIndex}`} 
+                                type="number" 
+                                value={q.negativeMarks} 
+                                onChange={e => handleQuestionChange(qIndex, 'negativeMarks', parseFloat(e.target.value) || 0)} 
+                                placeholder="e.g., 0.25"
+                            />
+                        </div>
+                    </div>
                </div>
 
                 <div className="space-y-2">
