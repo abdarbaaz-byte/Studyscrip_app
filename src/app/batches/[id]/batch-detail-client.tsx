@@ -137,11 +137,6 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     <div className="container mx-auto px-4 py-8 pb-32">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          <div className="space-y-4">
-            <h1 className="font-headline text-4xl font-bold">{batch.title}</h1>
-            <p className="text-lg text-muted-foreground">{batch.description}</p>
-          </div>
-
           <Tabs defaultValue="notes" className="w-full">
             <TabsList className="grid w-full grid-cols-4 h-12 bg-secondary/50">
               <TabsTrigger value="notes" className="gap-2"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
