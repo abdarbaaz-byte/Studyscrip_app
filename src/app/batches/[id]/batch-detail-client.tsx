@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy, Send, User, Users } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy, Send, User, Users, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -32,6 +32,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const [attemptedQuizzes, setAttemptedQuizzes] = useState<{[key: string]: string | null}>({});
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
   const [hasNewInfo, setHasNewInfo] = useState(false);
+  const [activeTab, setActiveTab] = useState("notes");
   
   // Chat State
   const [batchMessages, setBatchMessages] = useState<BatchMessage[]>([]);
@@ -90,14 +91,14 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
 
   // Group Chat Effect
   useEffect(() => {
-    if (hasAccess && batch.id) {
+    if (hasAccess && batch.id && activeTab === 'chats') {
         const unsubscribe = listenToBatchMessages(batch.id, (messages) => {
             setBatchMessages(messages);
             scrollToBottom();
         });
         return () => unsubscribe();
     }
-  }, [hasAccess, batch.id]);
+  }, [hasAccess, batch.id, activeTab]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -178,12 +179,14 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     return <div className="flex justify-center py-20"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
+  const isChatting = activeTab === 'chats' && hasAccess;
+
   return (
-    <div className="container mx-auto px-4 py-8 pb-32">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <Tabs defaultValue="notes" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-12 bg-secondary/50">
+    <div className={cn("container mx-auto px-4 py-8", isChatting ? "pb-4 h-[calc(100dvh-80px)] overflow-hidden" : "pb-32")}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+        <div className={cn(isChatting ? "lg:col-span-3 h-full" : "lg:col-span-2", "space-y-8 h-full flex flex-col")}>
+          <Tabs defaultValue="notes" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-4 h-12 bg-secondary/50 shrink-0">
               <TabsTrigger value="notes" className="gap-2"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
               <TabsTrigger value="quizzes" className="gap-2"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
               <TabsTrigger value="chats" className="gap-2"><MessageSquare className="h-4 w-4"/> Chat</TabsTrigger>
@@ -193,7 +196,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="notes" className="pt-6">
+            <TabsContent value="notes" className="pt-6 overflow-y-auto">
               <Card>
                 <CardContent className="pt-6">
                   <Accordion type="single" collapsible className="w-full space-y-3">
@@ -231,11 +234,11 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="quizzes" className="pt-6">
+            <TabsContent value="quizzes" className="pt-6 overflow-y-auto">
               {!hasAccess ? (
                 <LockedContent title="Enroll to access Batch Quizzes" onBuy={handleBuyClick} />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
                   {quizzes.map(quiz => {
                     const now = new Date();
                     const start = quiz.startTime?.toDate();
@@ -307,21 +310,21 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
               )}
             </TabsContent>
 
-            <TabsContent value="chats" className="pt-6">
+            <TabsContent value="chats" className="pt-6 h-full overflow-hidden">
               {!hasAccess ? (
                 <LockedContent title="Enroll to chat with Batch Students" onBuy={handleBuyClick} />
               ) : (
-                <Card className="flex flex-col h-[calc(100vh-250px)] min-h-[500px] border-none shadow-none md:border md:shadow-sm">
-                  <CardHeader className="border-b pb-4 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
+                <Card className="flex flex-col h-full border-none shadow-none md:border md:shadow-sm overflow-hidden">
+                  <CardHeader className="border-b pb-4 bg-background/50 backdrop-blur-sm sticky top-0 z-10 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="bg-primary/10 p-2 rounded-full"><Users className="h-5 w-5 text-primary"/></div>
                         <div>
                             <CardTitle className="text-lg">Group Discussion</CardTitle>
-                            <CardDescription>Real-time chat with fellow students</CardDescription>
+                            <CardDescription className="text-xs">Real-time chat with fellow students</CardDescription>
                         </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="flex-1 p-0 overflow-hidden bg-secondary/5">
+                  <CardContent className="flex-1 p-0 overflow-hidden bg-secondary/5 relative">
                     <ScrollArea className="h-full p-4 md:p-6" ref={chatScrollRef}>
                         <div className="space-y-6">
                             {batchMessages.map((msg) => {
@@ -353,7 +356,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                         </div>
                     </ScrollArea>
                   </CardContent>
-                  <CardFooter className="p-4 border-t bg-background/50 backdrop-blur-sm">
+                  <CardFooter className="p-4 border-t bg-background shrink-0">
                     <form onSubmit={handleSendMessage} className="flex w-full gap-2 items-center">
                         <Input 
                             placeholder="Type your message here..." 
@@ -372,7 +375,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
               )}
             </TabsContent>
 
-            <TabsContent value="information" className="pt-6">
+            <TabsContent value="information" className="pt-6 overflow-y-auto">
               <Card>
                 <CardHeader><CardTitle>Latest Announcements</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -391,57 +394,59 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
           </Tabs>
         </div>
 
-        <aside className="space-y-6">
-          <Card className="sticky top-24 overflow-hidden shadow-lg border-2 border-primary/10">
-            <div className="aspect-[16/10] relative">
-              <Image src={getGoogleDriveImageUrl(batch.thumbnail)} alt={batch.title} fill className="object-cover" />
-            </div>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-sm font-medium text-muted-foreground">Enrollment Fee</span>
-                <div className="text-right">
-                    <span className="text-3xl font-bold text-primary block">
-                        {isFree ? <Badge className="text-xl bg-green-600 px-4 py-1">Free</Badge> : `Rs. ${batch.price}`}
-                    </span>
-                    {batch.originalPrice && batch.originalPrice > batch.price && (
-                        <span className="text-sm text-muted-foreground line-through">Rs. {batch.originalPrice}</span>
+        {!isChatting && (
+          <aside className="space-y-6">
+            <Card className="sticky top-24 overflow-hidden shadow-lg border-2 border-primary/10">
+              <div className="aspect-[16/10] relative">
+                <Image src={getGoogleDriveImageUrl(batch.thumbnail)} alt={batch.title} fill className="object-cover" />
+              </div>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-sm font-medium text-muted-foreground">Enrollment Fee</span>
+                  <div className="text-right">
+                      <span className="text-3xl font-bold text-primary block">
+                          {isFree ? <Badge className="text-xl bg-green-600 px-4 py-1">Free</Badge> : `Rs. ${batch.price}`}
+                      </span>
+                      {batch.originalPrice && batch.originalPrice > batch.price && (
+                          <span className="text-sm text-muted-foreground line-through">Rs. {batch.originalPrice}</span>
+                      )}
+                  </div>
+                </div>
+                {!hasAccess ? (
+                  <Button size="lg" className="w-full" onClick={handleBuyClick}>Enroll Now <ArrowRight className="ml-2"/></Button>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 p-3 bg-green-100 text-green-700 rounded-lg font-bold">
+                    <Unlock className="h-5 w-5"/> {isFree ? "Free Access" : "Enrolled"}
+                  </div>
+                )}
+                <div className="mt-6 space-y-3">
+                  <p className="text-sm font-semibold border-b pb-2">Includes:</p>
+                  <ul className="text-sm space-y-2 text-muted-foreground">
+                    {(batch.includes && batch.includes.length > 0) ? (
+                        batch.includes.map((point, idx) => (
+                          <li key={idx} className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0"/> 
+                              <span>{point}</span>
+                          </li>
+                        ))
+                    ) : (
+                      <>
+                          <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Lifetime access to Batch content</li>
+                          <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Batch Discussion Group Chat</li>
+                          <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Specialized Practice Tests</li>
+                          <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Downloadable PDF Notes</li>
+                      </>
                     )}
+                  </ul>
                 </div>
-              </div>
-              {!hasAccess ? (
-                <Button size="lg" className="w-full" onClick={handleBuyClick}>Enroll Now <ArrowRight className="ml-2"/></Button>
-              ) : (
-                <div className="flex items-center justify-center gap-2 p-3 bg-green-100 text-green-700 rounded-lg font-bold">
-                  <Unlock className="h-5 w-5"/> {isFree ? "Free Access" : "Enrolled"}
-                </div>
-              )}
-              <div className="mt-6 space-y-3">
-                <p className="text-sm font-semibold border-b pb-2">Includes:</p>
-                <ul className="text-sm space-y-2 text-muted-foreground">
-                  {(batch.includes && batch.includes.length > 0) ? (
-                      batch.includes.map((point, idx) => (
-                        <li key={idx} className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0"/> 
-                            <span>{point}</span>
-                        </li>
-                      ))
-                  ) : (
-                    <>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Lifetime access to Batch content</li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Batch Discussion Group Chat</li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Specialized Practice Tests</li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500"/> Downloadable PDF Notes</li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
+              </CardContent>
+            </Card>
+          </aside>
+        )}
       </div>
 
-      {/* Sticky Bottom Purchase Bar */}
-      {!hasAccess && !isFree && (
+      {/* Sticky Bottom Purchase Bar - Hide when chatting */}
+      {!hasAccess && !isFree && !isChatting && (
         <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
@@ -479,7 +484,10 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
 
       <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
-          <DialogHeader className="p-2 border-b shrink-0"><DialogTitle>{contentToView?.title}</DialogTitle></DialogHeader>
+          <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="truncate">{contentToView?.title}</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-5 w-5"/></Button>
+          </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0">{renderContentInDialog()}</div>
         </DialogContent>
       </Dialog>
