@@ -31,6 +31,8 @@ function QuizResultsContent() {
   const [answers, setAnswers] = useState<AnswersState>({});
   const [score, setScore] = useState(0);
   const [maxMarks, setMaxMarks] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [incorrectCount, setIncorrectCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [canShowAnalysis, setCanShowAnalysis] = useState(false);
   const [allAttempts, setAllAttempts] = useState<QuizAttempt[]>([]);
@@ -81,6 +83,8 @@ function QuizResultsContent() {
 
         let earnedMarks = 0;
         let totalPossibleMarks = 0;
+        let correct = 0;
+        let incorrect = 0;
 
         loadedQuiz.questions.forEach(q => {
             const qMarks = q.marks ?? 1;
@@ -104,15 +108,18 @@ function QuizResultsContent() {
 
                 if (isCorrect) {
                     earnedMarks += qMarks;
+                    correct++;
                 } else {
-                    // Correct implementation: Subtract negative marks only if attempted and wrong
                     earnedMarks -= qNegMarks;
+                    incorrect++;
                 }
             }
         });
 
         setScore(Math.max(0, earnedMarks));
         setMaxMarks(totalPossibleMarks);
+        setCorrectCount(correct);
+        setIncorrectCount(incorrect);
         setCanShowAnalysis(showAnalysis && Object.keys(answers).length > 0);
         setCanShowRank(showRank || quizType === 'live');
         
@@ -152,10 +159,10 @@ function QuizResultsContent() {
           <div className="flex justify-center mb-4">
                 <GraduationCap className="h-16 w-16 text-primary" />
             </div>
-            <CardTitle className="font-headline text-3xl">
+            <CardTitle className="font-headline text-3xl text-center">
                 {Object.keys(answers).length > 0 ? `Results: ${quiz.title}` : `Leaderboard: ${quiz.title}`}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-center">
                 {Object.keys(answers).length > 0 ? `Well done, ${name}! Here's how you did.` : `Check out the top performers for this quiz!`}
             </CardDescription>
         </CardHeader>
@@ -165,7 +172,23 @@ function QuizResultsContent() {
                     <div className="text-5xl font-bold text-primary">
                         {score} / {maxMarks} <span className="text-xl font-normal text-muted-foreground ml-1">Marks</span>
                     </div>
-                    <div className="w-full max-w-sm">
+
+                    <div className="grid grid-cols-3 gap-4 w-full max-w-md mt-2">
+                        <div className="text-center p-3 bg-green-50 rounded-xl border border-green-100 shadow-sm">
+                            <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Correct</p>
+                            <p className="text-2xl font-bold text-green-700">{correctCount}</p>
+                        </div>
+                        <div className="text-center p-3 bg-red-50 rounded-xl border border-red-100 shadow-sm">
+                            <p className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Incorrect</p>
+                            <p className="text-2xl font-bold text-red-700">{incorrectCount}</p>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+                            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">Skipped</p>
+                            <p className="text-2xl font-bold text-gray-700">{quiz.questions.length - correctCount - incorrectCount}</p>
+                        </div>
+                    </div>
+
+                    <div className="w-full max-w-sm mt-4">
                          <Progress value={scorePercentage} className="h-4" />
                     </div>
                     <p className="font-semibold text-lg">{scorePercentage.toFixed(0)}% Score</p>
@@ -178,7 +201,7 @@ function QuizResultsContent() {
                 </div>
             )}
 
-             <div className="flex gap-4">
+             <div className="flex gap-4 mt-4">
                 {isPractice && (
                     <Button onClick={() => router.push(`/quizzes/${quizId}?type=practice`)}>
                         Attempt Again
@@ -243,13 +266,16 @@ function QuizResultsContent() {
                 }
 
                 return (
-                    <Card key={question.id} className={cn("border-l-4", isAttempted ? (isCorrect ? "border-green-500" : "border-red-500") : "border-gray-300")}>
+                    <Card key={question.id} className={cn("border-l-4 overflow-hidden", isAttempted ? (isCorrect ? "border-green-500" : "border-red-500") : "border-gray-300")}>
                         <CardHeader>
-                            <div className="flex justify-between items-center mb-2">
-                                <Badge variant="outline">Q{index + 1}</Badge>
-                                <div className="flex gap-2">
-                                    <Badge variant="secondary">+{question.marks} Marks</Badge>
-                                    {question.negativeMarks > 0 && <Badge variant="destructive">-{question.negativeMarks} Negative</Badge>}
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex gap-2 items-center">
+                                    <Badge variant="outline">Q{index + 1}</Badge>
+                                    {isAttempted && <Badge className="bg-blue-100 text-blue-700 border-blue-200">Attempted</Badge>}
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <Badge variant="secondary" className="bg-primary/5">+{question.marks} Marks</Badge>
+                                    {question.negativeMarks > 0 && <Badge variant="destructive" className="text-[10px] py-0">-{question.negativeMarks} Neg.</Badge>}
                                 </div>
                             </div>
                             <CardTitle className="text-lg">
