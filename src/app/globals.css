@@ -129,3 +129,8 @@ body {
     pointer-events: none;
   }
 }
+
+/* Hide Global Support Chat Widget when specifically requested */
+body.hide-global-chat #global-chat-widget {
+  display: none !important;
+}

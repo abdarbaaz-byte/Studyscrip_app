@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -245,7 +244,7 @@ export function ChatWidget() {
   const hasUnreadMessages = !isOpen && activeChat && typeof activeChat.unreadCount === 'number' && activeChat.unreadCount > 0;
 
   return (
-    <div ref={chatWidgetRef}>
+    <div ref={chatWidgetRef} id="global-chat-widget">
       <div className="fixed bottom-20 right-4 z-30 md:bottom-4">
         <Button id="chat-widget-toggle" onClick={handleToggleWidget} size="icon" className="rounded-full h-14 w-14 shadow-lg relative">
            {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}

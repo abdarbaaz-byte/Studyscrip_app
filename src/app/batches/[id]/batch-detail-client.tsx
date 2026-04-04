@@ -45,6 +45,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
 
   const isFree = batch.price === 0;
   const hasAccess = isPurchased || isFree;
+  const isChatting = activeTab === 'chats' && hasAccess;
 
   useEffect(() => {
     async function loadData() {
@@ -95,6 +96,18 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         return () => unsubscribe();
     }
   }, [hasAccess, batch.id, activeTab]);
+
+  // Handle hiding global chat widget when batch chat is active
+  useEffect(() => {
+    if (isChatting) {
+      document.body.classList.add('hide-global-chat');
+    } else {
+      document.body.classList.remove('hide-global-chat');
+    }
+    return () => {
+      document.body.classList.remove('hide-global-chat');
+    };
+  }, [isChatting]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -174,8 +187,6 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   if (loading || authLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
-
-  const isChatting = activeTab === 'chats' && hasAccess;
 
   return (
     <div className={cn("container mx-auto px-4 py-4 md:py-8", isChatting ? "h-[calc(100dvh-128px)] overflow-hidden" : "pb-32")}>
