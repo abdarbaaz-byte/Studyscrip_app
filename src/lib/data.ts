@@ -195,6 +195,7 @@ export type Quiz = {
     endTime?: Timestamp;   // Optional end time for the quiz
     targetClass: string; // Legacy
     targetClasses?: string[]; // New: support multiple targets
+    createdAt?: Timestamp; // Added for sorting
 };
 
 // This type will be used to store a user's attempt in Firestore
@@ -933,9 +934,15 @@ export async function getQuiz(id: string): Promise<Quiz | null> {
 
 export async function getQuizzes(): Promise<Quiz[]> {
     const quizzesCol = collection(db, 'quizzes');
-    const q = query(quizzesCol, orderBy('title'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+    const snapshot = await getDocs(quizzesCol);
+    const quizzes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+    
+    // Sort client-side to ensure newest first, even if createdAt is missing in some old docs
+    return quizzes.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis() || 0;
+        const timeB = b.createdAt?.toMillis() || 0;
+        return timeB - timeA;
+    });
 }
 
 export async function getQuizzesForTarget(targetId: string): Promise<Quiz[]> {
@@ -943,7 +950,14 @@ export async function getQuizzesForTarget(targetId: string): Promise<Quiz[]> {
     // Query quizzes where targetClasses array contains targetId
     const q = query(quizzesCol, where('targetClasses', 'array-contains', targetId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+    const quizzes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+    
+    // Sort client-side to avoid composite index requirement
+    return quizzes.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis() || 0;
+        const timeB = b.createdAt?.toMillis() || 0;
+        return timeB - timeA;
+    });
 }
 
 export async function saveQuiz(quiz: Quiz): Promise<void> {
@@ -968,6 +982,7 @@ export async function saveQuiz(quiz: Quiz): Promise<void> {
     if (id) {
         await setDoc(doc(db, 'quizzes', id), dataToSave, { merge: true });
     } else {
+        dataToSave.createdAt = serverTimestamp(); // Ensure new quizzes have a timestamp
         await addDoc(collection(db, 'quizzes'), dataToSave);
     }
 }
