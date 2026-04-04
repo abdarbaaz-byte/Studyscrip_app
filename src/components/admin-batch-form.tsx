@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, ListPlus } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, ListPlus, MessageSquare } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { saveBatchInformation, getBatchInformation, deleteBatchInformation } from "@/lib/data";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -48,7 +49,8 @@ export function AdminBatchForm({ initialBatches, onSave, onDelete }: AdminBatchF
         notes: [],
         quizIds: [],
         includes: [],
-        createdAt: null as any
+        createdAt: null as any,
+        chatEnabled: true,
     });
     setIsDialogOpen(true);
   };
@@ -106,6 +108,7 @@ export function AdminBatchForm({ initialBatches, onSave, onDelete }: AdminBatchF
               <TableCell>
                 <div className="flex gap-2">
                   <Badge variant="outline">{batch.notes.length} Topics</Badge>
+                  {batch.chatEnabled === false && <Badge variant="destructive">Chat Off</Badge>}
                 </div>
               </TableCell>
               <TableCell className="text-right space-x-2">
@@ -146,7 +149,8 @@ export function AdminBatchForm({ initialBatches, onSave, onDelete }: AdminBatchF
 function BatchForm({ batch, onSave, onCancel, isSaving }: { batch: Batch, onSave: (batch: Batch) => void, onCancel: () => void, isSaving: boolean }) {
   const [formData, setFormData] = useState<Batch>({
     ...batch,
-    includes: batch.includes || []
+    includes: batch.includes || [],
+    chatEnabled: batch.chatEnabled !== false, // default to true
   });
   const [infoTitle, setInfoTitle] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -254,6 +258,18 @@ function BatchForm({ batch, onSave, onCancel, isSaving }: { batch: Batch, onSave
         <div className="space-y-2">
           <Label>Original Price (Rs.) - For Discount display</Label>
           <Input name="originalPrice" type="number" value={formData.originalPrice || 0} onChange={handleChange} placeholder="e.g. 1999" />
+        </div>
+        <div className="space-y-2 flex flex-col justify-end">
+            <div className="flex items-center space-x-2 p-3 border rounded-md bg-secondary/20">
+                <Switch 
+                    id="chat-enabled" 
+                    checked={formData.chatEnabled} 
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, chatEnabled: checked }))} 
+                />
+                <Label htmlFor="chat-enabled" className="flex items-center gap-2 cursor-pointer">
+                    <MessageSquare className="h-4 w-4"/> Enable Group Chat
+                </Label>
+            </div>
         </div>
         <div className="space-y-2 col-span-2">
           <Label>Description</Label>

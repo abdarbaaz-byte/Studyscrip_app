@@ -46,6 +46,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   const isFree = batch.price === 0;
   const hasAccess = isPurchased || isFree;
   const isChatting = activeTab === 'chats' && hasAccess;
+  const chatEnabled = batch.chatEnabled !== false;
 
   useEffect(() => {
     async function loadData() {
@@ -120,7 +121,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || isSending) return;
+    if (!newMessage.trim() || !user || isSending || !chatEnabled) return;
 
     setIsSending(true);
     try {
@@ -365,19 +366,25 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                         </ScrollArea>
                     </CardContent>
                     <CardFooter className="p-3 border-t bg-background shrink-0">
-                        <form onSubmit={handleSendMessage} className="flex w-full gap-2 items-center">
-                            <Input 
-                                placeholder="Type your message here..." 
-                                value={newMessage} 
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                disabled={isSending}
-                                autoComplete="off"
-                                className="flex-1 h-11 bg-secondary/20 border-none focus-visible:ring-1 focus-visible:ring-primary rounded-full px-5"
-                            />
-                            <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-full shadow-md" disabled={!newMessage.trim() || isSending}>
-                                {isSending ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-5 w-5 ml-0.5" />}
-                            </Button>
-                        </form>
+                        {chatEnabled ? (
+                            <form onSubmit={handleSendMessage} className="flex w-full gap-2 items-center">
+                                <Input 
+                                    placeholder="Type your message here..." 
+                                    value={newMessage} 
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    disabled={isSending}
+                                    autoComplete="off"
+                                    className="flex-1 h-11 bg-secondary/20 border-none focus-visible:ring-1 focus-visible:ring-primary rounded-full px-5"
+                                />
+                                <Button type="submit" size="icon" className="h-11 w-11 shrink-0 rounded-full shadow-md" disabled={!newMessage.trim() || isSending}>
+                                    {isSending ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-5 w-5 ml-0.5" />}
+                                </Button>
+                            </form>
+                        ) : (
+                            <div className="w-full py-2.5 text-center text-sm font-medium text-muted-foreground bg-secondary/20 rounded-full border border-dashed flex items-center justify-center gap-2">
+                                <Lock className="h-3.5 w-3.5"/> Chat is currently disabled by Admin
+                            </div>
+                        )}
                     </CardFooter>
                     </Card>
                 )}

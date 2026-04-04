@@ -62,6 +62,7 @@ export type Batch = {
     notes: BatchNote[];
     quizIds: string[]; // Keep for legacy, though we'll use targetClasses in Quizzes now
     includes: string[];
+    chatEnabled?: boolean; // New: Toggle for group chat
 };
 
 export async function getBatches(): Promise<Batch[]> {
@@ -95,7 +96,7 @@ export async function saveBatch(batch: Omit<Batch, 'id' | 'createdAt'> & { id?: 
     if (id) {
         await setDoc(doc(db, 'batches', id), data, { merge: true });
     } else {
-        await addDoc(collection(db, 'batches'), { ...data, createdAt: serverTimestamp() });
+        await addDoc(collection(db, 'batches'), { ...data, createdAt: serverTimestamp(), chatEnabled: true });
     }
 }
 
