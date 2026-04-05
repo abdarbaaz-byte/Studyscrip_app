@@ -244,9 +244,6 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                 </TabsContent>
 
                 <TabsContent value="quizzes" className="h-full mt-0 overflow-y-auto">
-                {!hasAccess ? (
-                    <LockedContent title="Enroll to access Batch Quizzes" onBuy={handleBuyClick} />
-                ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
                     {quizzes.map(quiz => {
                         const now = new Date();
@@ -269,7 +266,10 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                             </div>
                             )}
                             <CardHeader>
-                            <CardTitle className="text-lg pr-12">{quiz.title}</CardTitle>
+                            <CardTitle className="text-lg pr-12 flex items-center gap-2">
+                                {quiz.title}
+                                {!hasAccess && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                            </CardTitle>
                             <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2 pb-4">
@@ -290,7 +290,11 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                 )}
                             </CardContent>
                             <CardFooter className="mt-auto">
-                            {hasAttempted ? (
+                            {!hasAccess ? (
+                                <Button onClick={handleBuyClick} variant="outline" className="w-full">
+                                    <Lock className="h-4 w-4 mr-2" /> Unlock Quiz
+                                </Button>
+                            ) : hasAttempted ? (
                                 <Button asChild variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50">
                                     <Link href={`/quizzes/${quiz.id}/results?type=live&answers=${encodeURIComponent(userAttemptAnswers || '')}`}>
                                         View Analysis <Trophy className="ml-2 h-4 w-4"/>
@@ -316,7 +320,6 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     })}
                     {quizzes.length === 0 && <p className="col-span-2 text-center py-10 text-muted-foreground">No quizzes assigned yet.</p>}
                     </div>
-                )}
                 </TabsContent>
 
                 <TabsContent value="chats" className="h-full mt-0 overflow-hidden">
@@ -346,7 +349,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                             </div>
                                             <div className={cn(
                                                 "px-4 py-2.5 rounded-2xl text-sm break-words shadow-sm", 
-                                                isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-white dark:bg-secondary rounded-tl-none border"
+                                                isMe ? "bg-primary text-primary-foreground" : "bg-white dark:bg-secondary rounded-tl-none border"
                                             )}>
                                                 {msg.text}
                                             </div>
