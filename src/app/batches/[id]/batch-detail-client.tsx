@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -416,7 +417,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         {!isChatting && (
           <aside className="space-y-6">
             <Card className="sticky top-24 overflow-hidden shadow-lg border-2 border-primary/10">
-              <div className="aspect-[16/10] relative">
+              <div className="aspect-[16/9] relative">
                 <Image src={getGoogleDriveImageUrl(batch.thumbnail)} alt={batch.title} fill className="object-cover" />
               </div>
               <CardContent className="p-6">
