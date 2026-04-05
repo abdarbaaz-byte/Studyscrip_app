@@ -862,6 +862,7 @@ export type FreeNote = {
   title: string;
   description: string;
   content: CourseContent[];
+  category: 'online' | 'offline'; // Added Category
 };
 
 export async function getFreeNotes(): Promise<FreeNote[]> {
@@ -876,7 +877,7 @@ export async function saveFreeNotes(note: FreeNote): Promise<void> {
     if (id) {
         await setDoc(doc(db, 'freeNotes', id), data, { merge: true });
     } else {
-        await addDoc(collection(db, 'freeNotes'), data);
+        await addDoc(collection(db, 'freeNotes'), { ...data, category: data.category || 'online' });
     }
 }
 

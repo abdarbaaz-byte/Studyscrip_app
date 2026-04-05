@@ -8,13 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, FileText, Video, Image as ImageIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, FileText, Video, Image as ImageIcon, Download, Eye, Globe, Smartphone } from "lucide-react";
 import { getFreeNotes, type FreeNote, type ContentItem } from "@/lib/data";
 
 export default function FreeNotesPage() {
   const [notes, setNotes] = useState<FreeNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
+  const [activeTab, setActiveTab] = useState("online");
 
   useEffect(() => {
     async function loadData() {
@@ -30,10 +32,6 @@ export default function FreeNotesPage() {
     if (type === 'pdf') return <FileText className="h-5 w-5 text-primary" />;
     if (type === 'video') return <Video className="h-5 w-5 text-primary" />;
     return <ImageIcon className="h-5 w-5 text-primary" />;
-  };
-
-  const handleViewContent = (item: ContentItem) => {
-    setContentToView(item);
   };
 
   const renderContentInDialog = () => {
@@ -107,6 +105,9 @@ export default function FreeNotesPage() {
     return <p>Unsupported content type.</p>;
   };
 
+  const onlineNotes = notes.filter(n => (n.category || 'online') === 'online');
+  const offlineNotes = notes.filter(n => n.category === 'offline');
+
   return (
     <>
       <div className="container mx-auto px-4 py-8">
@@ -121,40 +122,82 @@ export default function FreeNotesPage() {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            {notes.length > 0 ? (
-              <Accordion type="single" collapsible className="w-full space-y-4">
-                {notes.map((note) => (
-                  <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card">
-                    <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline">
-                      {note.title}
-                    </AccordionTrigger>
-                    <AccordionContent className="p-6 pt-0">
-                       <p className="text-muted-foreground mb-4">{note.description}</p>
-                       <ul className="space-y-3">
-                          {note.content.map((item, index) => (
-                            <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
-                              <div className="flex items-center gap-4">
-                                {getContentIcon(item.type)}
-                                <span className="font-medium">{item.title}</span>
-                                <Badge variant={item.type === 'pdf' ? 'secondary' : 'default'} className="capitalize">{item.type}</Badge>
-                              </div>
-                              <Button variant="ghost" size="sm" onClick={() => handleViewContent(item)}>View</Button>
-                            </li>
-                          ))}
-                           {note.content.length === 0 && (
-                            <p className="text-center text-muted-foreground py-4">No content available for this topic yet.</p>
-                           )}
-                       </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            ) : (
-              <div className="text-center col-span-full py-16">
-                <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No free notes available at the moment. Please check back later.</p>
-              </div>
-            )}
+            <Tabs defaultValue="online" value={activeTab} onValueChange={setActiveTab} className="w-full mb-8">
+                <TabsList className="grid w-full grid-cols-2 h-12 bg-secondary/50">
+                    <TabsTrigger value="online" className="gap-2"><Globe className="h-4 w-4"/> Online Notes</TabsTrigger>
+                    <TabsTrigger value="offline" className="gap-2"><Smartphone className="h-4 w-4"/> Offline (Download)</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="online" className="mt-6">
+                    {onlineNotes.length > 0 ? (
+                        <Accordion type="single" collapsible className="w-full space-y-4">
+                            {onlineNotes.map((note) => (
+                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card">
+                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline">
+                                {note.title}
+                                </AccordionTrigger>
+                                <AccordionContent className="p-6 pt-0">
+                                <p className="text-muted-foreground mb-4">{note.description}</p>
+                                <ul className="space-y-3">
+                                    {note.content.map((item, index) => (
+                                        <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                                        <div className="flex items-center gap-4">
+                                            {getContentIcon(item.type)}
+                                            <span className="font-medium">{item.title}</span>
+                                            <Badge variant={item.type === 'pdf' ? 'secondary' : 'default'} className="capitalize">{item.type}</Badge>
+                                        </div>
+                                        <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>
+                                            <Eye className="mr-2 h-4 w-4"/> View
+                                        </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                                </AccordionContent>
+                            </AccordionItem>
+                            ))}
+                        </Accordion>
+                    ) : (
+                        <EmptyState message="No online notes found." />
+                    )}
+                </TabsContent>
+
+                <TabsContent value="offline" className="mt-6">
+                    {offlineNotes.length > 0 ? (
+                        <Accordion type="single" collapsible className="w-full space-y-4">
+                            {offlineNotes.map((note) => (
+                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card">
+                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline">
+                                {note.title}
+                                </AccordionTrigger>
+                                <AccordionContent className="p-6 pt-0">
+                                <p className="text-muted-foreground mb-4">{note.description}</p>
+                                <ul className="space-y-3">
+                                    {note.content.map((item, index) => (
+                                        <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                                        <div className="flex items-center gap-4">
+                                            {getContentIcon(item.type)}
+                                            <span className="font-medium">{item.title}</span>
+                                            <Badge variant="outline" className="capitalize">{item.type}</Badge>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm" asChild>
+                                                <a href={item.url} target="_blank" rel="noopener noreferrer" download>
+                                                    <Download className="mr-2 h-4 w-4"/> Download
+                                                </a>
+                                            </Button>
+                                        </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                                </AccordionContent>
+                            </AccordionItem>
+                            ))}
+                        </Accordion>
+                    ) : (
+                        <EmptyState message="No offline notes available for download yet." />
+                    )}
+                </TabsContent>
+            </Tabs>
           </div>
         )}
       </div>
@@ -171,4 +214,13 @@ export default function FreeNotesPage() {
       </Dialog>
     </>
   );
+}
+
+function EmptyState({ message }: { message: string }) {
+    return (
+        <div className="text-center py-16 border-2 border-dashed rounded-lg">
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">{message}</p>
+        </div>
+    );
 }

@@ -33,6 +33,7 @@ const emptyNote: Omit<FreeNote, 'id'> = {
   title: "",
   description: "",
   content: [],
+  category: 'online',
 };
 
 export function AdminFreeNotesForm({ initialNotes, onSave, onDelete }: AdminFreeNotesFormProps) {
@@ -49,7 +50,7 @@ export function AdminFreeNotesForm({ initialNotes, onSave, onDelete }: AdminFree
   };
   
   const handleAddNew = () => {
-    setEditingNote({ ...emptyNote, id: '' }); // Temp empty object for the form
+    setEditingNote({ ...emptyNote, id: '' });
     setIsDialogOpen(true);
   };
   
@@ -89,7 +90,12 @@ export function AdminFreeNotesForm({ initialNotes, onSave, onDelete }: AdminFree
           <AccordionItem value={note.id} key={note.id} className="border rounded-md px-4 bg-secondary/50">
             <div className="flex items-center w-full">
               <AccordionTrigger className="flex-grow hover:no-underline py-3 text-lg font-medium">
-                {note.title}
+                <div className="flex items-center gap-3">
+                    {note.title}
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${note.category === 'offline' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                        {note.category || 'online'}
+                    </span>
+                </div>
               </AccordionTrigger>
               <div className="flex items-center gap-3 ml-4">
                  <Button variant="outline" size="sm" onClick={() => handleEdit(note)}>Edit</Button>
@@ -132,12 +138,11 @@ export function AdminFreeNotesForm({ initialNotes, onSave, onDelete }: AdminFree
 }
 
 
-// Sub-component for the form itself
 function NoteForm({ note, onSave, onCancel, isSaving }: { note: FreeNote | null, onSave: (note: FreeNote) => void, onCancel: () => void, isSaving: boolean }) {
   const [formData, setFormData] = useState<Omit<FreeNote, 'id'>>(note || emptyNote);
 
   useEffect(() => {
-    setFormData(note || emptyNote);
+    setFormData(note ? { ...note, category: note.category || 'online' } : emptyNote);
   }, [note]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -165,14 +170,28 @@ function NoteForm({ note, onSave, onCancel, isSaving }: { note: FreeNote | null,
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, id: note?.id || '' });
+    onSave({ ...formData, id: note?.id || '' } as FreeNote);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Topic Title</Label>
-        <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+            <Label htmlFor="title">Topic Title</Label>
+            <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="category">Display Mode</Label>
+            <Select value={formData.category} onValueChange={(val: any) => setFormData(prev => ({ ...prev, category: val }))}>
+                <SelectTrigger id="category">
+                    <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="online">Online (In-App View)</SelectItem>
+                    <SelectItem value="offline">Offline (Downloadable)</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
@@ -231,5 +250,3 @@ function NoteForm({ note, onSave, onCancel, isSaving }: { note: FreeNote | null,
     </form>
   );
 }
-
-    
