@@ -210,6 +210,7 @@ export type Question = {
     explanation: string;
     marks: number; // Points for correct answer
     negativeMarks: number; // Points to deduct for incorrect answer
+    imageUrl?: string; // Added optional image support
 };
 
 

@@ -246,7 +246,8 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
         answerText: '',
         explanation: '',
         marks: 1,
-        negativeMarks: 0
+        negativeMarks: 0,
+        imageUrl: ''
     };
     setFormData(prev => ({...prev, questions: [...prev.questions, newQuestion]}));
   };
@@ -480,6 +481,15 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                
                 {q.type === 'mcq' && (
                     <div className="space-y-3">
+                        <div className="space-y-2">
+                            <Label htmlFor={`q-image-${qIndex}`}>Question Image URL (Optional)</Label>
+                            <Input 
+                                id={`q-image-${qIndex}`}
+                                placeholder="Google Drive image link"
+                                value={q.imageUrl || ''}
+                                onChange={e => handleQuestionChange(qIndex, 'imageUrl', e.target.value)}
+                            />
+                        </div>
                         <Label>Options & Correct Answer</Label>
                         <RadioGroup value={q.correctAnswer?.toString()} onValueChange={value => handleCorrectAnswerChange(qIndex, parseInt(value))}>
                             {q.options.map((opt, optIndex) => (

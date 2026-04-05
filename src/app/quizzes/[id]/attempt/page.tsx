@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { getGoogleDriveImageUrl } from "@/lib/utils";
 
 type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
@@ -412,6 +414,17 @@ function QuizAttemptContent() {
                 )}
             </div>
             <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
+            
+            {currentQuestion.imageUrl && (
+                <div className="mb-6 rounded-lg overflow-hidden border bg-secondary/10 flex justify-center">
+                    <img 
+                        src={getGoogleDriveImageUrl(currentQuestion.imageUrl)} 
+                        alt="Question Visual" 
+                        className="max-w-full h-auto max-h-[300px] object-contain" 
+                    />
+                </div>
+            )}
+
             <QuizQuestion
                 key={currentQuestion.id} 
                 question={currentQuestion}

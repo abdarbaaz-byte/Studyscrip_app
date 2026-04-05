@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -12,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
+import { getGoogleDriveImageUrl } from "@/lib/utils";
 
 type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 
@@ -283,6 +285,16 @@ function QuizResultsContent() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            {question.imageUrl && (
+                                <div className="mb-4 rounded-md overflow-hidden border bg-secondary/5 flex justify-center">
+                                    <img 
+                                        src={getGoogleDriveImageUrl(question.imageUrl)} 
+                                        alt="Question Context" 
+                                        className="max-w-full h-auto max-h-[200px] object-contain" 
+                                    />
+                                </div>
+                            )}
+
                             {question.type === 'mcq' && question.options.map((option, optIndex) => {
                                 const isUserAnswer = parseInt(userAnswer?.toString() || '-1') === optIndex;
                                 const isCorrectAnswer = question.correctAnswer === optIndex;
