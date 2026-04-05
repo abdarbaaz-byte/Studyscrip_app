@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserProfile, updateUserProfile, getUserPayments, type Payment, type UserCertificate } from "@/lib/data";
-import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2 } from "lucide-react";
+import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 
 
 export default function MyProfilePage() {
@@ -29,6 +29,9 @@ export default function MyProfilePage() {
   const [school, setSchool] = useState("");
   const [userClass, setUserClass] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [rollNumber, setRollNumber] = useState("");
+  const [address, setAddress] = useState("");
+  
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
   const [certificates, setCertificates] = useState<UserCertificate[]>([]);
   
@@ -51,6 +54,8 @@ export default function MyProfilePage() {
       setSchool(profile.school || "");
       setUserClass(profile.userClass || "");
       setMobileNumber(profile.mobileNumber || "");
+      setRollNumber(profile.rollNumber || "");
+      setAddress(profile.address || "");
       setCertificates(profile.certificates || []);
     }
 
@@ -78,9 +83,11 @@ export default function MyProfilePage() {
         school,
         userClass,
         mobileNumber,
+        rollNumber,
+        address,
       });
       toast({ title: "Profile Updated!", description: "Your information has been saved." });
-      setIsEditing(false); // Switch back to view mode on successful save
+      setIsEditing(false);
     } catch (error) {
       console.error("Failed to update profile:", error);
       toast({ variant: "destructive", title: "Update Failed", description: "Could not save your profile." });
@@ -90,77 +97,64 @@ export default function MyProfilePage() {
 
   const handleShareCertificate = async (cert: UserCertificate) => {
     setIsSharing(cert.id);
-    const imageUrl = getGoogleDriveImageUrl(cert.url);
-    const proxyUrl = `/api/download?url=${encodeURIComponent(imageUrl)}&name=${encodeURIComponent(cert.title)}.jpg`;
-
     try {
-      // Fetch the image as a blob
-      const response = await fetch(proxyUrl);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const blob = await response.blob();
-      
-      // Create a File object
-      const file = new File([blob], `${cert.title}.jpg`, { type: blob.type });
-
-      // Prepare share data with the file
       const shareData = {
         title: 'My Certificate!',
         text: `I just earned a certificate for "${cert.title}" from StudyScript!`,
-        files: [file],
+        url: cert.url,
       };
 
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
       } else {
-        // Fallback for browsers that don't support file sharing
          await navigator.clipboard.writeText(cert.url);
-         toast({ title: 'Link Copied!', description: 'File sharing is not supported, so the certificate link has been copied to your clipboard.' });
+         toast({ title: 'Link Copied!', description: 'Certificate link has been copied to your clipboard.' });
       }
-
     } catch (error) {
       console.error('Error sharing certificate:', error);
-      toast({ variant: 'destructive', title: 'Could not share', description: 'There was an error trying to share your certificate.' });
     } finally {
       setIsSharing(null);
     }
   };
 
   const handleDownloadCertificate = (certUrl: string, certTitle: string) => {
-    // We use our API proxy to handle the download and bypass CORS.
-    const downloadUrl = `/api/download?url=${encodeURIComponent(getGoogleDriveImageUrl(certUrl))}&name=${encodeURIComponent(certTitle)}.jpg`;
-    window.location.href = downloadUrl;
+    window.open(certUrl, '_blank');
   };
   
   const totalLoading = authLoading || loadingProfile;
 
+  const DetailItem = ({ icon: Icon, label, value }: { icon: any, label: string, value: string }) => (
+    <div className="flex items-start gap-3 p-4 rounded-xl border bg-background/50">
+        <div className="bg-primary/10 p-2 rounded-lg text-primary">
+            <Icon className="h-5 w-5" />
+        </div>
+        <div className="space-y-0.5">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</p>
+            <p className="text-sm md:text-base font-semibold">{value || "Not set"}</p>
+        </div>
+    </div>
+  );
+
   const renderViewMode = () => (
-    <div className="space-y-6">
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Full Name</p>
-          <p className="text-lg">{name || "Not set"}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Email Address</p>
-          <p className="text-lg">{email}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Mobile Number</p>
-          <p className="text-lg">{mobileNumber || "Not set"}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">School Name</p>
-          <p className="text-lg">{school || "Not set"}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Your Class</p>
-          <p className="text-lg">{userClass || "Not set"}</p>
-        </div>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-lg font-bold col-span-full border-b pb-2 flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" /> Personal Information
+            </h3>
+            <DetailItem icon={User} label="Full Name" value={name} />
+            <DetailItem icon={Mail} label="Email Address" value={email} />
+            <DetailItem icon={Phone} label="Mobile Number" value={mobileNumber} />
+            <DetailItem icon={MapPin} label="Full Address" value={address} />
+            
+            <h3 className="text-lg font-bold col-span-full border-b pb-2 mt-4 flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" /> Academic Details
+            </h3>
+            <DetailItem icon={GraduationCap} label="School/College" value={school} />
+            <DetailItem icon={BookOpen} label="Class/Course" value={userClass} />
+            <DetailItem icon={Hash} label="Roll Number" value={rollNumber} />
       </div>
-      <div className="flex justify-end pt-4">
-        <Button size="lg" onClick={() => setIsEditing(true)}>
+      <div className="flex justify-center pt-4">
+        <Button size="lg" onClick={() => setIsEditing(true)} className="rounded-full px-8 shadow-md">
           <Edit className="mr-2 h-5 w-5" />
           Edit Profile
         </Button>
@@ -169,37 +163,51 @@ export default function MyProfilePage() {
   );
 
   const renderEditMode = () => (
-     <form onSubmit={handleSave} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input id="email" type="email" value={email} disabled readOnly />
-            <p className="text-xs text-muted-foreground">Email address cannot be changed.</p>
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="mobileNumber">Mobile Number</Label>
-            <Input id="mobileNumber" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} placeholder="e.g., 9876543210" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="school">School Name</Label>
-            <Input id="school" value={school} onChange={(e) => setSchool(e.target.value)} placeholder="e.g., Delhi Public School" />
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="userClass">Your Class</Label>
-            <Input id="userClass" value={userClass} onChange={(e) => setUserClass(e.target.value)} placeholder="e.g., 10th or B.Tech" />
-          </div>
+     <form onSubmit={handleSave} className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-secondary/30 border">
+                <h3 className="text-lg font-bold col-span-full flex items-center gap-2"><User className="h-5 w-5" /> Update Personal Info</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Enter your full name" className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input id="email" type="email" value={email} disabled readOnly className="bg-secondary/50 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="mobileNumber">Mobile Number</Label>
+                    <Input id="mobileNumber" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} placeholder="e.g., 9876543210" className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="address">Full Address</Label>
+                    <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Your residential address" className="rounded-xl" />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-secondary/30 border">
+                <h3 className="text-lg font-bold col-span-full flex items-center gap-2"><GraduationCap className="h-5 w-5" /> Update Academic Info</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="school">School/College Name</Label>
+                    <Input id="school" value={school} onChange={(e) => setSchool(e.target.value)} placeholder="e.g., Delhi Public School" className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="userClass">Class/Course</Label>
+                    <Input id="userClass" value={userClass} onChange={(e) => setUserClass(e.target.value)} placeholder="e.g., 10th or B.Tech" className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="rollNumber">Roll Number</Label>
+                    <Input id="rollNumber" value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} placeholder="e.g., 2024001" className="rounded-xl" />
+                </div>
+            </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
+        <div className="flex justify-center gap-4 pt-4">
+            <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving} className="rounded-full px-8">
               <X className="mr-2 h-5 w-5" />
               Cancel
             </Button>
-            <Button type="submit" size="lg" disabled={isSaving}>
+            <Button type="submit" size="lg" disabled={isSaving} className="rounded-full px-10 shadow-lg">
               {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
               {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
@@ -208,21 +216,35 @@ export default function MyProfilePage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <Card className="shadow-lg">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <User className="h-16 w-16 text-primary" />
+    <div className="container mx-auto px-4 py-8 md:py-12 bg-secondary/10">
+      <div className="max-w-4xl mx-auto space-y-10">
+        
+        {/* Profile Header Card */}
+        <Card className="border-none shadow-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-indigo-900 text-white">
+            <div className="p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+                <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                    <div className="relative h-24 w-24 md:h-32 md:w-32 rounded-full border-4 border-white/20 bg-background flex items-center justify-center text-primary text-4xl md:text-5xl font-black shadow-inner">
+                        {name ? name.charAt(0).toUpperCase() : <User className="h-16 w-16" />}
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tight">{name || "Anonymous User"}</h1>
+                    <p className="text-white/70 text-lg md:text-xl font-medium flex items-center justify-center md:justify-start gap-2">
+                        <Mail className="h-5 w-5" /> {email}
+                    </p>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+                        {userClass && <Badge className="bg-white/20 text-white border-none backdrop-blur-md px-4 py-1">{userClass}</Badge>}
+                        {school && <Badge className="bg-white/20 text-white border-none backdrop-blur-md px-4 py-1">{school}</Badge>}
+                    </div>
+                </div>
             </div>
-            <CardTitle className="font-headline text-3xl md:text-4xl">My Profile</CardTitle>
-            <CardDescription className="text-md md:text-lg text-muted-foreground pt-2">
-              View and update your personal details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-8">
+        </Card>
+
+        <Card className="shadow-xl rounded-3xl border-none">
+          <CardContent className="p-6 md:p-10">
             {totalLoading ? (
-              <div className="flex justify-center items-center h-48">
+              <div className="flex justify-center items-center h-64">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
               </div>
             ) : (
@@ -233,96 +255,92 @@ export default function MyProfilePage() {
 
         {!totalLoading && (
            <>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                        <Wallet /> Payment History
+            <Card className="shadow-xl rounded-3xl border-none">
+                <CardHeader className="px-8 pt-8">
+                    <CardTitle className="font-headline text-2xl flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-xl text-primary"><Wallet className="h-6 w-6" /></div>
+                        Payment History
                     </CardTitle>
-                    <CardDescription>A record of all your transactions on StudyScript.</CardDescription>
+                    <CardDescription>A complete record of your transactions.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Item Name</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paymentHistory.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                                        You have not made any payments yet.
-                                    </TableCell>
+                <CardContent className="px-0 sm:px-8 pb-8">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="border-none hover:bg-transparent">
+                                    <TableHead className="font-bold">Item Name</TableHead>
+                                    <TableHead className="font-bold">Amount</TableHead>
+                                    <TableHead className="font-bold">Date</TableHead>
+                                    <TableHead className="text-right font-bold">Status</TableHead>
                                 </TableRow>
-                            ) : (
-                                paymentHistory.map((payment) => (
-                                    <TableRow key={payment.id}>
-                                        <TableCell className="font-medium">{payment.itemTitle}</TableCell>
-                                        <TableCell>Rs. {payment.amount}</TableCell>
-                                        <TableCell>{format(payment.paymentDate.toDate(), "PPP")}</TableCell>
-                                        <TableCell className="text-right">
-                                             <Badge
-                                                variant={
-                                                payment.status === 'succeeded'
-                                                    ? 'default'
-                                                    : payment.status === 'pending'
-                                                    ? 'secondary'
-                                                    : 'destructive'
-                                                }
-                                                className={cn(
-                                                "capitalize",
-                                                payment.status === 'succeeded' && "bg-green-600",
-                                                payment.status === 'pending' && "bg-orange-500",
-                                                )}
-                                            >
-                                                {payment.status}
-                                            </Badge>
+                            </TableHeader>
+                            <TableBody>
+                                {paymentHistory.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center h-32 text-muted-foreground">
+                                            No payment records found.
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    paymentHistory.map((payment) => (
+                                        <TableRow key={payment.id} className="hover:bg-secondary/20 transition-colors">
+                                            <TableCell className="font-semibold py-4">{payment.itemTitle}</TableCell>
+                                            <TableCell className="font-bold text-primary">Rs. {payment.amount}</TableCell>
+                                            <TableCell className="text-muted-foreground">{format(payment.paymentDate.toDate(), "PPP")}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge
+                                                    variant={payment.status === 'succeeded' ? 'default' : payment.status === 'pending' ? 'secondary' : 'destructive'}
+                                                    className={cn(
+                                                        "capitalize px-3 py-1 rounded-full",
+                                                        payment.status === 'succeeded' && "bg-green-600",
+                                                        payment.status === 'pending' && "bg-orange-500",
+                                                    )}
+                                                >
+                                                    {payment.status}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
 
-            <Card>
-                 <CardHeader>
-                    <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                        <Award /> My Certificates
+            <Card className="shadow-xl rounded-3xl border-none">
+                 <CardHeader className="px-8 pt-8">
+                    <CardTitle className="font-headline text-2xl flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-xl text-primary"><Award className="h-6 w-6" /></div>
+                        My Certificates
                     </CardTitle>
-                    <CardDescription>All your earned certificates in one place.</CardDescription>
+                    <CardDescription>View and share your achievements.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-8 pb-8">
                     {certificates.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">
-                            You have not earned any certificates yet. Keep learning!
-                        </p>
+                        <div className="text-center py-16 bg-secondary/10 rounded-2xl border-2 border-dashed">
+                            <Award className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
+                            <p className="text-muted-foreground font-medium">Keep learning to earn certificates!</p>
+                        </div>
                     ) : (
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {certificates.map((cert) => (
-                                <Card key={cert.id} className="overflow-hidden">
-                                    <CardHeader className="p-0">
-                                        <div className="relative bg-secondary">
-                                            <Image
-                                                src={getGoogleDriveImageUrl(cert.url)}
-                                                alt={cert.title}
-                                                width={1650}
-                                                height={1275}
-                                                className="w-full h-auto object-cover"
-                                            />
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="p-4">
-                                        <p className="font-semibold truncate">{cert.title}</p>
-                                        <div className="flex gap-2 mt-3">
-                                            <Button size="sm" className="w-full" onClick={() => handleDownloadCertificate(cert.url, cert.title)}>
-                                                <Download className="mr-2 h-4 w-4"/> Download
+                                <Card key={cert.id} className="overflow-hidden rounded-2xl border bg-background group hover:shadow-lg transition-all duration-300">
+                                    <div className="relative aspect-[1.4/1] bg-secondary/30 overflow-hidden">
+                                        <Image
+                                            src={getGoogleDriveImageUrl(cert.url)}
+                                            alt={cert.title}
+                                            fill
+                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    </div>
+                                    <CardContent className="p-4 space-y-4">
+                                        <p className="font-bold truncate text-lg">{cert.title}</p>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" className="flex-1 rounded-lg" onClick={() => handleDownloadCertificate(cert.url, cert.title)}>
+                                                <Download className="mr-2 h-4 w-4"/> View
                                             </Button>
-                                             <Button size="sm" variant="outline" className="w-full" onClick={() => handleShareCertificate(cert)} disabled={isSharing === cert.id}>
+                                             <Button size="sm" variant="outline" className="flex-1 rounded-lg" onClick={() => handleShareCertificate(cert)} disabled={isSharing === cert.id}>
                                                 {isSharing === cert.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Share2 className="mr-2 h-4 w-4"/>}
                                                 Share
                                             </Button>

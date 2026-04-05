@@ -270,6 +270,8 @@ export type UserProfile = {
     school?: string;
     userClass?: string;
     mobileNumber?: string;
+    rollNumber?: string;
+    address?: string;
     certificates?: UserCertificate[];
     role?: 'admin' | 'employee' | 'teacher' | null;
     schoolId?: string | null;
@@ -1300,7 +1302,14 @@ export async function getUserProfile(userId: string): Promise<Partial<UserProfil
   return null;
 }
 
-export async function updateUserProfile(userId: string, data: Partial<{ displayName: string; school: string; userClass: string; mobileNumber: string; }>): Promise<void> {
+export async function updateUserProfile(userId: string, data: Partial<{ 
+    displayName: string; 
+    school: string; 
+    userClass: string; 
+    mobileNumber: string;
+    rollNumber: string;
+    address: string;
+}>): Promise<void> {
   const userDocRef = doc(db, 'users', userId);
   await updateDoc(userDocRef, data);
 }
