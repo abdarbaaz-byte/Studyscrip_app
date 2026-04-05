@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserProfile, updateUserProfile, getUserPayments, type Payment, type UserCertificate } from "@/lib/data";
-import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail } from "lucide-react";
+import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 
 export default function MyProfilePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = userAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -357,4 +357,8 @@ export default function MyProfilePage() {
       </div>
     </div>
   );
+}
+
+function userAuth() {
+    return useAuth();
 }
