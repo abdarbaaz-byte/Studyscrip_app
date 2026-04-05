@@ -291,17 +291,17 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                             </CardContent>
                             <CardFooter className="mt-auto">
                             {!hasAccess ? (
-                                <Button onClick={handleBuyClick} variant="outline" className="w-full">
+                                <Button onClick={handleBuyClick} className="w-full">
                                     <Lock className="h-4 w-4 mr-2" /> Unlock Quiz
                                 </Button>
                             ) : hasAttempted ? (
-                                <Button asChild variant="outline" className="w-full border-green-600 text-green-700 hover:bg-green-50">
+                                <Button asChild className="w-full">
                                     <Link href={`/quizzes/${quiz.id}/results?type=live&answers=${encodeURIComponent(userAttemptAnswers || '')}`}>
                                         View Analysis <Trophy className="ml-2 h-4 w-4"/>
                                     </Link>
                                 </Button>
                             ) : isExpired ? (
-                                <Button asChild variant="secondary" className="w-full">
+                                <Button asChild className="w-full">
                                     <Link href={`/quizzes/${quiz.id}/results?type=live`}>
                                         View Winners <Trophy className="ml-2 h-4 w-4"/>
                                     </Link>
