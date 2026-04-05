@@ -416,11 +416,12 @@ function QuizAttemptContent() {
             <h2 className="text-xl font-semibold mb-6">{currentQuestion.text}</h2>
             
             {currentQuestion.imageUrl && (
-                <div className="mb-6 rounded-lg overflow-hidden border bg-secondary/10 flex justify-center">
+                <div className="mb-6 rounded-lg overflow-hidden border bg-secondary/10 flex justify-center min-h-[100px] items-center">
                     <img 
                         src={getGoogleDriveImageUrl(currentQuestion.imageUrl)} 
                         alt="Question Visual" 
-                        className="max-w-full h-auto max-h-[300px] object-contain" 
+                        className="max-w-full h-auto max-h-[400px] object-contain"
+                        loading="lazy"
                     />
                 </div>
             )}

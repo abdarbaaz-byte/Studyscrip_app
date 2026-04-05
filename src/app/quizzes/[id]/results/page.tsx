@@ -286,11 +286,12 @@ function QuizResultsContent() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {question.imageUrl && (
-                                <div className="mb-4 rounded-md overflow-hidden border bg-secondary/5 flex justify-center">
+                                <div className="mb-4 rounded-md overflow-hidden border bg-secondary/5 flex justify-center min-h-[80px] items-center">
                                     <img 
                                         src={getGoogleDriveImageUrl(question.imageUrl)} 
                                         alt="Question Context" 
-                                        className="max-w-full h-auto max-h-[200px] object-contain" 
+                                        className="max-w-full h-auto max-h-[300px] object-contain" 
+                                        loading="lazy"
                                     />
                                 </div>
                             )}
