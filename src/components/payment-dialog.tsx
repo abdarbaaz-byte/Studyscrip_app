@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -207,22 +205,11 @@ export function PaymentDialog({
             <span className="font-bold text-xl text-primary">Rs. {itemPrice}</span>
         </div>
 
-        <Tabs defaultValue="razorpay" className="w-full">
+        <Tabs defaultValue="upi" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="razorpay">Card / Netbanking</TabsTrigger>
                 <TabsTrigger value="upi">Pay with UPI</TabsTrigger>
+                <TabsTrigger value="razorpay">Card / Netbanking</TabsTrigger>
             </TabsList>
-            <TabsContent value="razorpay" className="py-4">
-                <p className="text-sm text-muted-foreground text-center mb-4">
-                    You will be redirected to Razorpay to complete your payment securely.
-                </p>
-                 <Button onClick={makePayment} disabled={totalProcessing} className="w-full">
-                    {totalProcessing ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : <Wallet className="mr-2 h-4 w-4" />}
-                    {isPaying ? "Redirecting..." : isProcessing ? "Processing..." : `Pay with Razorpay`}
-                </Button>
-            </TabsContent>
             <TabsContent value="upi" className="py-4 space-y-4">
                 {!UPI_ID ? (
                      <div className="text-center p-4 bg-destructive/10 text-destructive rounded-lg">
@@ -265,6 +252,17 @@ export function PaymentDialog({
                         </p>
                     </>
                 )}
+            </TabsContent>
+            <TabsContent value="razorpay" className="py-4">
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                    You will be redirected to Razorpay to complete your payment securely.
+                </p>
+                 <Button onClick={makePayment} disabled={totalProcessing} className="w-full">
+                    {totalProcessing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : <Wallet className="mr-2 h-4 w-4" />}
+                    {isPaying ? "Redirecting..." : isProcessing ? "Processing..." : `Pay with Razorpay`}
+                </Button>
             </TabsContent>
         </Tabs>
         
