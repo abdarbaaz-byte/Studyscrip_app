@@ -297,7 +297,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
                     <span className="text-2xl font-bold text-primary">Rs. {course.price}</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Lifetime Course Access</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Course Content Access</span>
                 </div>
                 <Button 
                     size="lg" 
