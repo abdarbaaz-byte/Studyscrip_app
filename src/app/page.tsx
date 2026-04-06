@@ -4,10 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
-import { listenToCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview, listenToAcademics } from "@/lib/data";
-import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, Store, Radio, BrainCircuit, Star, Send, Users, Headphones } from "lucide-react";
+import { listenToCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview, listenToAcademics, listenToBatches, type Batch } from "@/lib/data";
+import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, Store, Radio, BrainCircuit, Star, Send, Users, Headphones, Layers, Circle } from "lucide-react";
 import type { Course } from "@/lib/courses";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { AcademicClass } from "@/lib/academics";
 import { useEffect, useState, useRef } from "react";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
@@ -18,13 +18,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 const coursesAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
+const batchesAutoplay = Autoplay({ delay: 6000, stopOnInteraction: true });
 const reviewsAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
 const bannerAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
   const [bannerSettings, setBannerSettings] = useState<BannerSettings | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -38,13 +41,16 @@ export default function Home() {
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   
-  // State for courses carousel indicators
+  // Carousel APIs
   const [coursesApi, setCoursesApi] = useState<CarouselApi>()
+  const [batchesApi, setBatchesApi] = useState<CarouselApi>()
+  const [reviewsApi, setReviewsApi] = useState<CarouselApi>()
+
+  // Indicators state
   const [coursesCurrent, setCoursesCurrent] = useState(0)
   const [coursesCount, setCoursesCount] = useState(0)
-
-   // State for reviews carousel indicators
-  const [reviewsApi, setReviewsApi] = useState<CarouselApi>()
+  const [batchesCurrent, setBatchesCurrent] = useState(0)
+  const [batchesCount, setBatchesCount] = useState(0)
   const [reviewsCurrent, setReviewsCurrent] = useState(0)
   const [reviewsCount, setReviewsCount] = useState(0)
 
@@ -56,6 +62,15 @@ export default function Home() {
       setCoursesCurrent(coursesApi.selectedScrollSnap() + 1)
     })
   }, [coursesApi])
+
+  useEffect(() => {
+    if (!batchesApi) return
+    setBatchesCount(batchesApi.scrollSnapList().length)
+    setBatchesCurrent(batchesApi.selectedScrollSnap() + 1)
+    batchesApi.on("select", () => {
+      setBatchesCurrent(batchesApi.selectedScrollSnap() + 1)
+    })
+  }, [batchesApi])
 
   useEffect(() => {
     if (!reviewsApi) return
@@ -71,8 +86,8 @@ export default function Home() {
     setLoading(true);
     const unsubCourses = listenToCourses(setCourses);
     const unsubAcademics = listenToAcademics(setAcademicClasses);
+    const unsubBatches = listenToBatches(setBatches);
     
-    // Banner and reviews don't need to be real-time for now
     Promise.all([
       getBannerSettings(),
       getReviews('approved'),
@@ -85,6 +100,7 @@ export default function Home() {
     return () => {
       unsubCourses();
       unsubAcademics();
+      unsubBatches();
     };
   }, []);
   
@@ -208,10 +224,15 @@ export default function Home() {
               </div>
             </section>
 
-            <section id="courses" className="pt-8 pb-16">
-              <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-12">
-                Courses
-              </h2>
+            <section id="courses" className="pt-8 pb-12">
+              <div className="flex justify-between items-center mb-12 px-2">
+                <h2 className="font-headline text-3xl md:text-4xl font-bold">
+                  Professional <span className="text-primary">Courses</span>
+                </h2>
+                <Button asChild variant="ghost">
+                  <Link href="/my-courses">View All <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                </Button>
+              </div>
               <Carousel
                 setApi={setCoursesApi}
                 plugins={[coursesAutoplay]}
@@ -246,7 +267,86 @@ export default function Home() {
                   ))}
                 </div>
               )}
-              {courses.length === 0 && <p className="text-center text-muted-foreground mt-8">No professional courses found.</p>}
+              {courses.length === 0 && <p className="text-center text-muted-foreground">No professional courses found.</p>}
+            </section>
+
+            <section id="batches" className="pt-8 pb-16">
+              <div className="flex justify-between items-center mb-12 px-2">
+                <h2 className="font-headline text-3xl md:text-4xl font-bold">
+                  Popular <span className="text-primary">Batches</span>
+                </h2>
+                <Button asChild variant="ghost">
+                  <Link href="/batches">Explore Batches <ArrowRight className="ml-2 h-4 w-4"/></Link>
+                </Button>
+              </div>
+              <Carousel
+                setApi={setBatchesApi}
+                plugins={[batchesAutoplay]}
+                className="w-full"
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+              >
+                <CarouselContent>
+                  {batches.map((batch) => (
+                    <CarouselItem key={batch.id} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                      <div className="p-1 h-full">
+                        <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group border-2 border-transparent hover:border-primary/10">
+                          <Link href={`/batches/${batch.id}`} className="aspect-[16/9] overflow-hidden block">
+                            <Image
+                              src={getGoogleDriveImageUrl(batch.thumbnail)}
+                              alt={batch.title}
+                              width={600}
+                              height={400}
+                              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </Link>
+                          <CardHeader className="flex-grow p-5">
+                            <div className="flex justify-between items-start mb-2">
+                              <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] uppercase font-bold tracking-wider">Active Batch</Badge>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-primary">
+                                    {batch.price === 0 ? <span className="text-green-600">Free</span> : `Rs. ${batch.price}`}
+                                </p>
+                              </div>
+                            </div>
+                            <CardTitle className="font-headline text-xl leading-tight mb-2 line-clamp-1">
+                              {batch.title}
+                            </CardTitle>
+                            <CardDescription className="line-clamp-2 text-sm">
+                              {batch.description}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardFooter className="p-5 pt-0">
+                            <Button asChild className="w-full h-10 text-sm">
+                              <Link href={`/batches/${batch.id}`}>
+                                View Details & Enroll
+                              </Link>
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+              {batches.length > 0 && (
+                <div className="py-4 text-center text-sm text-muted-foreground flex justify-center gap-2">
+                  {Array.from({ length: batchesCount }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => batchesApi?.scrollTo(i)}
+                      className={cn(
+                        "h-2 w-2 rounded-full transition-all",
+                        i === batchesCurrent - 1 ? "w-4 bg-primary" : "bg-primary/50"
+                      )}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+              {batches.length === 0 && <p className="text-center text-muted-foreground">No active batches found.</p>}
             </section>
 
             <section id="reviews" className="pt-8 pb-16">
