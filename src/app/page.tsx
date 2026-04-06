@@ -229,9 +229,6 @@ export default function Home() {
                 <h2 className="font-headline text-3xl md:text-4xl font-bold">
                   Professional <span className="text-primary">Courses</span>
                 </h2>
-                <Button asChild variant="ghost">
-                  <Link href="/my-courses">View All <ArrowRight className="ml-2 h-4 w-4"/></Link>
-                </Button>
               </div>
               <Carousel
                 setApi={setCoursesApi}
@@ -275,9 +272,6 @@ export default function Home() {
                 <h2 className="font-headline text-3xl md:text-4xl font-bold">
                   Popular <span className="text-primary">Batches</span>
                 </h2>
-                <Button asChild variant="ghost">
-                  <Link href="/batches">Explore Batches <ArrowRight className="ml-2 h-4 w-4"/></Link>
-                </Button>
               </div>
               <Carousel
                 setApi={setBatchesApi}
