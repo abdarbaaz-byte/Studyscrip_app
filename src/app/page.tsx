@@ -225,7 +225,7 @@ export default function Home() {
             </section>
 
             <section id="courses" className="pt-8 pb-12">
-              <div className="flex justify-between items-center mb-12 px-2">
+              <div className="text-center mb-12">
                 <h2 className="font-headline text-3xl md:text-4xl font-bold">
                   Professional <span className="text-primary">Courses</span>
                 </h2>
@@ -268,7 +268,7 @@ export default function Home() {
             </section>
 
             <section id="batches" className="pt-8 pb-16">
-              <div className="flex justify-between items-center mb-12 px-2">
+              <div className="text-center mb-12">
                 <h2 className="font-headline text-3xl md:text-4xl font-bold">
                   Popular <span className="text-primary">Batches</span>
                 </h2>
