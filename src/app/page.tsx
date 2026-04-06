@@ -227,7 +227,7 @@ export default function Home() {
             <section id="courses" className="pt-8 pb-12">
               <div className="text-center mb-12">
                 <h2 className="font-headline text-3xl md:text-4xl font-bold">
-                  Professional <span className="text-primary">Courses</span>
+                  Exam <span className="text-primary">Resources</span>
                 </h2>
               </div>
               <Carousel
