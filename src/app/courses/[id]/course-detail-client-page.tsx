@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio } from "lucide-react";
+import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { checkUserPurchase, createPurchase, getScheduledLiveClassesForItem, type LiveClass } from "@/lib/data";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import { PaymentDialog } from "@/components/payment-dialog";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 
 export default function CourseDetailClientPage({ course }: { course: Course }) {
@@ -189,10 +190,11 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
 
   const thumbnailUrl = getGoogleDriveImageUrl(course.thumbnail);
   const isLiveClassActive = liveClass && new Date() >= liveClass.startTime.toDate() && new Date() <= liveClass.endTime.toDate();
+  const isFree = course.price === 0;
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8 md:py-12">
+      <div className={cn("container mx-auto px-4 py-8 md:py-12", !isPurchased && !isFree && "pb-32")}>
         <div className="grid md:grid-cols-3 gap-8 md:gap-12">
           <div className="md:col-span-2">
             <h1 className="font-headline text-3xl md:text-5xl font-bold mb-4">{course.title}</h1>
@@ -289,6 +291,24 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
           </aside>
         </div>
       </div>
+
+      {!isPurchased && !isFree && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div className="container mx-auto flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-primary">Rs. {course.price}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Lifetime Course Access</span>
+                </div>
+                <Button 
+                    size="lg" 
+                    onClick={handleBuyClick} 
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl transition-all active:scale-95 h-12 shadow-md"
+                >
+                    Enroll Now <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+            </div>
+        </div>
+      )}
       
        <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">

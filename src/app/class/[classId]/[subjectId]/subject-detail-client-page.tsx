@@ -1,12 +1,11 @@
 
-
 "use client";
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { type AcademicClass, type Subject, listenToAcademics } from "@/lib/academics";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { FileText, ChevronRight, Lock, Unlock, Loader2, Radio } from "lucide-react";
+import { FileText, ChevronRight, Lock, Unlock, Loader2, Radio, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, notFound, useRouter } from "next/navigation";
@@ -14,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { checkUserPurchase, createPurchase, getScheduledLiveClassesForItem, type LiveClass } from "@/lib/data";
 import { PaymentDialog } from "@/components/payment-dialog";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function SubjectDetailClientPage() {
   const params = useParams();
@@ -125,7 +125,7 @@ export default function SubjectDetailClientPage() {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
+      <div className={cn("container mx-auto px-4 py-8", !isPurchased && !isFree && "pb-32")}>
        <div className="mb-8">
          <Link href={`/class/${academicClass.id}`} className="text-sm text-muted-foreground hover:text-primary flex items-center">
             <ChevronRight className="h-4 w-4 transform rotate-180 mr-1" />
@@ -222,6 +222,25 @@ export default function SubjectDetailClientPage() {
         </div>
       )}
     </div>
+
+    {!isPurchased && !isFree && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div className="container mx-auto flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-primary">Rs. {subject.price}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Full Subject Access</span>
+                </div>
+                <Button 
+                    size="lg" 
+                    onClick={handleBuyClick} 
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl transition-all active:scale-95 h-12 shadow-md"
+                >
+                    Unlock All <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+            </div>
+        </div>
+    )}
+
      {subject && (
         <PaymentDialog
           open={isPaymentDialogOpen}
