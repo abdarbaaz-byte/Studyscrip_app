@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -10,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Gift } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -20,6 +19,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCodeInput, setReferralCodeInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -32,10 +32,9 @@ export default function SignupPage() {
       return;
     }
     setLoading(true);
-    const success = await signUp(name, email, password);
+    const success = await signUp(name, email, password, referralCodeInput);
     if (success) {
       // The user will be redirected from the auth hook after successful login
-      // No need to push here, as it might conflict with the tour logic
     }
     setLoading(false);
   };
@@ -99,6 +98,20 @@ export default function SignupPage() {
                 </Button>
               </div>
             </div>
+
+            <div className="space-y-2 pt-2">
+              <Label htmlFor="referral" className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-primary" /> Referral Code (Optional)
+              </Label>
+              <Input 
+                id="referral" 
+                placeholder="Enter 6-digit code" 
+                value={referralCodeInput} 
+                onChange={(e) => setReferralCodeInput(e.target.value.toUpperCase())} 
+                maxLength={6}
+              />
+            </div>
+
             <Button type="submit" className="w-full mt-2" disabled={loading}>
                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account

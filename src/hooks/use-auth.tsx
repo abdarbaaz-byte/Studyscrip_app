@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import {
@@ -24,6 +22,7 @@ import { auth, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { doc, setDoc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
+import { processReferral } from "@/lib/data";
 
 
 export type UserRole = 'admin' | 'employee' | 'teacher' | null;
@@ -58,7 +57,7 @@ interface AuthContextType {
   permissions: UserPermission[];
   loading: boolean;
   hasPermission: (permission: UserPermission) => boolean;
-  signUp: (name: string, email: string, password: string) => Promise<boolean>;
+  signUp: (name: string, email: string, password: string, referralCode?: string) => Promise<boolean>;
   logIn: (email: string, password: string) => Promise<boolean>;
   logOut: () => void;
   resetPassword: (email: string) => Promise<boolean>;
@@ -95,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   
   useEffect(() => {
-    if (user) { // Removed user.emailVerified check
+    if (user) { 
       if (user.email === SUPER_ADMIN_EMAIL) {
           setUserRole('admin');
           setPermissions([
@@ -166,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [user, router, toast]);
 
-  const signUp = async (name: string, email: string, password: string) => {
+  const signUp = async (name: string, email: string, password: string, referralCode?: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -177,6 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const sessionToken = Date.now().toString();
       localStorage.setItem('sessionToken', sessionToken);
       
+      // Generate unique referral code for the new user
+      const myReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
       await setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
@@ -191,7 +193,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           certificates: [],
           activeSessionToken: sessionToken,
           schoolId: null,
+          referralCode: myReferralCode,
+          referralCount: 0,
+          referredBy: null,
       });
+
+      // Handle the optional referral from someone else
+      if (referralCode) {
+          await processReferral(referralCode, user.uid);
+      }
 
       toast({ 
         title: "Account Created!",
@@ -234,9 +244,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userClass: "",
             mobileNumber: "",
             certificates: [],
+            referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+            referralCount: 0,
             ...userData
          });
       } else {
+         // Ensure referral fields exist for old users
+         const existingData = userDoc.data();
+         if (!existingData.referralCode) {
+             userData.referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+             userData.referralCount = 0;
+         }
          await setDoc(userDocRef, userData, { merge: true });
       }
 

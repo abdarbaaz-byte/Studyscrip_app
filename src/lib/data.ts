@@ -275,6 +275,9 @@ export type UserProfile = {
     certificates?: UserCertificate[];
     role?: 'admin' | 'employee' | 'teacher' | null;
     schoolId?: string | null;
+    referralCode: string;
+    referredBy?: string | null;
+    referralCount: number;
 };
 
 // COURSES
@@ -734,7 +737,9 @@ export async function sendMessage(chatId: string, message: ChatMessage, userInfo
       uid: userInfo.userId,
       email: userInfo.userName,
       createdAt: new Date().toISOString(),
-      readNotifications: []
+      readNotifications: [],
+      referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+      referralCount: 0
     });
   }
 
@@ -1317,6 +1322,27 @@ export async function updateUserProfile(userId: string, data: Partial<{
 export async function updateUserCertificates(userId: string, certificates: UserCertificate[]): Promise<void> {
     const userDocRef = doc(db, 'users', userId);
     await updateDoc(userDocRef, { certificates });
+}
+
+// --- REFERRALS ---
+export async function processReferral(referralCode: string, newUserId: string) {
+    if (!referralCode) return;
+    const usersCol = collection(db, 'users');
+    const q = query(usersCol, where('referralCode', '==', referralCode.toUpperCase()), limit(1));
+    const snapshot = await getDocs(q);
+    
+    if (!snapshot.empty) {
+        const referrerDoc = snapshot.docs[0];
+        const referrerId = referrerDoc.id;
+        
+        const batch = writeBatch(db);
+        // Increment referrer's count
+        batch.update(referrerDoc.ref, { referralCount: increment(1) });
+        // Mark the new user as referred
+        batch.update(doc(db, 'users', newUserId), { referredBy: referrerId });
+        
+        await batch.commit();
+    }
 }
 
 // --- SCHOOLS / INSTITUTES ---

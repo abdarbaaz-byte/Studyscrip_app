@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons";
-import { Menu, Bell, Circle, LogOut, Share2, User, Link as LinkIcon, School, Users } from "lucide-react";
+import { Menu, Bell, Circle, LogOut, Share2, User, Link as LinkIcon, School, Users, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@/lib/notifications";
 import { listenToNotifications, listenToUserReadNotifications, markNotificationAsRead } from "@/lib/data";
@@ -73,25 +73,9 @@ export function SiteHeader() {
     }
   };
 
-  const handleShare = async () => {
-    const shareData = {
-      title: 'StudyScript',
-      text: 'Check out StudyScript for amazing courses!',
-      url: window.location.origin,
-    };
-    if (navigator.share && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-      } catch (error) {
-        console.error('Error sharing:', error);
-      }
-    } else {
-      toast({
-        title: "Sharing not supported",
-        description: "Your browser does not support the Web Share API.",
-      });
-    }
+  const handleShareAppClick = () => {
     setIsSheetOpen(false);
+    router.push("/share-reward");
   };
 
   const handleLinkClick = () => {
@@ -245,10 +229,10 @@ export function SiteHeader() {
                   <Button
                     variant="ghost"
                     className="text-foreground/70 transition-colors hover:text-foreground justify-start p-0"
-                    onClick={handleShare}
+                    onClick={handleShareAppClick}
                   >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share App
+                    <Gift className="mr-2 h-4 w-4 text-primary" />
+                    Share & Earn
                   </Button>
               </div>
             </div>
@@ -323,6 +307,12 @@ export function SiteHeader() {
           
           {user ? (
              <div className="hidden md:flex items-center gap-2">
+                <Button asChild variant="outline" className="border-primary/30 hover:bg-primary/5">
+                    <Link href="/share-reward">
+                        <Gift className="mr-2 h-4 w-4 text-primary"/>
+                        Share & Earn
+                    </Link>
+                </Button>
                 {userRole === 'teacher' && (
                     <Button asChild variant="secondary">
                         <Link href="/teacher/dashboard">

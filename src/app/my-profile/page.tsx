@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { getUserProfile, updateUserProfile, getUserPayments, type Payment, type UserCertificate } from "@/lib/data";
-import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail, BookOpen } from "lucide-react";
+import { getUserProfile, updateUserProfile, getUserPayments, type Payment, type UserCertificate, type UserProfile } from "@/lib/data";
+import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail, BookOpen, Gift, Users, Copy, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 
 export default function MyProfilePage() {
-  const { user, loading: authLoading } = userAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -34,11 +34,13 @@ export default function MyProfilePage() {
   
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
   const [certificates, setCertificates] = useState<UserCertificate[]>([]);
+  const [fullProfile, setFullProfile] = useState<Partial<UserProfile> | null>(null);
   
   const [isSaving, setIsSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSharing, setIsSharing] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -49,6 +51,7 @@ export default function MyProfilePage() {
     ]);
     
     if (profile) {
+      setFullProfile(profile);
       setName(profile.displayName || user.displayName || "");
       setEmail(profile.email || user.email || "");
       setSchool(profile.school || "");
@@ -93,6 +96,15 @@ export default function MyProfilePage() {
       toast({ variant: "destructive", title: "Update Failed", description: "Could not save your profile." });
     }
     setIsSaving(false);
+  };
+
+  const handleCopyCode = () => {
+    if (fullProfile?.referralCode) {
+        navigator.clipboard.writeText(fullProfile.referralCode);
+        setCopiedCode(true);
+        toast({ title: "Code Copied!", description: "Referral code copied to clipboard." });
+        setTimeout(() => setCopiedCode(false), 2000);
+    }
   };
 
   const handleShareCertificate = async (cert: UserCertificate) => {
@@ -228,7 +240,7 @@ export default function MyProfilePage() {
                         {name ? name.charAt(0).toUpperCase() : <User className="h-16 w-16" />}
                     </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1">
                     <h1 className="text-3xl md:text-5xl font-black font-headline tracking-tight">{name || "Anonymous User"}</h1>
                     <p className="text-white/70 text-lg md:text-xl font-medium flex items-center justify-center md:justify-start gap-2">
                         <Mail className="h-5 w-5" /> {email}
@@ -238,8 +250,49 @@ export default function MyProfilePage() {
                         {school && <Badge className="bg-white/20 text-white border-none backdrop-blur-md px-4 py-1">{school}</Badge>}
                     </div>
                 </div>
+                <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 text-center space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-widest opacity-80">Referral Program</p>
+                    <div className="flex items-center gap-2 justify-center bg-black/20 p-2 rounded-lg border border-white/10">
+                        <span className="font-mono text-xl font-bold tracking-widest">{fullProfile?.referralCode || "------"}</span>
+                        <button onClick={handleCopyCode} className="hover:text-primary-foreground/80 transition-colors">
+                            {copiedCode ? <CheckCircle2 className="h-5 w-5 text-green-400" /> : <Copy className="h-5 w-5" />}
+                        </button>
+                    </div>
+                    <p className="text-[10px] opacity-70">Refer and earn rewards</p>
+                </div>
             </div>
         </Card>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-4">
+                <div className="bg-blue-100 p-4 rounded-2xl text-blue-600">
+                    <Users className="h-8 w-8" />
+                </div>
+                <div>
+                    <p className="text-3xl font-black text-blue-900">{fullProfile?.referralCount || 0}</p>
+                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Total Referrals</p>
+                </div>
+            </Card>
+            <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-4">
+                <div className="bg-orange-100 p-4 rounded-2xl text-orange-600">
+                    <Award className="h-8 w-8" />
+                </div>
+                <div>
+                    <p className="text-3xl font-black text-orange-900">{certificates.length}</p>
+                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Certificates</p>
+                </div>
+            </Card>
+            <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-4">
+                <div className="bg-green-100 p-4 rounded-2xl text-green-600">
+                    <Wallet className="h-8 w-8" />
+                </div>
+                <div>
+                    <p className="text-3xl font-black text-green-900">{paymentHistory.length}</p>
+                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Purchases</p>
+                </div>
+            </Card>
+        </div>
 
         <Card className="shadow-xl rounded-3xl border-none">
           <CardContent className="p-6 md:p-10">
@@ -357,8 +410,4 @@ export default function MyProfilePage() {
       </div>
     </div>
   );
-}
-
-function userAuth() {
-    return useAuth();
 }
