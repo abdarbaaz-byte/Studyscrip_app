@@ -233,44 +233,39 @@ export default function MyProfilePage() {
         
         {/* Profile Header Card */}
         <Card className="border-none shadow-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-indigo-900 text-white">
-            <div className="p-8 md:p-12 flex flex-col items-center text-center">
-                <div className="relative group mb-6">
+            <div className="p-8 md:p-10 flex flex-col items-center text-center">
+                <div className="relative group mb-4">
                     <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
                     <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-full border-4 border-white/20 bg-background flex items-center justify-center text-primary text-3xl md:text-4xl font-black shadow-inner">
                         {name ? name.charAt(0).toUpperCase() : <User className="h-12 w-12" />}
                     </div>
                 </div>
-                <div className="space-y-1 mb-8">
+                <div className="space-y-1 mb-6">
                     <h1 className="text-2xl md:text-4xl font-black font-headline tracking-tight">{name || "Anonymous User"}</h1>
-                    <p className="text-white/70 text-base md:text-lg font-medium flex items-center justify-center gap-2">
+                    <p className="text-white/70 text-sm md:text-lg font-medium flex items-center justify-center gap-2">
                         <Mail className="h-4 w-4" /> {email}
                     </p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/20 w-full max-w-[280px] text-center space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Referral Program</p>
-                    <div className="flex items-center gap-2 justify-center bg-black/20 p-2 rounded-lg border border-white/10">
-                        <span className="font-mono text-lg font-bold tracking-widest">{fullProfile?.referralCode || "------"}</span>
-                        <button onClick={handleCopyCode} className="hover:text-primary-foreground/80 transition-colors">
-                            {copiedCode ? <CheckCircle2 className="h-5 w-5 text-green-400" /> : <Copy className="h-5 w-5" />}
-                        </button>
-                    </div>
-                    <p className="text-[10px] opacity-70">Refer and earn rewards</p>
+                <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 flex items-center gap-3">
+                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-90">Referral Code :</span>
+                    <span className="font-mono text-sm md:text-lg font-bold tracking-widest">{fullProfile?.referralCode || "------"}</span>
+                    <button onClick={handleCopyCode} className="hover:text-primary-foreground/80 transition-colors ml-1">
+                        {copiedCode ? <CheckCircle2 className="h-5 w-5 text-green-400" /> : <Copy className="h-5 w-5" />}
+                    </button>
                 </div>
             </div>
         </Card>
 
-        {/* Stats Grid - Focused on Referrals only */}
-        <div className="flex justify-center">
-            <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-4 w-full max-w-sm">
-                <div className="bg-blue-100 p-4 rounded-2xl text-blue-600">
-                    <Users className="h-8 w-8" />
-                </div>
-                <div>
-                    <p className="text-3xl font-black text-blue-900">{fullProfile?.referralCount || 0}</p>
-                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Total Referrals</p>
-                </div>
-            </Card>
-        </div>
+        {/* Total Referrals card - Full Width */}
+        <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-6">
+            <div className="bg-blue-100 p-4 rounded-2xl text-blue-600">
+                <Users className="h-8 w-8 md:h-10 md:w-10" />
+            </div>
+            <div>
+                <p className="text-3xl md:text-4xl font-black text-blue-900">{fullProfile?.referralCount || 0}</p>
+                <p className="text-sm md:text-base font-bold text-muted-foreground uppercase tracking-wider">Total Referrals</p>
+            </div>
+        </Card>
 
         <Card className="shadow-xl rounded-3xl border-none">
           <CardContent className="p-6 md:p-10">
