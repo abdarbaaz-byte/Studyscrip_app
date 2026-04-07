@@ -34,19 +34,20 @@ export default function ShareRewardPage() {
   const shareText = `Hey! Join me on StudyScript for amazing courses. Click my link to join and get exclusive benefits! 🚀\n\nJoin here: ${shareUrl}`;
 
   const handleShare = async () => {
-    const shareData = {
-      title: 'Join StudyScript',
-      text: shareText,
-      url: shareUrl,
-    };
-
-    if (navigator.share && navigator.canShare(shareData)) {
+    // Native Share Intent (Web Share API)
+    if (navigator.share) {
       try {
-        await navigator.share(shareData);
+        await navigator.share({
+          title: 'Join StudyScript',
+          text: shareText,
+          url: shareUrl,
+        });
       } catch (error) {
         console.error('Error sharing:', error);
+        // Fallback to copy if user cancels or error occurs
       }
     } else {
+      // Fallback for browsers that don't support native share
       handleCopy();
     }
   };
@@ -66,6 +67,7 @@ export default function ShareRewardPage() {
     <div className="container mx-auto px-4 py-8 md:py-12 bg-secondary/10">
       <div className="max-w-2xl mx-auto space-y-8">
         
+        {/* Header Card */}
         <ScrollAnimation>
           <Card className="border-none shadow-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-center p-8">
             <div className="flex justify-center mb-6">
@@ -80,6 +82,7 @@ export default function ShareRewardPage() {
           </Card>
         </ScrollAnimation>
 
+        {/* Link Box */}
         <ScrollAnimation delay={100}>
           <Card className="shadow-xl rounded-3xl border-none">
             <CardHeader className="text-center pb-2">
@@ -101,6 +104,7 @@ export default function ShareRewardPage() {
           </Card>
         </ScrollAnimation>
 
+        {/* Steps Section */}
         <ScrollAnimation delay={200}>
           <Card className="border-none shadow-lg bg-white rounded-3xl">
             <CardHeader>
@@ -113,7 +117,7 @@ export default function ShareRewardPage() {
                 <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">1</div>
                 <div>
                   <p className="font-bold">Link Share Karein</p>
-                  <p className="text-sm text-muted-foreground">'Share with Friends' button par click karein aur apne dosto ko link bhejein.</p>
+                  <p className="text-sm text-muted-foreground">"Share with Friends" button par click karein aur apne dosto ko Android share sheet ke zariye link bhejein.</p>
                 </div>
               </div>
               <div className="flex gap-4 items-start">
@@ -134,6 +138,7 @@ export default function ShareRewardPage() {
           </Card>
         </ScrollAnimation>
 
+        {/* Note Box */}
         <ScrollAnimation delay={300}>
           <Card className="bg-orange-50 border-orange-100 rounded-3xl">
             <CardHeader>
