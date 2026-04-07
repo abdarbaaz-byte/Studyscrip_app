@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
@@ -13,34 +12,31 @@ export default function DisclaimerPage() {
                 </div>
                 <CardTitle className="font-headline text-3xl md:text-4xl">Disclaimer</CardTitle>
                  <CardDescription className="text-md md:text-lg text-muted-foreground pt-2">
-                    Important information about our platform and content.
+                    Important information about StudyScript platform and content.
                 </CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
 
                 <div className="space-y-4">
-                    <h2 className="font-headline text-2xl font-semibold">Disclaimer</h2>
+                    <h2 className="font-headline text-2xl font-semibold">General Disclaimer</h2>
                     <ul className="list-disc list-inside space-y-2 text-base text-muted-foreground">
                         <li className="text-justify">
-                            <strong>Educational Purpose Only:</strong> The information and materials provided on StudyScript are for general educational and informational purposes only. The content is self-made and is not intended to be a substitute for professional advice.
+                            <strong>Educational Purpose Only:</strong> The content provided on StudyScript, including videos, PDFs, and notes, is for general educational purposes. While we strive for accuracy, the content is self-made and should not be treated as official textbook material.
                         </li>
                         <li className="text-justify">
-                            <strong>No Guarantee of Accuracy:</strong> While we strive to provide accurate and up-to-date information, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, or suitability of the information, products, or services contained in the application. Any reliance you place on such information is strictly at your own risk.
+                            <strong>UPI Payments:</strong> Manual UPI payments are verified by our team. Please note that it may take up to <strong>24 hours</strong> to grant access after you submit your UPI Reference ID. Ensure you provide the correct ID to avoid delays.
                         </li>
                         <li className="text-justify">
-                            <strong>Personal Responsibility:</strong> You are responsible for your own learning and the application of knowledge. We are not liable for any academic or career outcomes. The results from quizzes and courses are for self-assessment and do not guarantee success in formal examinations.
+                            <strong>Referral Program:</strong> Referral rewards and "Free Access" are subject to verification. Users found using fraudulent methods to increase referral counts will be disqualified, and their access may be revoked.
                         </li>
                         <li className="text-justify">
-                            <strong>For Minors (Under 18):</strong> If you are a minor, you must use our Service under the supervision and with the consent of a parent or legal guardian. Please do not provide any personal information without their permission and guidance.
+                            <strong>Bookstore Downloads:</strong> Access to the Bookstore is free but requires a mandatory user login. This is done to prevent bot downloads and maintain the quality of our service.
                         </li>
                         <li className="text-justify">
-                            <strong>External Links:</strong> Our application may contain links to external websites that are not provided or maintained by or in any way affiliated with us. Please note that we do not guarantee the accuracy, relevance, timeliness, or completeness of any information on these external websites.
+                            <strong>Live Classes & Quizzes:</strong> Scheduled times for Live Classes and Live Quizzes are subject to change. While we aim to provide a stable experience, we are not responsible for technical issues arising from the user's internet connection or device compatibility.
                         </li>
                          <li className="text-justify">
-                            <strong>Content Ownership:</strong> All content, including text, videos, PDFs, and quiz questions, is the property of StudyScript unless otherwise stated. Unauthorized use, reproduction, or distribution is strictly prohibited.
-                        </li>
-                        <li className="text-justify">
-                            <strong>Changes to Content:</strong> We reserve the right to modify, update, or remove content from the application at any time without prior notice.
+                            <strong>Content Ownership:</strong> All materials on this platform are owned by StudyScript. Unauthorized distribution or copying of our premium content is strictly prohibited and may lead to legal action.
                         </li>
                     </ul>
                 </div>
