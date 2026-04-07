@@ -1,27 +1,36 @@
-
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { getUserProfile, UserProfile } from "@/lib/data";
+import { getUserProfile, UserProfile, getBannerSettings, BannerItem } from "@/lib/data";
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Share2, Gift, Users, Trophy, Loader2, Copy, CheckCircle2, MessageCircle, ArrowRightCircle } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { useToast } from "@/hooks/use-toast";
+import { getGoogleDriveImageUrl } from "@/lib/utils";
 
 export default function ShareRewardPage() {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Partial<UserProfile> | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [referralBanner, setReferralBanner] = useState<BannerItem | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     async function loadData() {
       if (user) {
-        const data = await getUserProfile(user.uid);
-        setProfile(data);
+        const [profileData, bannerData] = await Promise.all([
+            getUserProfile(user.uid),
+            getBannerSettings()
+        ]);
+        setProfile(profileData);
+        if (bannerData.referralBanner && bannerData.referralBanner.isActive) {
+            setReferralBanner(bannerData.referralBanner);
+        }
       }
       setLoading(false);
     }
@@ -153,6 +162,31 @@ export default function ShareRewardPage() {
             </CardContent>
           </Card>
         </ScrollAnimation>
+
+        {/* Bottom Banner Setup */}
+        {referralBanner && (
+            <ScrollAnimation delay={400}>
+                {referralBanner.linkUrl ? (
+                    <Link href={referralBanner.linkUrl} target="_blank" className="block relative aspect-[21/9] w-full overflow-hidden rounded-3xl shadow-lg border-4 border-white">
+                        <Image 
+                            src={getGoogleDriveImageUrl(referralBanner.imageUrl)} 
+                            alt="Promotion"
+                            fill
+                            className="object-cover"
+                        />
+                    </Link>
+                ) : (
+                    <div className="relative aspect-[21/9] w-full overflow-hidden rounded-3xl shadow-lg border-4 border-white">
+                        <Image 
+                            src={getGoogleDriveImageUrl(referralBanner.imageUrl)} 
+                            alt="Promotion"
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
+                )}
+            </ScrollAnimation>
+        )}
 
       </div>
     </div>

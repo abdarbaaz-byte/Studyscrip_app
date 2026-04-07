@@ -1177,15 +1177,18 @@ export type BannerItem = {
 
 export type BannerSettings = {
   banners: BannerItem[];
+  referralBanner?: BannerItem; // Optional banner for Share & Earn page
 };
 
 export async function getBannerSettings(): Promise<BannerSettings> {
     const settingsDocRef = doc(db, 'settings', 'homeBanner');
     const docSnap = await getDoc(settingsDocRef);
     if (docSnap.exists()) {
-        // Ensure it returns the full object with an array, even if empty
         const data = docSnap.data();
-        return { banners: data.banners || [] };
+        return { 
+            banners: data.banners || [],
+            referralBanner: data.referralBanner || undefined
+        };
     }
     // Return a default structure if the document doesn't exist
     return { banners: [] };

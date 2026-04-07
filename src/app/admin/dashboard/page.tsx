@@ -34,7 +34,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -716,18 +716,33 @@ export default function AdminDashboardPage() {
       linkUrl: '',
       isActive: true,
     };
-    setBannerSettings(prev => ({ banners: [...prev.banners, newBanner] }));
+    setBannerSettings(prev => ({ ...prev, banners: [...prev.banners, newBanner] }));
   };
 
   const handleUpdateBanner = (id: string, field: keyof Omit<BannerItem, 'id'>, value: string | boolean) => {
     setBannerSettings(prev => ({
+      ...prev,
       banners: prev.banners.map(b => b.id === id ? { ...b, [field]: value } : b)
     }));
   };
   
   const handleDeleteBanner = (id: string) => {
     setBannerSettings(prev => ({
+      ...prev,
       banners: prev.banners.filter(b => b.id !== id)
+    }));
+  };
+
+  const handleUpdateReferralBanner = (field: keyof Omit<BannerItem, 'id'>, value: string | boolean) => {
+    setBannerSettings(prev => ({
+        ...prev,
+        referralBanner: {
+            id: 'referral-banner',
+            imageUrl: prev.referralBanner?.imageUrl || '',
+            linkUrl: prev.referralBanner?.linkUrl || '',
+            isActive: prev.referralBanner?.isActive ?? false,
+            [field]: value
+        }
     }));
   };
 
@@ -1784,67 +1799,109 @@ export default function AdminDashboardPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Site Settings</CardTitle>
-        <CardDescription>Manage global site settings like the homepage banners.</CardDescription>
+        <CardDescription>Manage global site settings like banners for home and referral pages.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSaveBanner} className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Homepage Banners</h3>
-            <Button type="button" variant="outline" size="sm" onClick={handleAddBanner}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
-            </Button>
+        <form onSubmit={handleSaveBanner} className="space-y-10">
+          {/* Homepage Banners Section */}
+          <div className="space-y-6">
+            <div className="flex justify-between items-center border-b pb-2">
+                <h3 className="text-lg font-bold flex items-center gap-2"><LayoutGrid className="h-5 w-5"/> Homepage Banners</h3>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddBanner}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
+                </Button>
+            </div>
+
+            <div className="space-y-4">
+                {bannerSettings.banners.map((banner, index) => (
+                <div key={banner.id} className="p-4 border rounded-lg relative bg-secondary/50">
+                    <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute top-2 right-2 h-7 w-7 text-destructive" 
+                        onClick={() => handleDeleteBanner(banner.id)}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor={`banner-image-url-${index}`}>Banner Image URL</Label>
+                        <Input
+                        id={`banner-image-url-${index}`}
+                        placeholder="https://example.com/banner.jpg"
+                        value={banner.imageUrl}
+                        onChange={(e) => handleUpdateBanner(banner.id, 'imageUrl', e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor={`banner-link-url-${index}`}>Banner Link URL</Label>
+                        <Input
+                        id={`banner-link-url-${index}`}
+                        placeholder="/courses/your-course-id"
+                        value={banner.linkUrl}
+                        onChange={(e) => handleUpdateBanner(banner.id, 'linkUrl', e.target.value)}
+                        />
+                    </div>
+                    </div>
+                    <div className="flex items-center space-x-2 mt-4">
+                        <Switch 
+                            id={`banner-active-${index}`}
+                            checked={banner.isActive}
+                            onCheckedChange={(checked) => handleUpdateBanner(banner.id, 'isActive', checked)}
+                        />
+                        <Label htmlFor={`banner-active-${index}`}>Show this banner</Label>
+                    </div>
+                </div>
+                ))}
+                {bannerSettings.banners.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4">No homepage banners configured.</p>
+                )}
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {bannerSettings.banners.map((banner, index) => (
-              <div key={banner.id} className="p-4 border rounded-lg relative bg-secondary/50">
-                 <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-2 right-2 h-7 w-7 text-destructive" 
-                    onClick={() => handleDeleteBanner(banner.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                 </Button>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`banner-image-url-${index}`}>Banner Image URL</Label>
-                    <Input
-                      id={`banner-image-url-${index}`}
-                      placeholder="https://example.com/banner.jpg"
-                      value={banner.imageUrl}
-                      onChange={(e) => handleUpdateBanner(banner.id, 'imageUrl', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`banner-link-url-${index}`}>Banner Link URL</Label>
-                    <Input
-                      id={`banner-link-url-${index}`}
-                      placeholder="/courses/your-course-id"
-                      value={banner.linkUrl}
-                      onChange={(e) => handleUpdateBanner(banner.id, 'linkUrl', e.target.value)}
-                    />
-                  </div>
+          {/* Referral Page Banner Section */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 border-b pb-2">
+                <h3 className="text-lg font-bold flex items-center gap-2"><Gift className="h-5 w-5"/> Referral Page Banner</h3>
+                <Badge variant="outline" className="text-[10px]">Optional</Badge>
+            </div>
+            
+            <div className="p-6 border rounded-2xl bg-primary/5 relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="ref-banner-img">Banner Image URL</Label>
+                        <Input 
+                            id="ref-banner-img"
+                            placeholder="Drive image link..."
+                            value={bannerSettings.referralBanner?.imageUrl || ''}
+                            onChange={(e) => handleUpdateReferralBanner('imageUrl', e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="ref-banner-link">Optional Link URL</Label>
+                        <Input 
+                            id="ref-banner-link"
+                            placeholder="/batches/..."
+                            value={bannerSettings.referralBanner?.linkUrl || ''}
+                            onChange={(e) => handleUpdateReferralBanner('linkUrl', e.target.value)}
+                        />
+                    </div>
                 </div>
-                 <div className="flex items-center space-x-2 mt-4">
+                <div className="flex items-center space-x-2 mt-6">
                     <Switch 
-                        id={`banner-active-${index}`}
-                        checked={banner.isActive}
-                        onCheckedChange={(checked) => handleUpdateBanner(banner.id, 'isActive', checked)}
+                        id="ref-banner-active"
+                        checked={bannerSettings.referralBanner?.isActive || false}
+                        onCheckedChange={(checked) => handleUpdateReferralBanner('isActive', checked)}
                     />
-                    <Label htmlFor={`banner-active-${index}`}>Show this banner</Label>
+                    <Label htmlFor="ref-banner-active" className="font-semibold">Show banner at bottom of Share & Earn page</Label>
                 </div>
-              </div>
-            ))}
-            {bannerSettings.banners.length === 0 && (
-                <p className="text-center text-muted-foreground py-4">No banners configured. Add one to get started.</p>
-            )}
+            </div>
           </div>
           
-          <Button type="submit" disabled={isSavingBanner}>
-            {isSavingBanner ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Save Banner Settings
+          <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isSavingBanner}>
+            {isSavingBanner ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save All Site Settings
           </Button>
         </form>
       </CardContent>
