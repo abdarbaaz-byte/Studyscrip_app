@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,11 +9,17 @@ import { getBookstoreItems, type BookstoreItem } from "@/lib/data";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BookstorePage() {
   const [items, setItems] = useState<BookstoreItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     async function loadData() {
@@ -25,6 +30,20 @@ export default function BookstorePage() {
     }
     loadData();
   }, []);
+
+  const handleDownload = (url: string) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Login Required",
+        description: "Please login to download books from the bookstore.",
+      });
+      router.push(`/login?redirect=/bookstore`);
+      return;
+    }
+    // Open the URL in a new tab for download
+    window.open(url, "_blank");
+  };
 
   const filteredItems = items.filter((item) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -66,7 +85,10 @@ export default function BookstorePage() {
                 <ScrollAnimation key={item.id} delay={index * 50}>
                   <Card className="flex flex-col overflow-hidden group h-full">
                     <CardHeader className="p-0 relative flex-grow">
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="block aspect-[3/4] h-full">
+                      <div 
+                        onClick={() => handleDownload(item.url)} 
+                        className="block aspect-[3/4] h-full cursor-pointer"
+                      >
                         <Image
                           src={getGoogleDriveImageUrl(item.thumbnailUrl) || `https://placehold.co/600x800.png/E2E8F0/A0AEC0?text=${item.title.split(' ').join('+')}`}
                           alt={item.title}
@@ -75,14 +97,15 @@ export default function BookstorePage() {
                           className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105 prevent-long-press"
                           onContextMenu={(e) => e.preventDefault()}
                         />
-                      </a>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 flex flex-col">
                       <CardTitle className="font-headline text-base h-10 flex items-center">{item.title}</CardTitle>
-                      <Button asChild className="w-full mt-3">
-                        <a href={item.url} target="_blank" rel="noopener noreferrer" download>
-                          <Download className="mr-2 h-4 w-4" /> Download
-                        </a>
+                      <Button 
+                        onClick={() => handleDownload(item.url)} 
+                        className="w-full mt-3"
+                      >
+                        <Download className="mr-2 h-4 w-4" /> Download
                       </Button>
                     </CardContent>
                   </Card>
