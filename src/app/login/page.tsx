@@ -76,7 +76,7 @@ export default function LoginPage() {
            <div className="mt-4 text-center text-sm">
             Don't have an account?{" "}
             <Link href="/signup" passHref>
-               <Button variant="link" className="px-0 h-auto">Sign up</Button>
+               <Button variant="link" className="px-0 h-auto">New Account</Button>
             </Link>
           </div>
         </CardContent>
