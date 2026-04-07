@@ -1,8 +1,9 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,8 +12,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff, Gift } from "lucide-react";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signUp } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState("");
@@ -24,6 +26,12 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      setReferralCodeInput(ref.toUpperCase());
+    }
+  }, [searchParams]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +118,9 @@ export default function SignupPage() {
                 onChange={(e) => setReferralCodeInput(e.target.value.toUpperCase())} 
                 maxLength={6}
               />
+              {searchParams.get('ref') && (
+                <p className="text-[10px] text-green-600 font-medium italic">Code applied automatically from link!</p>
+              )}
             </div>
 
             <Button type="submit" className="w-full mt-2" disabled={loading}>
@@ -126,5 +137,13 @@ export default function SignupPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin text-primary" /></div>}>
+      <SignupForm />
+    </Suspense>
   );
 }

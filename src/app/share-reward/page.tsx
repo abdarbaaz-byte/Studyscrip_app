@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -5,7 +6,7 @@ import { getUserProfile, UserProfile } from "@/lib/data";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Share2, Gift, Users, Trophy, Loader2, Copy, CheckCircle2 } from "lucide-react";
+import { Share2, Gift, Users, Trophy, Loader2, Copy, CheckCircle2, MessageCircle, ArrowRightCircle } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,12 +29,13 @@ export default function ShareRewardPage() {
   }, [user]);
 
   const referralCode = profile?.referralCode || "";
-  const shareUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const shareText = `Hey! Join me on StudyScript for amazing courses. Use my referral code: ${referralCode} to join. Download now: ${shareUrl}`;
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const shareUrl = `${baseUrl}/signup?ref=${referralCode}`;
+  const shareText = `Hey! Join me on StudyScript for amazing courses. Click my link to join and get exclusive benefits! 🚀\n\nJoin here: ${shareUrl}`;
 
   const handleShare = async () => {
     const shareData = {
-      title: 'StudyScript Referral',
+      title: 'Join StudyScript',
       text: shareText,
       url: shareUrl,
     };
@@ -81,13 +83,14 @@ export default function ShareRewardPage() {
         <ScrollAnimation delay={100}>
           <Card className="shadow-xl rounded-3xl border-none">
             <CardHeader className="text-center pb-2">
-              <CardTitle className="text-xl">Your Referral Code</CardTitle>
+              <CardTitle className="text-xl">Your Referral Link</CardTitle>
+              <CardDescription>Share this link to automatically apply your code</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-6">
-              <div className="flex items-center gap-4 bg-secondary/50 px-8 py-4 rounded-2xl border-2 border-dashed border-primary/30">
-                <span className="text-3xl font-black font-mono tracking-widest text-primary">{referralCode || "------"}</span>
-                <Button variant="ghost" size="icon" onClick={handleCopy}>
-                  {copied ? <CheckCircle2 className="h-6 w-6 text-green-600" /> : <Copy className="h-6 w-6" />}
+              <div className="flex items-center gap-4 bg-secondary/50 px-6 py-4 rounded-2xl border-2 border-dashed border-primary/30 w-full overflow-hidden">
+                <span className="text-sm font-mono truncate text-primary flex-1">{shareUrl}</span>
+                <Button variant="ghost" size="icon" onClick={handleCopy} className="shrink-0">
+                  {copied ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <Copy className="h-5 w-5" />}
                 </Button>
               </div>
               
@@ -98,48 +101,50 @@ export default function ShareRewardPage() {
           </Card>
         </ScrollAnimation>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ScrollAnimation delay={200}>
-            <Card className="h-full">
-              <CardHeader>
-                <div className="bg-orange-100 text-orange-600 w-10 h-10 rounded-lg flex items-center justify-center mb-2">
-                  <Users className="h-6 w-6" />
-                </div>
-                <CardTitle className="text-lg">Invite Friends</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Apne dosto ko app share karein aur unhe apna referral code use karne ko kahein.
-              </CardContent>
-            </Card>
-          </ScrollAnimation>
-
-          <ScrollAnimation delay={300}>
-            <Card className="h-full">
-              <CardHeader>
-                <div className="bg-green-100 text-green-600 w-10 h-10 rounded-lg flex items-center justify-center mb-2">
-                  <Trophy className="h-6 w-6" />
-                </div>
-                <CardTitle className="text-lg">Earn Points</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Har successful referral par aapko points milenge jo aap premium courses unlock karne ke liye use kar sakte hain.
-              </CardContent>
-            </Card>
-          </ScrollAnimation>
-        </div>
-
-        <ScrollAnimation delay={400}>
-          <Card className="bg-primary/5 border-primary/10">
+        <ScrollAnimation delay={200}>
+          <Card className="border-none shadow-lg bg-white rounded-3xl">
             <CardHeader>
-              <CardTitle className="text-lg font-bold">Reward Details / इनाम की जानकारी</CardTitle>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <ArrowRightCircle className="text-primary h-6 w-6" /> Referral Steps
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-                <li>Har 5 referral par aapko 1 "Free Practice Quiz" access milega.</li>
-                <li>10 referral poore hone par ek specialized "Audio Lecture" topic unlock hoga.</li>
-                <li>Top referrers ke liye mahine ke ant mein special prizes diye jayenge.</li>
-                <li>Aapne abhi tak <strong>{profile?.referralCount || 0}</strong> referrals kiye hain.</li>
-              </ul>
+            <CardContent className="space-y-6">
+              <div className="flex gap-4 items-start">
+                <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">1</div>
+                <div>
+                  <p className="font-bold">Link Share Karein</p>
+                  <p className="text-sm text-muted-foreground">'Share with Friends' button par click karein aur apne dosto ko link bhejein.</p>
+                </div>
+              </div>
+              <div className="flex gap-4 items-start">
+                <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">2</div>
+                <div>
+                  <p className="font-bold">Dost Join Karein</p>
+                  <p className="text-sm text-muted-foreground">Aapka dost uss link par click karke signup karega toh aapka code auto-fill ho jayega.</p>
+                </div>
+              </div>
+              <div className="flex gap-4 items-start">
+                <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">3</div>
+                <div>
+                  <p className="font-bold">Referral Count Badhayein</p>
+                  <p className="text-sm text-muted-foreground">Jaise hi wo signup karenge, aapka referral count badh jayega. Aapne abhi tak <span className="font-bold text-primary">{profile?.referralCount || 0}</span> referral kiye hain.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollAnimation>
+
+        <ScrollAnimation delay={300}>
+          <Card className="bg-orange-50 border-orange-100 rounded-3xl">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold text-orange-800 flex items-center gap-2">
+                <MessageCircle className="h-5 w-5" /> Important Note
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-orange-900 leading-relaxed">
+                Referral points se **Free Access** ya rewards paane ke liye, kripya StudyScript ke **Chat Support** mein message karein. Hamari team aapke referrals verify karke aapko reward pradan karegi.
+              </p>
             </CardContent>
           </Card>
         </ScrollAnimation>
