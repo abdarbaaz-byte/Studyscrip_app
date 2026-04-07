@@ -92,3 +92,45 @@ export const sendPushNotifications = functions.firestore
       console.error("Error in sendPushNotifications function:", error);
     }
   });
+
+/**
+ * Triggered when a notification is deleted from the 'notifications' collection.
+ * Cleans up the 'readNotifications' array in all user documents to save space.
+ */
+export const cleanupReadNotifications = functions.firestore
+  .document("notifications/{notificationId}")
+  .onDelete(async (snapshot, context) => {
+    const notificationId = context.params.notificationId;
+    const usersRef = db.collection("users");
+
+    try {
+      // Find users who have this notificationId in their readNotifications array
+      const querySnapshot = await usersRef.where("readNotifications", "array-contains", notificationId).get();
+
+      if (querySnapshot.empty) {
+        console.log(`No users had read notification ${notificationId}.`);
+        return;
+      }
+
+      console.log(`Found ${querySnapshot.size} users to cleanup read notification ${notificationId}.`);
+
+      const docs = querySnapshot.docs;
+      // Firestore batches are limited to 500 operations
+      for (let i = 0; i < docs.length; i += 500) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + 500);
+        
+        chunk.forEach((userDoc) => {
+          batch.update(userDoc.ref, {
+            readNotifications: admin.firestore.FieldValue.arrayRemove(notificationId)
+          });
+        });
+
+        await batch.commit();
+      }
+
+      console.log(`Successfully removed ${notificationId} from all user read arrays.`);
+    } catch (error) {
+      console.error("Error in cleanupReadNotifications function:", error);
+    }
+  });
