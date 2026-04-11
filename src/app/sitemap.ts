@@ -5,7 +5,7 @@ import { getAcademicData } from '@/lib/academics';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://studyscript.netlify.app';
 
-  // 1. Static pages
+  // 1. Static pages (Including all pages from the old sitemap.xml)
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
