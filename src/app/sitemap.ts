@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getCourses } from '@/lib/data';
+import { getCourses, getBatches } from '@/lib/data';
 import { getAcademicData } from '@/lib/academics';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -20,24 +20,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/bookstore`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/audio-lectures`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/live-classes`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/batches`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
   ];
 
   // 2. Dynamic course pages
   const courses = await getCourses();
   const courseRoutes = courses.map((course) => ({
     url: `${baseUrl}/courses/${course.docId}`,
-    lastModified: new Date(), // Ideally, you'd use a date from your course data
-    changeFrequency: 'weekly' as 'weekly',
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
     priority: 0.9,
   }));
 
-  // 3. Dynamic academic pages (classes, subjects, chapters)
+  // 3. Dynamic batch pages
+  const batches = await getBatches();
+  const batchRoutes = batches.map((batch) => ({
+    url: `${baseUrl}/batches/${batch.id}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }));
+
+  // 4. Dynamic academic pages (classes, subjects, chapters)
   const academicClasses = await getAcademicData();
   const academicRoutes = academicClasses.flatMap((ac) => {
     const classUrl = {
       url: `${baseUrl}/class/${ac.id}`,
       lastModified: new Date(),
-      changeFrequency: 'weekly' as 'weekly',
+      changeFrequency: 'weekly' as const,
       priority: 0.8,
     };
 
@@ -45,14 +55,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const subjectUrl = {
         url: `${baseUrl}/class/${ac.id}/${subject.id}`,
         lastModified: new Date(),
-        changeFrequency: 'weekly' as 'weekly',
+        changeFrequency: 'weekly' as const,
         priority: 0.8,
       };
 
       const chapterUrls = (subject.chapters || []).map((chapter) => ({
         url: `${baseUrl}/class/${ac.id}/${subject.id}/${chapter.id}`,
         lastModified: new Date(),
-        changeFrequency: 'monthly' as 'monthly',
+        changeFrequency: 'monthly' as const,
         priority: 0.7,
       }));
 
@@ -62,5 +72,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [classUrl, ...subjectUrls];
   });
 
-  return [...staticRoutes, ...courseRoutes, ...academicRoutes];
+  return [...staticRoutes, ...courseRoutes, ...batchRoutes, ...academicRoutes];
 }
