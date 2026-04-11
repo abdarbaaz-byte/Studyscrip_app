@@ -3,6 +3,7 @@ const createNextPwa = require('next-pwa');
 
 const withPWA = createNextPwa({
   dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
   sw: 'sw.js',
@@ -64,13 +65,14 @@ const withPWA = createNextPwa({
     },
     {
       urlPattern: /.*/i,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'others',
         expiration: {
           maxEntries: 32,
           maxAgeSeconds: 24 * 60 * 60, // 24 hours
         },
+        networkTimeoutSeconds: 10,
       },
     },
   ],
