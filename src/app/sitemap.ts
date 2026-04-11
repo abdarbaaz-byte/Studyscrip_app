@@ -23,54 +23,59 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/batches`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
   ];
 
-  // 2. Dynamic course pages
-  const courses = await getCourses();
-  const courseRoutes = courses.map((course) => ({
-    url: `${baseUrl}/courses/${course.docId}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.9,
-  }));
+  try {
+    // 2. Dynamic course pages
+    const courses = await getCourses();
+    const courseRoutes = courses.map((course) => ({
+      url: `${baseUrl}/courses/${course.docId || course.id}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    }));
 
-  // 3. Dynamic batch pages
-  const batches = await getBatches();
-  const batchRoutes = batches.map((batch) => ({
-    url: `${baseUrl}/batches/${batch.id}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
-
-  // 4. Dynamic academic pages (classes, subjects, chapters)
-  const academicClasses = await getAcademicData();
-  const academicRoutes = academicClasses.flatMap((ac) => {
-    const classUrl = {
-      url: `${baseUrl}/class/${ac.id}`,
+    // 3. Dynamic batch pages
+    const batches = await getBatches();
+    const batchRoutes = batches.map((batch) => ({
+      url: `${baseUrl}/batches/${batch.id}`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
-    };
+    }));
 
-    const subjectUrls = (ac.subjects || []).flatMap((subject) => {
-      const subjectUrl = {
-        url: `${baseUrl}/class/${ac.id}/${subject.id}`,
+    // 4. Dynamic academic pages (classes, subjects, chapters)
+    const academicClasses = await getAcademicData();
+    const academicRoutes = academicClasses.flatMap((ac) => {
+      const classUrl = {
+        url: `${baseUrl}/class/${ac.id}`,
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       };
 
-      const chapterUrls = (subject.chapters || []).map((chapter) => ({
-        url: `${baseUrl}/class/${ac.id}/${subject.id}/${chapter.id}`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly' as const,
-        priority: 0.7,
-      }));
+      const subjectUrls = (ac.subjects || []).flatMap((subject) => {
+        const subjectUrl = {
+          url: `${baseUrl}/class/${ac.id}/${subject.id}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        };
 
-      return [subjectUrl, ...chapterUrls];
+        const chapterUrls = (subject.chapters || []).map((chapter) => ({
+          url: `${baseUrl}/class/${ac.id}/${subject.id}/${chapter.id}`,
+          lastModified: new Date(),
+          changeFrequency: 'monthly' as const,
+          priority: 0.7,
+        }));
+
+        return [subjectUrl, ...chapterUrls];
+      });
+
+      return [classUrl, ...subjectUrls];
     });
 
-    return [classUrl, ...subjectUrls];
-  });
-
-  return [...staticRoutes, ...courseRoutes, ...batchRoutes, ...academicRoutes];
+    return [...staticRoutes, ...courseRoutes, ...batchRoutes, ...academicRoutes];
+  } catch (error) {
+    console.error("Sitemap generation error:", error);
+    return staticRoutes;
+  }
 }
