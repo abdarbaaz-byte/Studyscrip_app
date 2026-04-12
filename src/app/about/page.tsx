@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpenCheck, Target, Video, MessageSquareHeart, GraduationCap } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
@@ -20,7 +19,7 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent className="text-lg text-left space-y-6 p-8">
               <p>
-                Welcome to <strong>StudyScript</strong>, a next-generation e-learning platform designed to make quality education accessible and engaging for everyone. We believe that learning should be flexible, interactive, and tailored to individual needs. Whether you're a student preparing for academic exams or a professional looking to upskill, StudyScript is here to guide you on your journey to success.
+                Welcome to <strong>StudyScript</strong>, founded by <strong>ABD Arbaaz</strong>. We are a next-generation e-learning platform designed to make quality education accessible and engaging for everyone. We believe that learning should be flexible, interactive, and tailored to individual needs. Whether you're a student preparing for academic exams or a professional looking to upskill, StudyScript is here to guide you on your journey to success.
               </p>
               <p>
                 Our platform is built on the foundation of providing comprehensive and high-quality content, seamlessly delivered through a modern and intuitive interface.
