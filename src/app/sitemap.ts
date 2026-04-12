@@ -38,7 +38,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    // 4. Dynamic academic pages (classes, subjects, chapters)
+    // 4. Dynamic academic pages (classes and subjects only)
+    // Chapters are excluded to prevent "Thin Content" flags since they primarily host single files/videos
     const academicClasses = await getAcademicData();
     const academicRoutes = academicClasses.flatMap((ac) => {
       const classUrl = {
@@ -48,23 +49,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       };
 
-      const subjectUrls = (ac.subjects || []).flatMap((subject) => {
-        const subjectUrl = {
-          url: `${baseUrl}/class/${ac.id}/${subject.id}`,
-          lastModified: new Date(),
-          changeFrequency: 'weekly' as const,
-          priority: 0.8,
-        };
-
-        const chapterUrls = (subject.chapters || []).map((chapter) => ({
-          url: `${baseUrl}/class/${ac.id}/${subject.id}/${chapter.id}`,
-          lastModified: new Date(),
-          changeFrequency: 'monthly' as const,
-          priority: 0.7,
-        }));
-
-        return [subjectUrl, ...chapterUrls];
-      });
+      const subjectUrls = (ac.subjects || []).map((subject) => ({
+        url: `${baseUrl}/class/${ac.id}/${subject.id}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      }));
 
       return [classUrl, ...subjectUrls];
     });
