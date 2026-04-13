@@ -1,5 +1,4 @@
 
-
 import { db } from './firebase';
 import { collection, getDocs, doc, writeBatch, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
@@ -29,6 +28,19 @@ export type AcademicClass = {
   description: string;
   subjects: Subject[];
 };
+
+// Helper for Manual Revalidation Trigger
+async function triggerRevalidation(path: string = '/') {
+    try {
+        await fetch('/api/revalidate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path, secret: 'studyscript-revalidate-secret' }),
+        });
+    } catch (e) {
+        console.warn("Manual revalidation trigger failed", e);
+    }
+}
 
 export const initialClasses: AcademicClass[] = [
   {
@@ -160,7 +172,6 @@ export function listenToAcademics(callback: (classes: AcademicClass[]) => void):
     
     return onSnapshot(classesCol, (snapshot) => {
         if (snapshot.empty) {
-            // Seeding logic is handled by getAcademicData, so here we can just return empty or the initial set
             callback(initialClasses);
             return;
         }
@@ -193,16 +204,23 @@ export async function saveAcademicData(data: AcademicClass[]) {
     const batch = writeBatch(db);
     data.forEach(ac => {
         const docRef = doc(db, 'academics', ac.id);
-        // Firestore works better without nested arrays being manipulated client-side
-        // It's often better to store subjects as a subcollection.
-        // For this prototype, we'll overwrite the whole document.
         batch.set(docRef, { ...ac });
     });
     await batch.commit();
+    
+    // Trigger global revalidation for academic pages
+    triggerRevalidation('/');
+    data.forEach(ac => {
+        triggerRevalidation(`/class/${ac.id}`);
+        ac.subjects.forEach(sub => {
+            triggerRevalidation(`/class/${ac.id}/${sub.id}`);
+        });
+    });
 }
 
 
 export async function deleteAcademicClass(classId: string): Promise<void> {
     const docRef = doc(db, 'academics', classId);
     await deleteDoc(docRef);
+    triggerRevalidation('/');
 }

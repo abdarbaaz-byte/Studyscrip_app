@@ -1,3 +1,4 @@
+
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove, increment } from 'firebase/firestore';
 import type { Course, CourseFolder, CourseContent } from './courses';
@@ -5,6 +6,19 @@ import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
 import { getAcademicData, type AcademicClass, type Subject } from './academics';
 import { UserPermission } from '@/hooks/use-auth';
+
+// Helper for Manual Revalidation
+async function triggerRevalidation(path: string = '/') {
+    try {
+        await fetch('/api/revalidate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path, secret: 'studyscript-revalidate-secret' }),
+        });
+    } catch (e) {
+        console.warn("Manual revalidation trigger failed (This is normal in local development)", e);
+    }
+}
 
 // Re-export for convenience
 export const listenToAcademics = (callback: (classes: AcademicClass[]) => void) => {
@@ -95,13 +109,16 @@ export async function saveBatch(batch: Omit<Batch, 'id' | 'createdAt'> & { id?: 
     const { id, ...data } = batch;
     if (id) {
         await setDoc(doc(db, 'batches', id), data, { merge: true });
+        triggerRevalidation(`/batches/${id}`);
     } else {
-        await addDoc(collection(db, 'batches'), { ...data, createdAt: serverTimestamp(), chatEnabled: true });
+        const docRef = await addDoc(collection(db, 'batches'), { ...data, createdAt: serverTimestamp(), chatEnabled: true });
+        triggerRevalidation(`/batches/${docRef.id}`);
     }
 }
 
 export async function deleteBatch(id: string): Promise<void> {
     await deleteDoc(doc(db, 'batches', id));
+    triggerRevalidation('/batches');
 }
 
 export async function getBatchInformation(batchId: string): Promise<BatchInformation[]> {
@@ -114,10 +131,12 @@ export async function getBatchInformation(batchId: string): Promise<BatchInforma
 export async function saveBatchInformation(batchId: string, info: Omit<BatchInformation, 'id' | 'createdAt'>): Promise<void> {
     const infoCol = collection(db, 'batches', batchId, 'information');
     await addDoc(infoCol, { ...info, createdAt: serverTimestamp() });
+    triggerRevalidation(`/batches/${batchId}`);
 }
 
 export async function deleteBatchInformation(batchId: string, infoId: string): Promise<void> {
     await deleteDoc(doc(db, 'batches', batchId, 'information', infoId));
+    triggerRevalidation(`/batches/${batchId}`);
 }
 
 export function listenToBatchMessages(batchId: string, callback: (messages: BatchMessage[]) => void) {
@@ -326,17 +345,22 @@ export async function saveCourse(courseData: Omit<Course, 'docId'> & { docId?: s
         const courseDocRef = doc(db, 'courses', docId);
         // Don't update createdAt when editing an existing course
         const { createdAt, ...updateData } = data;
-        return await setDoc(courseDocRef, updateData, { merge: true });
+        const res = await setDoc(courseDocRef, updateData, { merge: true });
+        triggerRevalidation(`/courses/${docId}`);
+        return res;
     } else {
         const coursesCol = collection(db, 'courses');
-        return await addDoc(coursesCol, { ...data, createdAt: serverTimestamp() });
+        const docRef = await addDoc(coursesCol, { ...data, createdAt: serverTimestamp() });
+        triggerRevalidation(`/courses/${docRef.id}`);
+        return docRef;
     }
 }
 
 
 export async function deleteCourse(docId: string): Promise<void> {
     const courseDocRef = doc(db, 'courses', docId);
-    return await deleteDoc(courseDocRef);
+    await deleteDoc(courseDocRef);
+    triggerRevalidation('/#courses');
 }
 
 
@@ -887,10 +911,12 @@ export async function saveFreeNotes(note: FreeNote): Promise<void> {
     } else {
         await addDoc(collection(db, 'freeNotes'), { ...data, category: data.category || 'online' });
     }
+    triggerRevalidation('/free-notes');
 }
 
 export async function deleteFreeNote(id: string): Promise<void> {
     await deleteDoc(doc(db, 'freeNotes', id));
+    triggerRevalidation('/free-notes');
 }
 
 
@@ -917,10 +943,12 @@ export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
     } else {
         await addDoc(collection(db, 'bookstore'), { ...data, createdAt: serverTimestamp() });
     }
+    triggerRevalidation('/bookstore');
 }
 
 export async function deleteBookstoreItem(id: string): Promise<void> {
     await deleteDoc(doc(db, 'bookstore', id));
+    triggerRevalidation('/bookstore');
 }
 
 // --- AUDIO LECTURES ---
@@ -1018,14 +1046,17 @@ export async function saveQuiz(quiz: Quiz): Promise<void> {
 
     if (id) {
         await setDoc(doc(db, 'quizzes', id), dataToSave, { merge: true });
+        triggerRevalidation(`/quizzes/${id}`);
     } else {
         dataToSave.createdAt = serverTimestamp(); // Ensure new quizzes have a timestamp
-        await addDoc(collection(db, 'quizzes'), dataToSave);
+        const docRef = await addDoc(collection(db, 'quizzes'), dataToSave);
+        triggerRevalidation(`/quizzes/${docRef.id}`);
     }
 }
 
 export async function deleteQuiz(id: string): Promise<void> {
     await deleteDoc(doc(db, 'quizzes', id));
+    triggerRevalidation('/quizzes');
 }
 
 export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'>): Promise<string> {
@@ -1197,6 +1228,7 @@ export async function getBannerSettings(): Promise<BannerSettings> {
 export async function saveBannerSettings(settings: BannerSettings): Promise<void> {
     const settingsDocRef = doc(db, 'settings', 'homeBanner');
     await setDoc(settingsDocRef, settings, { merge: true });
+    triggerRevalidation('/');
 }
 
 // --- STUDENT REVIEWS ---
@@ -1227,11 +1259,13 @@ export async function submitReview(reviewData: { name: string; className: string
 export async function approveReview(id: string): Promise<void> {
     const reviewDocRef = doc(db, 'reviews', id);
     await updateDoc(reviewDocRef, { status: 'approved' });
+    triggerRevalidation('/');
 }
 
 export async function deleteReview(id: string): Promise<void> {
     const reviewDocRef = doc(db, 'reviews', id);
-await deleteDoc(reviewDocRef);
+    await deleteDoc(reviewDocRef);
+    triggerRevalidation('/');
 }
 
 // --- LIVE CLASSES ---

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getBatch, getBatches } from "@/lib/data";
 import BatchDetailClient from "./batch-detail-client";
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = false; // Manual revalidation only
 
 type Props = {
   params: { id: string };

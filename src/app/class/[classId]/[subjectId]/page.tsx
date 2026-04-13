@@ -3,6 +3,8 @@ import { Metadata } from "next";
 import { getAcademicData } from "@/lib/academics";
 import SubjectDetailClientPage from "./subject-detail-client-page";
 
+export const revalidate = false; // Manual revalidation only
+
 type Props = {
   params: { classId: string; subjectId: string };
 };

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getCourse, getCourses } from "@/lib/data";
 import CourseDetailClientPage from "./course-detail-client-page";
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = false; // Never automatically revalidate, wait for manual trigger
 
 type Props = {
   params: { id: string };
