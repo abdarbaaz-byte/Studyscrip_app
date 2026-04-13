@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // 2. Dynamic course pages
+    // 2. Dynamic course pages (Listing page /courses removed per request)
     const courses = await getCourses();
     const courseRoutes = courses.map((course) => ({
       url: `${baseUrl}/courses/${course.docId || course.id}`,
@@ -38,8 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    // 4. Dynamic academic pages (classes and subjects only)
-    // Chapters are excluded to prevent "Thin Content" flags since they primarily host single files/videos
+    // 4. Dynamic academic pages
     const academicClasses = await getAcademicData();
     const academicRoutes = academicClasses.flatMap((ac) => {
       const classUrl = {
@@ -56,6 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }));
 
+      // Chapters are excluded to prevent "Thin Content" flags per user request
       return [classUrl, ...subjectUrls];
     });
 
