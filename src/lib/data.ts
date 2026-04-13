@@ -114,11 +114,13 @@ export async function saveBatch(batch: Omit<Batch, 'id' | 'createdAt'> & { id?: 
         const docRef = await addDoc(collection(db, 'batches'), { ...data, createdAt: serverTimestamp(), chatEnabled: true });
         triggerRevalidation(`/batches/${docRef.id}`);
     }
+    triggerRevalidation('/'); // Batch list on home might change
 }
 
 export async function deleteBatch(id: string): Promise<void> {
     await deleteDoc(doc(db, 'batches', id));
     triggerRevalidation('/batches');
+    triggerRevalidation('/');
 }
 
 export async function getBatchInformation(batchId: string): Promise<BatchInformation[]> {
@@ -347,11 +349,13 @@ export async function saveCourse(courseData: Omit<Course, 'docId'> & { docId?: s
         const { createdAt, ...updateData } = data;
         const res = await setDoc(courseDocRef, updateData, { merge: true });
         triggerRevalidation(`/courses/${docId}`);
+        triggerRevalidation('/');
         return res;
     } else {
         const coursesCol = collection(db, 'courses');
         const docRef = await addDoc(coursesCol, { ...data, createdAt: serverTimestamp() });
         triggerRevalidation(`/courses/${docRef.id}`);
+        triggerRevalidation('/');
         return docRef;
     }
 }
@@ -360,7 +364,7 @@ export async function saveCourse(courseData: Omit<Course, 'docId'> & { docId?: s
 export async function deleteCourse(docId: string): Promise<void> {
     const courseDocRef = doc(db, 'courses', docId);
     await deleteDoc(courseDocRef);
-    triggerRevalidation('/#courses');
+    triggerRevalidation('/');
 }
 
 
