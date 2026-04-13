@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getCourse, getCourses } from "@/lib/data";
 import CourseDetailClientPage from "./course-detail-client-page";
 
-export const revalidate = 0;
+export const revalidate = 3600; // Revalidate every hour
 
 type Props = {
   params: { id: string };
