@@ -220,6 +220,13 @@ export function SiteHeader() {
                     Privacy Policy
                   </Link>
                   <Link
+                    href="/terms"
+                    className="text-foreground/70 transition-colors hover:text-foreground"
+                    onClick={handleLinkClick}
+                  >
+                    Terms & Conditions
+                  </Link>
+                  <Link
                     href="/disclaimer"
                     className="text-foreground/70 transition-colors hover:text-foreground"
                     onClick={handleLinkClick}
