@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
     { url: `${baseUrl}/faq`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/disclaimer`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/quizzes`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/free-notes`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
@@ -20,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // 2. Dynamic course pages (Listing page /courses removed per request)
+    // 2. Dynamic course pages
     const courses = await getCourses();
     const courseRoutes = courses.map((course) => ({
       url: `${baseUrl}/courses/${course.docId || course.id}`,
@@ -55,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }));
 
-      // Chapters are excluded to prevent "Thin Content" flags per user request
+      // Chapters are excluded to prevent "Thin Content" flags per SEO best practice
       return [classUrl, ...subjectUrls];
     });
 
