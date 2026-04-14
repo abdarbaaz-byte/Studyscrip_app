@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpenCheck, Target, Video, MessageSquareHeart, GraduationCap } from "lucide-react";
+import { BookOpenCheck, Target, Video, MessageSquareHeart, GraduationCap, UserCircle, Mail } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
 
 export default function AboutPage() {
@@ -83,6 +83,30 @@ export default function AboutPage() {
                  </ScrollAnimation>
 
             </div>
+        </div>
+
+        <div className="mt-12">
+            <ScrollAnimation>
+                <Card className="border-primary/20 bg-primary/5">
+                    <CardHeader className="flex flex-row items-center gap-4">
+                        <UserCircle className="w-10 h-10 text-primary" />
+                        <CardTitle className="text-2xl font-headline">About Founder</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="text-lg">
+                            StudyScript is led by <strong>ABD Arbaaz</strong>, a professional <strong>Pharmacist</strong> with a deep-rooted passion for educational technology. 
+                        </p>
+                        <p className="text-muted-foreground">
+                            He envisioned this platform to bridge the accessibility gap in digital learning, specifically by providing structured study materials that simplify complex topics for students. His goal is to empower every learner with the right resources at their fingertips to make their academic journey smoother and more successful.
+                        </p>
+                        <div className="flex items-center gap-2 pt-4 border-t border-primary/10">
+                            <Mail className="w-5 h-5 text-primary" />
+                            <span className="font-semibold">Contact Founder: </span>
+                            <a href="mailto:studyscript001@gmail.com" className="text-primary hover:underline">studyscript001@gmail.com</a>
+                        </div>
+                    </CardContent>
+                </Card>
+            </ScrollAnimation>
         </div>
 
       </div>

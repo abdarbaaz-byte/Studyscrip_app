@@ -7,10 +7,10 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compa
 // These values are injected or should be hardcoded if needed, 
 // but FCM can often initialize with minimal config in the SW.
 firebase.initializeApp({
-  apiKey: true, // Placeholder, browser handles auth via VAPID
-  projectId: "studyscript-001", // Replace with your actual project ID if delivery fails
-  messagingSenderId: "782631529406", // Replace with your actual Sender ID
-  appId: "1:782631529406:web:..." // Replace with your actual App ID
+  apiKey: "AIzaSyAogMOncvmZLqQ1qom0d3RDihdqOB9XRiY", // Placeholder, browser handles auth via VAPID
+  projectId: "studyscript", // Replace with your actual project ID if delivery fails
+  messagingSenderId: "891979418045", // Replace with your actual Sender ID
+  appId: "1:891979418045:web:047bfd8a00e148c14dead4" // Replace with your actual App ID
 });
 
 const messaging = firebase.messaging();
