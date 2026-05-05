@@ -13,10 +13,10 @@ import { AudioPlayer } from "@/components/audio-player";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://studyscript.netlify.app"),
-  title: "StudyScript | Live Classes, Free pdf Notes for NCERT & MP Board",
+  title: "Free Notes for Class 8-12 | NCERT solutions | StudyScript",
   description: "StudyScript se online padhai karein! Hum Class 8-12 ke liye structured courses, live classes, quizzes, free pdf notes aur books pradan karte hain. NCERT, MP Board syllabus, aur previous year question papers ke saath apni exam ki taiyari ko behtar banayein.",
   applicationName: "StudyScript",
-  keywords: ["online classes", "e-learning India", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "NCERT solutions", "MP Board", "previous year question papers", "audio lectures", "live classes", "online quiz", "free study material", "free notes pdf", "English spoken", "online padhai", "free pdf books", "education platform", "professional courses", "exam preparation"],
+  keywords: ["online classes", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "NCERT solutions", "MP Board", "previous year question papers", "CBSE notes", "live classes", "online quiz", "free study material", "free pdf notes", "MP board notes", "free pdf books", "Study script", "professional courses", "exam preparation"],
   authors: [{ name: "StudyScript" }],
   robots: "index, follow",
   verification: {
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "StudyScript",
-    title: "StudyScript | Live Classes, Free pdf Notes for NCERT & MP Board",
-    description: "StudyScript se online padhai karein! Hum Class 8th-12th ke liye structured courses, live classes, quizzes, free pdf notes aur books pradan karte hain.",
+    title: "StudyScript | NCERT Solutions for CBSE, MP Board & All State Boards",
+    description: "StudyScript se online padhai karein! Hum Class 8th-12th ke liye structured courses, quizzes, free pdf notes aur books pradan karte hain.",
     url: "https://studyscript.netlify.app",
   },
 };

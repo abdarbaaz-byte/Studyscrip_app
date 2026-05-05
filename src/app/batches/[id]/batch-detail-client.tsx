@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy, Send, User, Users, X } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy, Send, User, Users, X, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -220,19 +219,18 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                             </AccordionTrigger>
                             <AccordionContent className="pt-2 space-y-2">
                             {topic.content.map(item => (
-                                <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
-                                <div className="flex items-center gap-3">
-                                    {getContentIcon(item.type)}
-                                    <span className="text-sm font-medium">{item.title}</span>
-                                </div>
-                                {hasAccess ? (
-                                    <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>View</Button>
-                                ) : (
-                                    <Button variant="ghost" size="sm" onClick={handleBuyClick}>
-                                    <Lock className="h-4 w-4 text-muted-foreground mr-2" />
-                                    Unlock
-                                    </Button>
-                                )}
+                                <div 
+                                  key={item.id} 
+                                  className="flex items-center gap-3 p-3 bg-background rounded-lg border cursor-pointer hover:bg-secondary/10 transition-colors"
+                                  onClick={hasAccess ? () => setContentToView(item) : handleBuyClick}
+                                >
+                                  {getContentIcon(item.type)}
+                                  <span className="text-sm font-medium flex-1">{item.title}</span>
+                                  {hasAccess ? (
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <Lock className="h-4 w-4 text-muted-foreground" />
+                                  )}
                                 </div>
                             ))}
                             </AccordionContent>

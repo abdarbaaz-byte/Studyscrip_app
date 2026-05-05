@@ -72,7 +72,7 @@ define(['./workbox-e43f5367'], (function (workbox) { 'use strict';
   importScripts();
   self.skipWaiting();
   workbox.clientsClaim();
-  workbox.registerRoute("/", new workbox.NetworkFirst({
+  workbox.registerRoute("/", new workbox.StaleWhileRevalidate({
     "cacheName": "start-url",
     plugins: [{
       cacheWillUpdate: async ({
@@ -92,7 +92,7 @@ define(['./workbox-e43f5367'], (function (workbox) { 'use strict';
       }
     }]
   }), 'GET');
-  workbox.registerRoute(/.*/i, new workbox.NetworkOnly({
+  workbox.registerRoute(/.*/i, new workbox.NetworkFirst({
     "cacheName": "dev",
     plugins: []
   }), 'GET');

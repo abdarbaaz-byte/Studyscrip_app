@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, Video, Image as ImageIcon, Download, Eye, Globe, Smartphone } from "lucide-react";
+import { Loader2, FileText, Video, Image as ImageIcon, Download, Eye, Globe, Smartphone, ChevronRight } from "lucide-react";
 import { getFreeNotes, type FreeNote, type ContentItem } from "@/lib/data";
 
 export default function FreeNotesClient() {
@@ -140,15 +139,14 @@ export default function FreeNotesClient() {
                                 <p className="text-muted-foreground mb-4">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
-                                        <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
-                                        <div className="flex items-center gap-4">
-                                            {getContentIcon(item.type)}
-                                            <span className="font-medium">{item.title}</span>
-                                            <Badge variant={item.type === 'pdf' ? 'secondary' : 'default'} className="capitalize">{item.type}</Badge>
-                                        </div>
-                                        <Button variant="ghost" size="sm" onClick={() => setContentToView(item)}>
-                                            <Eye className="mr-2 h-4 w-4"/> View
-                                        </Button>
+                                        <li 
+                                          key={index} 
+                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors"
+                                          onClick={() => setContentToView(item)}
+                                        >
+                                          {getContentIcon(item.type)}
+                                          <span className="font-medium flex-1">{item.title}</span>
+                                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                         </li>
                                     ))}
                                 </ul>
@@ -173,19 +171,14 @@ export default function FreeNotesClient() {
                                 <p className="text-muted-foreground mb-4">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
-                                        <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
-                                        <div className="flex items-center gap-4">
-                                            {getContentIcon(item.type)}
-                                            <span className="font-medium">{item.title}</span>
-                                            <Badge variant="outline" className="capitalize">{item.type}</Badge>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button variant="outline" size="sm" asChild>
-                                                <a href={item.url} target="_blank" rel="noopener noreferrer" download>
-                                                    <Download className="mr-2 h-4 w-4"/> Download
-                                                </a>
-                                            </Button>
-                                        </div>
+                                        <li 
+                                          key={index} 
+                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors"
+                                          onClick={() => window.open(item.url, '_blank')}
+                                        >
+                                          {getContentIcon(item.type)}
+                                          <span className="font-medium flex-1">{item.title}</span>
+                                          <Download className="h-5 w-5 text-muted-foreground" />
                                         </li>
                                     ))}
                                 </ul>

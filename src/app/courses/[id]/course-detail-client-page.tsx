@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio, ArrowRight } from "lucide-react";
+import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio, ArrowRight, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { checkUserPurchase, createPurchase, getScheduledLiveClassesForItem, type LiveClass } from "@/lib/data";
 import { useRouter } from "next/navigation";
@@ -212,14 +211,15 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                       <AccordionContent className="pt-2">
                         <ul className="space-y-3">
                           {folder.content.map((item) => (
-                            <li key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-background">
-                              <div className="flex items-center gap-4">
-                                {getContentIcon(item.type)}
-                                <span className="font-medium">{item.title}</span>
-                                <Badge variant={item.type === 'pdf' ? 'secondary' : 'default'} className="capitalize">{item.type}</Badge>
-                              </div>
+                            <li 
+                              key={item.id} 
+                              className="flex items-center gap-4 p-4 rounded-lg bg-background cursor-pointer hover:bg-secondary/10 transition-colors"
+                              onClick={() => handleViewContent(item)}
+                            >
+                              {getContentIcon(item.type)}
+                              <span className="font-medium flex-1">{item.title}</span>
                               {isPurchased ? (
-                                  <Button variant="ghost" size="sm" onClick={() => handleViewContent(item)}>View</Button>
+                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
                               ) : (
                                 <Lock className="h-5 w-5 text-muted-foreground" />
                               )}

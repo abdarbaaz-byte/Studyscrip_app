@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -209,13 +208,14 @@ export default function ChapterDetailClientPage() {
                   ) : (
                     <ul className="space-y-4">
                       {chapter.content.map((item) => (
-                        <li key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
-                          <div className="flex items-center gap-4">
-                            {getContentIcon(item.type)}
-                            <span className="font-medium">{item.title}</span>
-                            <Badge variant={item.type === 'pdf' ? 'secondary' : 'default'} className="capitalize">{item.type}</Badge>
-                          </div>
-                          <Button variant="ghost" size="sm" onClick={() => handleViewContent(item)}>View</Button>
+                        <li 
+                          key={item.id} 
+                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors"
+                          onClick={() => handleViewContent(item)}
+                        >
+                          {getContentIcon(item.type)}
+                          <span className="font-medium flex-1">{item.title}</span>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </li>
                       ))}
                       {chapter.content.length === 0 && (

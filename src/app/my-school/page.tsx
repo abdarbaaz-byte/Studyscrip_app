@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { getSchool, type School, getSchoolNotes, type SchoolNote, type ContentItem, getSchoolTests, type Quiz, getSchoolInformation, type SchoolInformation } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks, User, Megaphone } from "lucide-react";
+import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks, User, Megaphone, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -238,12 +236,16 @@ export default function MySchoolPage() {
                             <AccordionContent>
                                 <div className="space-y-3 pt-2">
                                      {note.content.map((item, index) => (
-                                        <li key={index} className="flex items-center justify-between p-3 rounded-lg bg-background list-none">
-                                        <div className="flex items-center gap-4">
-                                            {getContentIcon(item.type)}
-                                            <span className="font-medium">{item.title}</span>
-                                        </div>
-                                        <Button variant="ghost" size="sm" onClick={() => handleViewContent(item)}>View</Button>
+                                        <li 
+                                          key={index} 
+                                          className="flex items-center gap-4 p-4 rounded-lg bg-background cursor-pointer hover:bg-secondary/10 transition-colors list-none"
+                                          onClick={() => handleViewContent(item)}
+                                        >
+                                          <div className="flex items-center gap-4 flex-1">
+                                              {getContentIcon(item.type)}
+                                              <span className="font-medium">{item.title}</span>
+                                          </div>
+                                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                         </li>
                                     ))}
                                     {note.content.length === 0 && <p className="text-sm text-center py-2">No content here yet.</p>}
