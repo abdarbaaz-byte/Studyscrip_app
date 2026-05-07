@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle } from "lucide-react";
 import { getQuizzes, type Quiz } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ACADEMIC_CLASSES = ["5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
@@ -22,7 +23,6 @@ export default function QuizzesPage() {
       const allQuizzes = await getQuizzes();
       
       // Filter quizzes to only show those targeted at academic classes
-      // This prevents Batch-only quizzes from appearing in the general list
       const generalQuizzes = allQuizzes.filter(quiz => {
         const targets = quiz.targetClasses || [];
         // Check if any selected target is an academic class
@@ -95,14 +95,35 @@ export default function QuizzesPage() {
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="space-y-16">
-          <section>
-            <div className="flex items-center gap-4 mb-8">
-                <Orbit className="h-8 w-8 text-primary" />
-                <h2 className="font-headline text-3xl font-bold">Live Quizzes</h2>
-            </div>
+        <Tabs defaultValue="practice" className="w-full">
+          <div className="flex justify-center mb-10">
+            <TabsList className="grid w-full grid-cols-2 max-w-md h-12 bg-secondary/50 p-1 rounded-xl">
+              <TabsTrigger value="practice" className="data-[state=active]:bg-background rounded-lg gap-2 font-headline">
+                <ShieldCheck className="h-4 w-4" /> Practice Quizzes
+              </TabsTrigger>
+              <TabsTrigger value="live" className="data-[state=active]:bg-background rounded-lg gap-2 font-headline">
+                <Orbit className="h-4 w-4" /> Live Quizzes
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="practice" className="animate-in fade-in duration-500">
+            {practiceQuizzes.length === 0 ? (
+                 <div className="text-center py-16 border-2 border-dashed rounded-lg bg-secondary/10">
+                    <ShieldCheck className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
+                    <p className="text-muted-foreground">No practice quizzes found for your class right now.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {practiceQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={false} />)}
+                </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="live" className="animate-in fade-in duration-500">
             {liveQuizzes.length === 0 ? (
-                 <div className="text-center py-10 border-2 border-dashed rounded-lg bg-secondary/10">
+                 <div className="text-center py-16 border-2 border-dashed rounded-lg bg-secondary/10">
+                    <Orbit className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
                     <p className="text-muted-foreground">No live quizzes are available right now for your class. Check back later!</p>
                 </div>
             ) : (
@@ -110,24 +131,8 @@ export default function QuizzesPage() {
                     {liveQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={true} />)}
                 </div>
             )}
-          </section>
-
-          <section>
-             <div className="flex items-center gap-4 mb-8">
-                <ShieldCheck className="h-8 w-8 text-primary" />
-                <h2 className="font-headline text-3xl font-bold">Practice Quizzes</h2>
-            </div>
-            {practiceQuizzes.length === 0 ? (
-                 <div className="text-center py-10 border-2 border-dashed rounded-lg bg-secondary/10">
-                    <p className="text-muted-foreground">No practice quizzes found. Please try another category.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {practiceQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={false} />)}
-                </div>
-            )}
-          </section>
-        </div>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
