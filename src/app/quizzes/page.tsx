@@ -97,12 +97,18 @@ export default function QuizzesPage() {
       ) : (
         <Tabs defaultValue="practice" className="w-full">
           <div className="flex justify-center mb-10">
-            <TabsList className="grid w-full grid-cols-2 max-w-md h-12 bg-secondary/50 p-1 rounded-xl">
-              <TabsTrigger value="practice" className="data-[state=active]:bg-background rounded-lg gap-2 font-headline">
-                <ShieldCheck className="h-4 w-4" /> Practice Quizzes
+            <TabsList className="grid w-full grid-cols-2 max-w-md h-14 bg-indigo-50 dark:bg-indigo-950/20 p-1.5 rounded-2xl border shadow-sm">
+              <TabsTrigger 
+                value="practice" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-primary/10"
+              >
+                <ShieldCheck className="h-5 w-5" /> Practice Quizzes
               </TabsTrigger>
-              <TabsTrigger value="live" className="data-[state=active]:bg-background rounded-lg gap-2 font-headline">
-                <Orbit className="h-4 w-4" /> Live Quizzes
+              <TabsTrigger 
+                value="live" 
+                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-orange-500/10"
+              >
+                <Orbit className="h-5 w-5" /> Live Quizzes
               </TabsTrigger>
             </TabsList>
           </div>
