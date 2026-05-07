@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -49,10 +48,10 @@ export default function QuizzesPage() {
     const isCurrentlyLive = start && end && now >= start && now <= end;
 
     return (
-      <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md relative">
+      <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md relative border-2 border-transparent hover:border-primary/10">
         {isCurrentlyLive && (
           <div className="absolute top-3 right-3 z-10">
-            <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-3">
+            <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-3 py-1 text-[10px] font-bold">
               <Circle className="h-2 w-2 fill-white animate-pulse" />
               LIVE
             </Badge>
@@ -73,7 +72,7 @@ export default function QuizzesPage() {
             </div>
         </CardContent>
         <CardFooter>
-          <Button asChild className="w-full">
+          <Button asChild className="w-full font-bold h-11">
             <Link href={`/quizzes/${quiz.id}?type=${isLiveType ? 'live' : 'practice'}`}>
               {isLiveType ? 'Take Live Quiz' : 'Start Practice'} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
@@ -97,12 +96,12 @@ export default function QuizzesPage() {
       ) : (
         <Tabs defaultValue="practice" className="w-full">
           <div className="flex justify-center mb-10">
-            <TabsList className="grid w-full grid-cols-2 max-w-md h-14 bg-indigo-50 dark:bg-indigo-950/20 p-1.5 rounded-2xl border shadow-sm">
+            <TabsList className="grid w-full grid-cols-2 max-w-md h-14 bg-secondary/50 p-1.5 rounded-2xl border shadow-inner">
               <TabsTrigger 
                 value="practice" 
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-primary/10"
+                className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-indigo-600/10"
               >
-                <ShieldCheck className="h-5 w-5" /> Practice Quizzes
+                <ShieldCheck className="h-5 w-5" /> Practice
               </TabsTrigger>
               <TabsTrigger 
                 value="live" 
@@ -113,11 +112,12 @@ export default function QuizzesPage() {
             </TabsList>
           </div>
 
-          <TabsContent value="practice" className="animate-in fade-in duration-500">
+          <TabsContent value="practice" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
             {practiceQuizzes.length === 0 ? (
-                 <div className="text-center py-16 border-2 border-dashed rounded-lg bg-secondary/10">
-                    <ShieldCheck className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                    <p className="text-muted-foreground">No practice quizzes found for your class right now.</p>
+                 <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
+                    <ShieldCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
+                    <h3 className="text-xl font-bold text-muted-foreground">No practice quizzes found</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Check back later for new academic practice material.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -126,11 +126,12 @@ export default function QuizzesPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="live" className="animate-in fade-in duration-500">
+          <TabsContent value="live" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
             {liveQuizzes.length === 0 ? (
-                 <div className="text-center py-16 border-2 border-dashed rounded-lg bg-secondary/10">
-                    <Orbit className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                    <p className="text-muted-foreground">No live quizzes are available right now for your class. Check back later!</p>
+                 <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
+                    <Orbit className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
+                    <h3 className="text-xl font-bold text-muted-foreground">No live quizzes scheduled</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Stay tuned! Live tests will appear here when scheduled.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
