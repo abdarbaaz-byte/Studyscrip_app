@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft } from "lucide-react";
+import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft, ChevronRight } from "lucide-react";
 import { getQuizzes, getQuizFolders, type Quiz, type QuizFolder } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -153,27 +153,24 @@ export default function QuizzesPage() {
                 </div>
             ) : (
                 <div className="space-y-10">
-                    {/* Folders Grid */}
+                    {/* Folders List (Updated to List View) */}
                     {folders.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                            {folders.map((folder) => {
-                                const count = practiceQuizzes.filter(q => q.folderId === folder.id).length;
-                                return (
-                                    <div 
-                                        key={folder.id} 
-                                        onClick={() => setSelectedFolderId(folder.id)}
-                                        className="group cursor-pointer flex flex-col items-center gap-3 p-6 rounded-2xl bg-secondary/30 border-2 border-transparent hover:border-indigo-600/30 hover:bg-white transition-all shadow-sm"
-                                    >
-                                        <div className="bg-indigo-100 p-4 rounded-2xl text-indigo-600 group-hover:scale-110 transition-transform">
-                                            <Folder className="h-8 w-8 fill-indigo-600" />
+                        <div className="flex flex-col gap-3 max-w-3xl mx-auto">
+                            {folders.map((folder) => (
+                                <div 
+                                    key={folder.id} 
+                                    onClick={() => setSelectedFolderId(folder.id)}
+                                    className="group cursor-pointer flex items-center justify-between p-4 rounded-xl bg-white border border-border hover:border-indigo-600/50 hover:shadow-md transition-all"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-indigo-100 p-2.5 rounded-lg text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                            <Folder className="h-6 w-6" />
                                         </div>
-                                        <div className="text-center">
-                                            <p className="font-bold text-sm line-clamp-1">{folder.name}</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">{count} Quizzes</p>
-                                        </div>
+                                        <span className="font-bold text-lg">{folder.name}</span>
                                     </div>
-                                )
-                            })}
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            ))}
                         </div>
                     )}
 
