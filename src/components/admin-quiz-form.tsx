@@ -31,6 +31,7 @@ import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 
 interface AdminQuizFormProps {
@@ -385,7 +386,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
+    <div className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="title">Quiz Title</Label>
@@ -673,6 +674,6 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
           Save Quiz
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
