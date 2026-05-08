@@ -75,10 +75,17 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
 
   const handleSave = async (quizData: Quiz) => {
     setIsSaving(true);
-    await onSave(quizData);
-    setIsSaving(false);
-    setIsDialogOpen(false);
-    setEditingQuiz(null);
+    try {
+      await onSave(quizData);
+      toast({ title: "Quiz saved successfully!" });
+      setIsDialogOpen(false);
+      setEditingQuiz(null);
+    } catch (error) {
+      console.error("Failed to save quiz:", error);
+      toast({ variant: "destructive", title: "Failed to save quiz" });
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   const handleAddNew = () => {
@@ -180,7 +187,7 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                 </div>
               </AccordionTrigger>
               <div className="flex items-center gap-3 ml-4">
-                 <Button variant="outline" size="sm" onClick={() => handleEdit(quiz)}>
+                 <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleEdit(quiz); }}>
                     <Edit className="mr-2 h-4 w-4"/> Edit
                  </Button>
                  <AlertDialog>
@@ -275,7 +282,15 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
         setStartTime(st ? (st as Timestamp).toDate() : undefined);
         setEndTime(et ? (et as Timestamp).toDate() : undefined);
     } else {
-        setFormData(emptyQuiz);
+        setFormData({
+            title: "",
+            description: "",
+            duration: 10,
+            questions: [],
+            targetClass: 'all',
+            targetClasses: [],
+            folderId: '',
+        });
         setStartTime(undefined);
         setEndTime(undefined);
     }
@@ -371,10 +386,9 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Explicitly handle empty targets to ensure it doesn't default to 'all' everywhere
     const finalTargetClass = formData.targetClasses && formData.targetClasses.length > 0 
         ? formData.targetClasses[0] 
-        : ''; // Empty string means no specific singular target
+        : '';
 
     onSave({ 
         ...formData, 
@@ -382,11 +396,11 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
         startTime: startTime,
         endTime: endTime,
         targetClass: finalTargetClass,
-    });
+    } as any);
   };
 
   return (
-    <div className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
+    <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="title">Quiz Title</Label>
@@ -674,6 +688,6 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
           Save Quiz
         </Button>
       </div>
-    </div>
+    </form>
   );
 }
