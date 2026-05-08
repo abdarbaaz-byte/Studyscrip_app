@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { getQuizzes, getQuizFolders, type Quiz, type QuizFolder } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,17 +55,24 @@ export default function QuizzesPage() {
     const start = quiz.startTime?.toDate();
     const end = quiz.endTime?.toDate();
     const isCurrentlyLive = start && end && now >= start && now <= end;
+    const isExpired = end && now > end;
 
     return (
-      <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md relative border-2 border-transparent hover:border-primary/10">
-        {isCurrentlyLive && (
-          <div className="absolute top-3 right-3 z-10">
-            <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-3 py-1 text-[10px] font-bold">
-              <Circle className="h-2 w-2 fill-white animate-pulse" />
-              LIVE
-            </Badge>
-          </div>
-        )}
+      <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md relative border-2 border-transparent hover:border-primary/10 overflow-hidden">
+        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+          {isCurrentlyLive && (
+              <Badge variant="destructive" className="flex items-center gap-1.5 bg-red-600 animate-pulse border-none px-3 py-1 text-[10px] font-bold shadow-md">
+                <Circle className="h-2 w-2 fill-white animate-pulse" />
+                LIVE
+              </Badge>
+          )}
+          {isExpired && (
+             <Badge variant="secondary" className="bg-gray-500 text-white border-none px-3 py-1 text-[10px] font-bold shadow-sm">
+                EXPIRED
+             </Badge>
+          )}
+        </div>
+        
         <CardHeader>
           <CardTitle className="font-headline text-2xl pr-16">{quiz.title}</CardTitle>
           <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
@@ -81,9 +88,10 @@ export default function QuizzesPage() {
             </div>
         </CardContent>
         <CardFooter>
-          <Button asChild className="w-full font-bold h-11">
+          <Button asChild className="w-full font-bold h-11" variant={isExpired ? "outline" : "default"}>
             <Link href={`/quizzes/${quiz.id}?type=${isLiveType ? 'live' : 'practice'}`}>
-              {isLiveType ? 'Take Live Quiz' : 'Start Practice'} <ArrowRight className="ml-2 h-4 w-4" />
+              {isCurrentlyLive ? 'Take Live Quiz' : isExpired ? 'View Analysis' : 'Start Quiz'} 
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </CardFooter>
@@ -153,7 +161,7 @@ export default function QuizzesPage() {
                 </div>
             ) : (
                 <div className="space-y-10">
-                    {/* Folders List (Updated to List View) */}
+                    {/* Folders List */}
                     {folders.length > 0 && (
                         <div className="flex flex-col gap-3 max-w-3xl mx-auto">
                             {folders.map((folder) => (
