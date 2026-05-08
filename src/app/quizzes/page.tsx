@@ -1,26 +1,35 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle } from "lucide-react";
-import { getQuizzes, type Quiz } from "@/lib/data";
+import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft } from "lucide-react";
+import { getQuizzes, getQuizFolders, type Quiz, type QuizFolder } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollAnimation } from "@/components/scroll-animation";
 
 const ACADEMIC_CLASSES = ["5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
 export default function QuizzesPage() {
   const [liveQuizzes, setLiveQuizzes] = useState<Quiz[]>([]);
   const [practiceQuizzes, setPracticeQuizzes] = useState<Quiz[]>([]);
+  const [folders, setFolders] = useState<QuizFolder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadQuizzes() {
+    async function loadQuizzesAndFolders() {
       setLoading(true);
-      const allQuizzes = await getQuizzes();
+      const [allQuizzes, allFolders] = await Promise.all([
+          getQuizzes(),
+          getQuizFolders()
+      ]);
       
+      setFolders(allFolders);
+
       // Filter quizzes to only show those targeted at academic classes
       const generalQuizzes = allQuizzes.filter(quiz => {
         const targets = quiz.targetClasses || [];
@@ -38,7 +47,7 @@ export default function QuizzesPage() {
       setPracticeQuizzes(practice);
       setLoading(false);
     }
-    loadQuizzes();
+    loadQuizzesAndFolders();
   }, []);
 
   const QuizCard = ({ quiz, isLiveType }: { quiz: Quiz, isLiveType: boolean }) => {
@@ -82,11 +91,19 @@ export default function QuizzesPage() {
     );
   };
 
+  const filteredPracticeQuizzes = selectedFolderId 
+    ? practiceQuizzes.filter(q => q.folderId === selectedFolderId)
+    : practiceQuizzes.filter(q => !q.folderId);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
-        <h1 className="font-headline text-4xl md:text-5xl font-bold">Quizzes</h1>
-        <p className="text-lg text-muted-foreground mt-2">Test your knowledge with our live and practice quizzes.</p>
+        <ScrollAnimation as="h1" className="font-headline text-4xl md:text-5xl font-bold">
+          Quizzes
+        </ScrollAnimation>
+        <ScrollAnimation as="p" delay={100} className="text-lg text-muted-foreground mt-2">
+          Test your knowledge with our live and practice quizzes.
+        </ScrollAnimation>
       </div>
 
       {loading ? (
@@ -113,15 +130,72 @@ export default function QuizzesPage() {
           </div>
 
           <TabsContent value="practice" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-            {practiceQuizzes.length === 0 ? (
-                 <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
-                    <ShieldCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
-                    <h3 className="text-xl font-bold text-muted-foreground">No practice quizzes found</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Check back later for new academic practice material.</p>
+            {selectedFolderId ? (
+                <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" onClick={() => setSelectedFolderId(null)} className="rounded-full">
+                            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Folders
+                        </Button>
+                        <h2 className="text-2xl font-bold font-headline">
+                            {folders.find(f => f.id === selectedFolderId)?.name} Quizzes
+                        </h2>
+                    </div>
+                    {filteredPracticeQuizzes.length === 0 ? (
+                        <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
+                            <ShieldCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
+                            <h3 className="text-xl font-bold text-muted-foreground">No quizzes in this folder</h3>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {filteredPracticeQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={false} />)}
+                        </div>
+                    )}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {practiceQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={false} />)}
+                <div className="space-y-10">
+                    {/* Folders Grid */}
+                    {folders.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                            {folders.map((folder) => {
+                                const count = practiceQuizzes.filter(q => q.folderId === folder.id).length;
+                                return (
+                                    <div 
+                                        key={folder.id} 
+                                        onClick={() => setSelectedFolderId(folder.id)}
+                                        className="group cursor-pointer flex flex-col items-center gap-3 p-6 rounded-2xl bg-secondary/30 border-2 border-transparent hover:border-indigo-600/30 hover:bg-white transition-all shadow-sm"
+                                    >
+                                        <div className="bg-indigo-100 p-4 rounded-2xl text-indigo-600 group-hover:scale-110 transition-transform">
+                                            <Folder className="h-8 w-8 fill-indigo-600" />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="font-bold text-sm line-clamp-1">{folder.name}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">{count} Quizzes</p>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
+
+                    {/* Uncategorized Quizzes */}
+                    {filteredPracticeQuizzes.length > 0 && (
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-bold font-headline flex items-center gap-2">
+                                <BrainCircuit className="h-5 w-5 text-indigo-600" /> Other Quizzes
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {filteredPracticeQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={false} />)}
+                            </div>
+                        </div>
+                    )}
+
+                    {folders.length === 0 && practiceQuizzes.length === 0 && (
+                        <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
+                            <ShieldCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
+                            <h3 className="text-xl font-bold text-muted-foreground">No practice quizzes found</h3>
+                            <p className="text-sm text-muted-foreground mt-1">Check back later for new academic practice material.</p>
+                        </div>
+                    )}
                 </div>
             )}
           </TabsContent>

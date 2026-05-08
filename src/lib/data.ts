@@ -246,6 +246,13 @@ export type Quiz = {
     targetClass: string; // Legacy
     targetClasses?: string[]; // New: support multiple targets
     createdAt?: Timestamp; // Added for sorting
+    folderId?: string; // Added for folder support
+};
+
+export type QuizFolder = {
+    id: string;
+    name: string;
+    createdAt: Timestamp;
 };
 
 // This type will be used to store a user's attempt in Firestore
@@ -1061,6 +1068,34 @@ export async function saveQuiz(quiz: Quiz): Promise<void> {
 export async function deleteQuiz(id: string): Promise<void> {
     await deleteDoc(doc(db, 'quizzes', id));
     triggerRevalidation('/quizzes');
+}
+
+export async function getQuizFolders(): Promise<QuizFolder[]> {
+    const foldersCol = collection(db, 'quizFolders');
+    const q = query(foldersCol, orderBy('createdAt', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizFolder));
+}
+
+export async function saveQuizFolder(folder: { id?: string, name: string }): Promise<void> {
+    if (folder.id) {
+        await setDoc(doc(db, 'quizFolders', folder.id), { name: folder.name }, { merge: true });
+    } else {
+        await addDoc(collection(db, 'quizFolders'), { name: folder.name, createdAt: serverTimestamp() });
+    }
+}
+
+export async function deleteQuizFolder(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'quizFolders', id));
+    // Optional: unlink quizzes from this folder
+    const quizzesCol = collection(db, 'quizzes');
+    const q = query(quizzesCol, where('folderId', '==', id));
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(doc => {
+        batch.update(doc.ref, { folderId: null });
+    });
+    await batch.commit();
 }
 
 export async function saveQuizAttempt(attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'>): Promise<string> {

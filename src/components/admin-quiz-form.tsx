@@ -2,13 +2,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Quiz, Question, QuestionType, Batch } from "@/lib/data";
-import { getBatches } from "@/lib/data";
+import type { Quiz, Question, QuestionType, Batch, QuizFolder } from "@/lib/data";
+import { getBatches, getQuizFolders, saveQuizFolder, deleteQuizFolder } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit, Calendar as CalendarIcon, GripVertical, CheckCircle2 } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Calendar as CalendarIcon, GripVertical, CheckCircle2, FolderPlus, Folder } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   AlertDialog,
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 
 interface AdminQuizFormProps {
@@ -57,6 +58,19 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
+  const [folders, setFolders] = useState<QuizFolder[]>([]);
+  const [newFolderName, setNewFolderName] = useState("");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadFolders();
+  }, []);
+
+  const loadFolders = async () => {
+    const f = await getQuizFolders();
+    setFolders(f);
+  };
 
   const handleSave = async (quizData: Quiz) => {
     setIsSaving(true);
@@ -76,9 +90,60 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
     setIsDialogOpen(true);
   };
 
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    try {
+        await saveQuizFolder({ name: newFolderName });
+        setNewFolderName("");
+        await loadFolders();
+        toast({ title: "Folder Created" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Error creating folder" });
+    }
+  };
+
+  const handleDeleteFolder = async (id: string) => {
+    try {
+        await deleteQuizFolder(id);
+        await loadFolders();
+        toast({ title: "Folder Deleted" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Error deleting folder" });
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Dialog open={isFolderDialogOpen} onOpenChange={setIsFolderDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <FolderPlus className="mr-2 h-4 w-4" /> Manage Folders
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Manage Quiz Folders</DialogTitle>
+              <DialogDescription>Folders help organize practice quizzes.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+               <div className="flex gap-2">
+                  <Input placeholder="New folder name..." value={newFolderName} onChange={e => setNewFolderName(e.target.value)} />
+                  <Button onClick={handleCreateFolder}>Add</Button>
+               </div>
+               <div className="border rounded-md overflow-hidden">
+                   {folders.map(f => (
+                       <div key={f.id} className="flex items-center justify-between p-3 border-b last:border-0 bg-secondary/20">
+                           <div className="flex items-center gap-2"><Folder className="h-4 w-4 text-primary"/> {f.name}</div>
+                           <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteFolder(f.id)}><Trash2 className="h-4 w-4"/></Button>
+                       </div>
+                   ))}
+                   {folders.length === 0 && <p className="p-8 text-center text-muted-foreground text-sm">No folders created yet.</p>}
+               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={isDialogOpen} onOpenChange={(isOpen) => { if(!isOpen) setEditingQuiz(null); setIsDialogOpen(isOpen); }}>
           <DialogTrigger asChild>
             <Button onClick={handleAddNew}>
@@ -97,6 +162,7 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
               onSave={handleSave}
               onCancel={() => setIsDialogOpen(false)}
               isSaving={isSaving}
+              folders={folders}
             />
           </DialogContent>
         </Dialog>
@@ -141,6 +207,11 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                     <span className="font-semibold flex items-center gap-1">
                         Targets: {quiz.targetClasses && quiz.targetClasses.length > 0 ? quiz.targetClasses.join(', ') : 'None selected (Hidden)'}
                     </span>
+                    {quiz.folderId && (
+                        <Badge variant="outline" className="bg-primary/5">
+                            Folder: {folders.find(f => f.id === quiz.folderId)?.name || 'Unknown'}
+                        </Badge>
+                    )}
                 </div>
                  <div className="flex justify-between text-xs text-muted-foreground mt-2">
                     <span>
@@ -162,7 +233,7 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
 }
 
 
-function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onSave: (quiz: Quiz) => void, onCancel: () => void, isSaving: boolean }) {
+function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | null, onSave: (quiz: Quiz) => void, onCancel: () => void, isSaving: boolean, folders: QuizFolder[] }) {
   const [formData, setFormData] = useState<Omit<Quiz, 'id' | 'startTime' | 'endTime'>>({
       title: "",
       description: "",
@@ -170,6 +241,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
       questions: [],
       targetClass: 'all',
       targetClasses: [],
+      folderId: '',
   });
   const [startTime, setStartTime] = useState<Date | undefined>();
   const [endTime, setEndTime] = useState<Date | undefined>();
@@ -375,6 +447,22 @@ function QuizForm({ quiz, onSave, onCancel, isSaving }: { quiz: Quiz | null, onS
                     />
                 </div>
           </div>
+
+          <div className="space-y-2 col-span-full">
+            <Label htmlFor="folderId">Folder (Optional - For Practice Quizzes Library)</Label>
+            <Select value={formData.folderId || "none"} onValueChange={(val) => setFormData(prev => ({ ...prev, folderId: val === "none" ? "" : val }))}>
+                <SelectTrigger id="folderId">
+                    <SelectValue placeholder="Select folder..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="none">No Folder (Direct display)</SelectItem>
+                    {folders.map(f => (
+                        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2 col-span-full">
             <Label className="text-lg font-bold">Assign to Classes & Batches</Label>
             <p className="text-xs text-muted-foreground mb-2">Select one or more targets. If none selected, the quiz will not be visible to users.</p>
