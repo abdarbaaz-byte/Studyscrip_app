@@ -5,11 +5,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft, ChevronRight, Lock, Clock } from "lucide-react";
 import { getQuizzes, getQuizFolders, type Quiz, type QuizFolder } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollAnimation } from "@/components/scroll-animation";
+import { format } from "date-fns";
 
 const ACADEMIC_CLASSES = ["5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
@@ -56,6 +57,7 @@ export default function QuizzesPage() {
     const end = quiz.endTime?.toDate();
     const isCurrentlyLive = start && end && now >= start && now <= end;
     const isExpired = end && now > end;
+    const isUpcoming = start && now < start;
 
     return (
       <Card key={quiz.id} className="flex flex-col h-full transition-all duration-300 hover:shadow-md relative border-2 border-transparent hover:border-primary/10 overflow-hidden">
@@ -71,11 +73,22 @@ export default function QuizzesPage() {
                 EXPIRED
              </Badge>
           )}
+          {isUpcoming && (
+             <Badge variant="secondary" className="bg-blue-600 text-white border-none px-3 py-1 text-[10px] font-bold shadow-sm">
+                UPCOMING
+             </Badge>
+          )}
         </div>
         
         <CardHeader>
           <CardTitle className="font-headline text-2xl pr-16">{quiz.title}</CardTitle>
           <CardDescription className="line-clamp-2">{quiz.description}</CardDescription>
+          {isUpcoming && start && (
+            <div className="flex items-center gap-1.5 mt-2 p-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-700">
+                <Clock className="h-3.5 w-3.5" />
+                <span className="text-[11px] font-bold uppercase tracking-tight">Starts: {format(start, "p, MMM d")}</span>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="flex-grow space-y-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -88,10 +101,10 @@ export default function QuizzesPage() {
             </div>
         </CardContent>
         <CardFooter>
-          <Button asChild className="w-full font-bold h-11" variant={isExpired ? "outline" : "default"}>
-            <Link href={`/quizzes/${quiz.id}?type=${isLiveType ? 'live' : 'practice'}`}>
-              {isCurrentlyLive ? 'Take Live Quiz' : isExpired ? 'View Analysis' : 'Start Quiz'} 
-              <ArrowRight className="ml-2 h-4 w-4" />
+          <Button asChild className="w-full font-bold h-11" variant={isExpired ? "outline" : isUpcoming ? "secondary" : "default"} disabled={isUpcoming}>
+            <Link href={isUpcoming ? "#" : `/quizzes/${quiz.id}?type=${isLiveType ? 'live' : 'practice'}`}>
+              {isCurrentlyLive ? 'Take Live Quiz' : isExpired ? 'View Analysis' : isUpcoming ? 'Locked Until Start' : 'Start Quiz'} 
+              {!isUpcoming && <ArrowRight className="ml-2 h-4 w-4" />}
             </Link>
           </Button>
         </CardFooter>
