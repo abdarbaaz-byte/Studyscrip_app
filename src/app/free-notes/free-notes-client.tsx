@@ -122,17 +122,29 @@ export default function FreeNotesClient() {
         ) : (
           <div className="max-w-4xl mx-auto">
             <Tabs defaultValue="online" value={activeTab} onValueChange={setActiveTab} className="w-full mb-8">
-                <TabsList className="grid w-full grid-cols-2 h-12 bg-secondary/50">
-                    <TabsTrigger value="online" className="gap-2"><Globe className="h-4 w-4"/> Online Notes</TabsTrigger>
-                    <TabsTrigger value="offline" className="gap-2"><Smartphone className="h-4 w-4"/> Offline (Download)</TabsTrigger>
-                </TabsList>
+                <div className="flex justify-center mb-10">
+                    <TabsList className="grid w-full grid-cols-2 max-w-md h-14 bg-secondary/50 p-1.5 rounded-2xl border shadow-inner">
+                        <TabsTrigger 
+                          value="online" 
+                          className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-emerald-600/10"
+                        >
+                          <Globe className="h-5 w-5"/> Online Notes
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="offline" 
+                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-orange-500/10"
+                        >
+                          <Smartphone className="h-5 w-5"/> Offline (Download)
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-                <TabsContent value="online" className="mt-6">
+                <TabsContent value="online" className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {onlineNotes.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {onlineNotes.map((note) => (
-                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card">
-                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline">
+                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card overflow-hidden">
+                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline hover:bg-secondary/10">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
@@ -141,10 +153,12 @@ export default function FreeNotesClient() {
                                     {note.content.map((item, index) => (
                                         <li 
                                           key={index} 
-                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors"
+                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent hover:border-emerald-500/20"
                                           onClick={() => setContentToView(item)}
                                         >
-                                          {getContentIcon(item.type)}
+                                          <div className="bg-emerald-100 p-2 rounded-lg">
+                                            {getContentIcon(item.type)}
+                                          </div>
                                           <span className="font-medium flex-1">{item.title}</span>
                                           <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                         </li>
@@ -159,12 +173,12 @@ export default function FreeNotesClient() {
                     )}
                 </TabsContent>
 
-                <TabsContent value="offline" className="mt-6">
+                <TabsContent value="offline" className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {offlineNotes.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {offlineNotes.map((note) => (
-                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card">
-                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline">
+                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card overflow-hidden">
+                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline hover:bg-secondary/10">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
@@ -173,10 +187,12 @@ export default function FreeNotesClient() {
                                     {note.content.map((item, index) => (
                                         <li 
                                           key={index} 
-                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors"
+                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent hover:border-orange-500/20"
                                           onClick={() => window.open(item.url, '_blank')}
                                         >
-                                          {getContentIcon(item.type)}
+                                          <div className="bg-orange-100 p-2 rounded-lg">
+                                            {getContentIcon(item.type)}
+                                          </div>
                                           <span className="font-medium flex-1">{item.title}</span>
                                           <Download className="h-5 w-5 text-muted-foreground" />
                                         </li>
@@ -197,8 +213,8 @@ export default function FreeNotesClient() {
 
       <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
-          <DialogHeader className="p-2 border-b shrink-0">
-            <DialogTitle>{contentToView?.title}</DialogTitle>
+          <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="truncate pl-4">{contentToView?.title}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0">
             {renderContentInDialog()}
@@ -211,9 +227,9 @@ export default function FreeNotesClient() {
 
 function EmptyState({ message }: { message: string }) {
     return (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{message}</p>
+        <div className="text-center py-16 border-2 border-dashed rounded-3xl bg-secondary/10">
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-20" />
+            <p className="text-muted-foreground font-medium">{message}</p>
         </div>
     );
 }
