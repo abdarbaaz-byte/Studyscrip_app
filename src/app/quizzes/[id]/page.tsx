@@ -247,11 +247,11 @@ function QuizStartPageContent() {
                                     <Input id="name" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Your full name" required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="class" className="flex items-center gap-2"><NotebookText className="h-4 w-4"/> Class</Label>
-                                    <Input id="class" value={userClass} onChange={(e) => setUserClass(e.target.value)} placeholder="e.g., 10th, 12th" required />
+                                    <Label htmlFor="class" className="flex items-center gap-2"><NotebookText className="h-4 w-4"/> Class/Course</Label>
+                                    <Input id="class" value={userClass} onChange={(e) => setUserClass(e.target.value)} placeholder="e.g., 10th, 12th, B.Sc." required />
                                 </div>
                                  <div className="space-y-2">
-                                    <Label htmlFor="school" className="flex items-center gap-2"><School className="h-4 w-4"/> School Name</Label>
+                                    <Label htmlFor="school" className="flex items-center gap-2"><School className="h-4 w-4"/> School/Institute Name</Label> 
                                     <Input id="school" value={userSchool} onChange={(e) => setUserSchool(e.target.value)} placeholder="e.g., Delhi Public School" required />
                                 </div>
                                 <Button type="submit" className="w-full" size="lg">Start Live Quiz</Button>

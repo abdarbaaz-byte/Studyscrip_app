@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!batch) return { title: 'Batch Not Found' };
 
   return {
-    title: `${batch.title} | Popular Batches | StudyScript`,
+    title: `${batch.title} | pdf notes | StudyScript`,
     description: batch.description || `Join the ${batch.title} batch on StudyScript. Focused learning group with notes, quizzes, and live discussion support.`,
     alternates: {
       canonical: `${baseUrl}/batches/${params.id}`,

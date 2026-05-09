@@ -17,8 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!academicClass) return { title: 'Class Not Found' };
 
   return {
-    title: `${academicClass.name} | NCERT & MP Board Solutions | StudyScript`,
-    description: `Complete study material for ${academicClass.name}. Access notes, subjects, and chapter-wise resources for NCERT and MP Board syllabus on StudyScript.`,
+    title: `${academicClass.name} | NCERT Solutions for All Subjects | StudyScript`,
+    description: `Complete study material for ${academicClass.name}. Access free notes, subjects, and chapter-wise notes for Class 8-12 on StudyScript.`,
     alternates: {
       canonical: `${baseUrl}/class/${params.classId}`,
     },
