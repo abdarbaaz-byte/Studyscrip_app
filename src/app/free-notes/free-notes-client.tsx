@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, Video, Image as ImageIcon, Download, Eye, Globe, Smartphone, ChevronRight } from "lucide-react";
+import { Loader2, FileText, Video, Image as ImageIcon, Download, Eye, Globe, Smartphone, ChevronRight, X } from "lucide-react";
 import { getFreeNotes, type FreeNote, type ContentItem } from "@/lib/data";
 
 export default function FreeNotesClient() {
@@ -153,10 +153,10 @@ export default function FreeNotesClient() {
                                     {note.content.map((item, index) => (
                                         <li 
                                           key={index} 
-                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent hover:border-emerald-500/20"
+                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent"
                                           onClick={() => setContentToView(item)}
                                         >
-                                          <div className="bg-emerald-100 p-2 rounded-lg">
+                                          <div className="bg-primary/10 p-2 rounded-lg">
                                             {getContentIcon(item.type)}
                                           </div>
                                           <span className="font-medium flex-1">{item.title}</span>
@@ -187,10 +187,10 @@ export default function FreeNotesClient() {
                                     {note.content.map((item, index) => (
                                         <li 
                                           key={index} 
-                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent hover:border-orange-500/20"
+                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent"
                                           onClick={() => window.open(item.url, '_blank')}
                                         >
-                                          <div className="bg-orange-100 p-2 rounded-lg">
+                                          <div className="bg-primary/10 p-2 rounded-lg">
                                             {getContentIcon(item.type)}
                                           </div>
                                           <span className="font-medium flex-1">{item.title}</span>
@@ -215,6 +215,7 @@ export default function FreeNotesClient() {
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
           <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
             <DialogTitle className="truncate pl-4">{contentToView?.title}</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-5 w-5"/></Button>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0">
             {renderContentInDialog()}
