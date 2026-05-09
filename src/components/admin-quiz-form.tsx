@@ -49,6 +49,7 @@ const emptyQuiz: Omit<Quiz, 'id'> = {
   questions: [],
   startTime: undefined,
   endTime: undefined,
+  resultAnnounceTime: undefined,
   targetClass: 'all',
   targetClasses: [],
 };
@@ -221,13 +222,18 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                         </Badge>
                     )}
                 </div>
-                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                 <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-2">
                     <span>
                         Starts: {quiz.startTime ? format((quiz.startTime as any).toDate(), "PPP p") : 'Always open'}
                     </span>
                      <span>
                         Ends: {quiz.endTime ? format((quiz.endTime as any).toDate(), "PPP p") : 'No expiry'}
                     </span>
+                    {quiz.resultAnnounceTime && (
+                        <span className="text-primary font-semibold">
+                            Results Announce: {format((quiz.resultAnnounceTime as any).toDate(), "PPP p")}
+                        </span>
+                    )}
                 </div>
                 {quiz.questions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No questions yet. Edit the quiz to add some.</p>}
               </div>
@@ -242,7 +248,7 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
 
 
 function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | null, onSave: (quiz: Quiz) => void, onCancel: () => void, isSaving: boolean, folders: QuizFolder[] }) {
-  const [formData, setFormData] = useState<Omit<Quiz, 'id' | 'startTime' | 'endTime'>>({
+  const [formData, setFormData] = useState<Omit<Quiz, 'id' | 'startTime' | 'endTime' | 'resultAnnounceTime'>>({
       title: "",
       description: "",
       duration: 10,
@@ -253,6 +259,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
   });
   const [startTime, setStartTime] = useState<Date | undefined>();
   const [endTime, setEndTime] = useState<Date | undefined>();
+  const [resultAnnounceTime, setResultAnnounceTime] = useState<Date | undefined>();
   const [availableBatches, setAvailableBatches] = useState<Batch[]>([]);
   const [loadingBatches, setLoadingBatches] = useState(true);
 
@@ -267,7 +274,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
 
   useEffect(() => {
     if (quiz) {
-        const { id, startTime: st, endTime: et, ...rest } = quiz;
+        const { id, startTime: st, endTime: et, resultAnnounceTime: rat, ...rest } = quiz;
         const initialData = { ...rest };
         if (!initialData.targetClasses) {
             initialData.targetClasses = (initialData.targetClass && initialData.targetClass !== 'all') ? [initialData.targetClass] : [];
@@ -281,6 +288,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
         setFormData(initialData);
         setStartTime(st ? (st as Timestamp).toDate() : undefined);
         setEndTime(et ? (et as Timestamp).toDate() : undefined);
+        setResultAnnounceTime(rat ? (rat as Timestamp).toDate() : undefined);
     } else {
         setFormData({
             title: "",
@@ -293,6 +301,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
         });
         setStartTime(undefined);
         setEndTime(undefined);
+        setResultAnnounceTime(undefined);
     }
   }, [quiz]);
 
@@ -395,9 +404,12 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
         id: quiz?.id || '',
         startTime: startTime,
         endTime: endTime,
+        resultAnnounceTime: resultAnnounceTime,
         targetClass: finalTargetClass,
     } as any);
   };
+
+  const isLiveQuiz = startTime !== undefined || endTime !== undefined;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
@@ -462,6 +474,37 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
                     />
                 </div>
           </div>
+
+          {isLiveQuiz && (
+            <div className="space-y-2 col-span-full bg-primary/5 p-4 rounded-lg border border-primary/20">
+                <Label htmlFor="resultAnnounceTime" className="text-primary font-bold">Result Announce Time (Required for Live Quiz)</Label>
+                <p className="text-[10px] text-muted-foreground mb-2">When should the Top 3 Rank and Detailed Analysis be visible to students?</p>
+                <div className="flex gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                id="resultAnnounceTime"
+                                variant={"outline"}
+                                className={cn("flex-1 justify-start text-left font-normal", !resultAnnounceTime && "text-muted-foreground")}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {resultAnnounceTime ? format(resultAnnounceTime, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={resultAnnounceTime} onSelect={setResultAnnounceTime} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                    <Input 
+                        type="time" 
+                        value={resultAnnounceTime ? format(resultAnnounceTime, "HH:mm") : ""}
+                        onChange={(e) => handleTimeChange(resultAnnounceTime, e.target.value, setResultAnnounceTime)}
+                        className="w-[120px]"
+                        required={isLiveQuiz}
+                    />
+                </div>
+            </div>
+          )}
 
           <div className="space-y-2 col-span-full">
             <Label htmlFor="folderId">Folder (Optional - For Practice Quizzes Library)</Label>

@@ -40,6 +40,7 @@ function QuizResultsContent() {
   const [allAttempts, setAllAttempts] = useState<QuizAttempt[]>([]);
   const [userRank, setUserRank] = useState<number | null>(null);
   const [canShowRank, setCanShowRank] = useState(false);
+  const [isResultAnnounced, setIsResultAnnounced] = useState(false);
 
   useEffect(() => {
     if (answersString) {
@@ -62,20 +63,14 @@ function QuizResultsContent() {
         setQuiz(loadedQuiz);
 
         const now = new Date();
-        const endTime = loadedQuiz.endTime?.toDate();
+        const announceTime = loadedQuiz.resultAnnounceTime?.toDate();
         
-        let showAnalysis = quizType === 'practice';
-        let showRank = false;
+        // For practice quizzes, always show analysis. 
+        // For live quizzes, only show if announceTime has passed.
+        const resultsLiveNow = quizType === 'practice' || !announceTime || now >= announceTime;
+        setIsResultAnnounced(resultsLiveNow);
 
         if (quizType === 'live') {
-            if (endTime && now > endTime) {
-                showAnalysis = true;
-                showRank = true;
-            } else if (!endTime) {
-                showAnalysis = true;
-                showRank = false;
-            }
-
             const attempts = await getQuizAttemptsForQuiz(quizId);
             setAllAttempts(attempts);
             
@@ -122,8 +117,8 @@ function QuizResultsContent() {
         setMaxMarks(totalPossibleMarks);
         setCorrectCount(correct);
         setIncorrectCount(incorrect);
-        setCanShowAnalysis(showAnalysis && Object.keys(answers).length > 0);
-        setCanShowRank(showRank || quizType === 'live');
+        setCanShowAnalysis(resultsLiveNow && Object.keys(answers).length > 0);
+        setCanShowRank(resultsLiveNow && quizType === 'live');
         
       } else {
         toast({ variant: 'destructive', title: 'Quiz not found.' });
@@ -216,187 +211,197 @@ function QuizResultsContent() {
         </CardContent>
       </Card>
 
-      {topThree.length > 0 && (
-          <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-100 dark:from-yellow-900/20 dark:to-orange-900/20">
-              <CardHeader className="text-center">
-                   <div className="flex justify-center mb-4">
-                        <Trophy className="h-16 w-16 text-yellow-500" />
-                    </div>
-                  <CardTitle className="font-headline text-3xl text-yellow-600">Congratulations to the Top 3!</CardTitle>
-              </CardHeader>
-              <CardContent>
-                  <div className="space-y-4">
-                      {topThree.map((attempt, index) => (
-                           <div key={attempt.id} className="flex items-center justify-between p-4 rounded-lg bg-background shadow-sm">
-                              <div className="flex items-center gap-4">
-                                <div className={cn("text-2xl font-bold w-8 text-center", getRankColor(index + 1))}>
-                                  {index + 1}
-                                </div>
-                                <div>
-                                  <p className="font-bold">{attempt.userName}</p>
-                                  <p className="text-sm text-muted-foreground">{attempt.userClass}</p>
-                                </div>
-                              </div>
-                               <div className="text-lg font-bold">
-                                    {attempt.score} / {attempt.maxMarks || attempt.totalQuestions} Marks
-                               </div>
-                           </div>
-                      ))}
-                  </div>
-              </CardContent>
-          </Card>
-      )}
-      
-      {canShowAnalysis ? (
-        <div className="space-y-6">
-            <h2 className="font-headline text-2xl font-bold">Detailed Analysis</h2>
-            {quiz.questions.map((question, index) => {
-                const userAnswer = answers[question.id];
-                let isCorrect = false;
-                let isAttempted = userAnswer !== undefined && userAnswer !== null && userAnswer !== "";
-                
-                if (isAttempted) {
-                    if(question.type === 'mcq' || question.type === 'true_false') {
-                        isCorrect = parseInt(userAnswer?.toString() || '-1') === question.correctAnswer;
-                    } else if (question.type === 'fill_in_blank') {
-                        isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
-                    } else if (question.type === 'match') {
-                        if (typeof userAnswer === 'object' && userAnswer !== null) {
-                            isCorrect = question.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
-                        }
-                    }
-                }
-
-                return (
-                    <Card key={question.id} className={cn("border-l-4 overflow-hidden", isAttempted ? (isCorrect ? "border-green-500" : "border-red-500") : "border-gray-300")}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start mb-2">
-                                <div className="flex gap-2 items-center">
-                                    <Badge variant="outline">Q{index + 1}</Badge>
-                                    {isAttempted && <Badge className="bg-blue-100 text-blue-700 border-blue-200">Attempted</Badge>}
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                    <Badge variant="secondary" className="bg-primary/5">+{question.marks} Marks</Badge>
-                                    {question.negativeMarks > 0 && <Badge variant="destructive" className="text-[10px] py-0">-{question.negativeMarks} Neg.</Badge>}
-                                </div>
+      {isResultAnnounced ? (
+        <>
+            {topThree.length > 0 && (
+                <Card className="mb-8 bg-gradient-to-br from-yellow-50 to-orange-100 dark:from-yellow-900/20 dark:to-orange-900/20">
+                    <CardHeader className="text-center">
+                        <div className="flex justify-center mb-4">
+                                <Trophy className="h-16 w-16 text-yellow-500" />
                             </div>
-                            <CardTitle className="text-lg">
-                                {question.text}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {question.imageUrl && (
-                                <div className="mb-4 rounded-md overflow-hidden border bg-secondary/5 flex justify-center min-h-[80px] items-center">
-                                    <img 
-                                        src={getGoogleDriveImageUrl(question.imageUrl)} 
-                                        alt="Question Context" 
-                                        className="max-w-full h-auto max-h-[300px] object-contain" 
-                                        loading="lazy"
-                                    />
+                        <CardTitle className="font-headline text-3xl text-yellow-600">Congratulations to the Top 3!</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {topThree.map((attempt, index) => (
+                                <div key={attempt.id} className="flex items-center justify-between p-4 rounded-lg bg-background shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn("text-2xl font-bold w-8 text-center", getRankColor(index + 1))}>
+                                        {index + 1}
+                                        </div>
+                                        <div>
+                                        <p className="font-bold">{attempt.userName}</p>
+                                        <p className="text-sm text-muted-foreground">{attempt.userClass}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-lg font-bold">
+                                            {attempt.score} / {attempt.maxMarks || attempt.totalQuestions} Marks
+                                    </div>
                                 </div>
-                            )}
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+            
+            {canShowAnalysis && (
+                <div className="space-y-6">
+                    <h2 className="font-headline text-2xl font-bold">Detailed Analysis</h2>
+                    {quiz.questions.map((question, index) => {
+                        const userAnswer = answers[question.id];
+                        let isCorrect = false;
+                        let isAttempted = userAnswer !== undefined && userAnswer !== null && userAnswer !== "";
+                        
+                        if (isAttempted) {
+                            if(question.type === 'mcq' || question.type === 'true_false') {
+                                isCorrect = parseInt(userAnswer?.toString() || '-1') === question.correctAnswer;
+                            } else if (question.type === 'fill_in_blank') {
+                                isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
+                            } else if (question.type === 'match') {
+                                if (typeof userAnswer === 'object' && userAnswer !== null) {
+                                    isCorrect = question.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);
+                                }
+                            }
+                        }
 
-                            {question.type === 'mcq' && question.options.map((option, optIndex) => {
-                                const isUserAnswer = parseInt(userAnswer?.toString() || '-1') === optIndex;
-                                const isCorrectAnswer = question.correctAnswer === optIndex;
-                                return (
-                                    <div
-                                    key={optIndex}
-                                    className={cn(
-                                        "flex items-center gap-3 p-3 rounded-md border",
-                                        isCorrectAnswer ? "bg-green-100 border-green-300" : "",
-                                        isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
+                        return (
+                            <Card key={question.id} className={cn("border-l-4 overflow-hidden", isAttempted ? (isCorrect ? "border-green-500" : "border-red-500") : "border-gray-300")}>
+                                <CardHeader>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex gap-2 items-center">
+                                            <Badge variant="outline">Q{index + 1}</Badge>
+                                            {isAttempted && <Badge className="bg-blue-100 text-blue-700 border-blue-200">Attempted</Badge>}
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <Badge variant="secondary" className="bg-primary/5">+{question.marks} Marks</Badge>
+                                            {question.negativeMarks > 0 && <Badge variant="destructive" className="text-[10px] py-0">-{question.negativeMarks} Neg.</Badge>}
+                                        </div>
+                                    </div>
+                                    <CardTitle className="text-lg">
+                                        {question.text}
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {question.imageUrl && (
+                                        <div className="mb-4 rounded-md overflow-hidden border bg-secondary/5 flex justify-center min-h-[80px] items-center">
+                                            <img 
+                                                src={getGoogleDriveImageUrl(question.imageUrl)} 
+                                                alt="Question Context" 
+                                                className="max-w-full h-auto max-h-[300px] object-contain" 
+                                                loading="lazy"
+                                            />
+                                        </div>
                                     )}
-                                    >
-                                    {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
-                                    <span className="flex-1">{option}</span>
-                                    </div>
-                                )
-                            })}
 
-                             {question.type === 'true_false' && ['True', 'False'].map((option, optIndex) => {
-                                const isUserAnswer = parseInt(userAnswer?.toString() || '-1') === optIndex;
-                                const isCorrectAnswer = question.correctAnswer === optIndex;
-                                return (
-                                    <div
-                                    key={optIndex}
-                                    className={cn(
-                                        "flex items-center gap-3 p-3 rounded-md border",
-                                        isCorrectAnswer ? "bg-green-100 border-green-300" : "",
-                                        isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
-                                    )}
-                                    >
-                                    {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
-                                    <span className="flex-1">{option}</span>
-                                    </div>
-                                )
-                            })}
-
-                            {question.type === 'fill_in_blank' && (
-                                <div className="space-y-2">
-                                     <div className={cn("flex items-center gap-3 p-3 rounded-md border", isAttempted && !isCorrect && "bg-red-100 border-red-300")}>
-                                        {isAttempted ? (isCorrect ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : <XCircle className="h-5 w-5 text-red-600"/>) : <FileQuestion className="h-5 w-5 text-muted-foreground"/>}
-                                        <span className="flex-1">Your Answer: <span className="font-mono">{userAnswer as string || '(Skipped)'}</span></span>
-                                     </div>
-                                      <div className={cn("flex items-center gap-3 p-3 rounded-md border bg-green-100 border-green-300")}>
-                                        <CheckCircle2 className="h-5 w-5 text-green-600"/>
-                                        <span className="flex-1">Correct Answer: <span className="font-mono">{question.answerText}</span></span>
-                                     </div>
-                                </div>
-                            )}
-
-                             {question.type === 'match' && (
-                                <div className="space-y-2">
-                                    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 font-semibold text-center text-sm">
-                                        <div>Your Answer</div>
-                                        <div></div>
-                                        <div>Correct Answer</div>
-                                    </div>
-                                    {question.matchOptions.map(opt => {
-                                        const studentAnswer = (userAnswer as any)?.[opt.id];
-                                        const isPairCorrect = studentAnswer === opt.answer;
+                                    {question.type === 'mcq' && question.options.map((option, optIndex) => {
+                                        const isUserAnswer = parseInt(userAnswer?.toString() || '-1') === optIndex;
+                                        const isCorrectAnswer = question.correctAnswer === optIndex;
                                         return (
-                                            <div key={opt.id} className={cn("grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-2 rounded-md border", isAttempted ? (isPairCorrect ? "bg-green-100/60" : "bg-red-100/60") : "bg-gray-50")}>
-                                                <div className="text-center">{opt.question}</div>
-                                                <ArrowRight className="h-4 w-4 text-muted-foreground"/>
-                                                <div className="text-center">
-                                                    {isPairCorrect ? (
-                                                        <span className="flex items-center justify-center gap-2 text-green-700">
-                                                            <CheckCircle2 className="h-4 w-4"/> {studentAnswer}
-                                                        </span>
-                                                    ) : (
-                                                        <div className="flex flex-col items-center">
-                                                            <span className="line-through text-red-700">{studentAnswer || '(No answer)'}</span>
-                                                            <span className="text-green-700">{opt.answer}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                            <div
+                                            key={optIndex}
+                                            className={cn(
+                                                "flex items-center gap-3 p-3 rounded-md border",
+                                                isCorrectAnswer ? "bg-green-100 border-green-300" : "",
+                                                isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
+                                            )}
+                                            >
+                                            {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
+                                            <span className="flex-1">{option}</span>
                                             </div>
-                                        );
+                                        )
                                     })}
-                                </div>
-                            )}
 
-                            {question.explanation && (
-                                <div className="p-3 bg-secondary rounded-lg text-sm text-muted-foreground">
-                                    <h4 className="font-semibold text-foreground mb-1">Explanation:</h4>
-                                    <p>{question.explanation}</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                )
-            })}
-        </div>
+                                    {question.type === 'true_false' && ['True', 'False'].map((option, optIndex) => {
+                                        const isUserAnswer = parseInt(userAnswer?.toString() || '-1') === optIndex;
+                                        const isCorrectAnswer = question.correctAnswer === optIndex;
+                                        return (
+                                            <div
+                                            key={optIndex}
+                                            className={cn(
+                                                "flex items-center gap-3 p-3 rounded-md border",
+                                                isCorrectAnswer ? "bg-green-100 border-green-300" : "",
+                                                isUserAnswer && !isCorrectAnswer ? "bg-red-100 border-red-300" : ""
+                                            )}
+                                            >
+                                            {isCorrectAnswer ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : isUserAnswer ? <XCircle className="h-5 w-5 text-red-600"/> : <FileQuestion className="h-5 w-5 text-muted-foreground"/> }
+                                            <span className="flex-1">{option}</span>
+                                            </div>
+                                        )
+                                    })}
+
+                                    {question.type === 'fill_in_blank' && (
+                                        <div className="space-y-2">
+                                            <div className={cn("flex items-center gap-3 p-3 rounded-md border", isAttempted && !isCorrect && "bg-red-100 border-red-300")}>
+                                                {isAttempted ? (isCorrect ? <CheckCircle2 className="h-5 w-5 text-green-600"/> : <XCircle className="h-5 w-5 text-red-600"/>) : <FileQuestion className="h-5 w-5 text-muted-foreground"/>}
+                                                <span className="flex-1">Your Answer: <span className="font-mono">{userAnswer as string || '(Skipped)'}</span></span>
+                                            </div>
+                                            <div className={cn("flex items-center gap-3 p-3 rounded-md border bg-green-100 border-green-300")}>
+                                                <CheckCircle2 className="h-5 w-5 text-green-600"/>
+                                                <span className="flex-1">Correct Answer: <span className="font-mono">{question.answerText}</span></span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {question.type === 'match' && (
+                                        <div className="space-y-2">
+                                            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 font-semibold text-center text-sm">
+                                                <div>Your Answer</div>
+                                                <div></div>
+                                                <div>Correct Answer</div>
+                                            </div>
+                                            {question.matchOptions.map(opt => {
+                                                const studentAnswer = (userAnswer as any)?.[opt.id];
+                                                const isPairCorrect = studentAnswer === opt.answer;
+                                                return (
+                                                    <div key={opt.id} className={cn("grid grid-cols-[1fr_auto_1fr] gap-4 items-center p-2 rounded-md border", isAttempted ? (isPairCorrect ? "bg-green-100/60" : "bg-red-100/60") : "bg-gray-50")}>
+                                                        <div className="text-center">{opt.question}</div>
+                                                        <ArrowRight className="h-4 w-4 text-muted-foreground"/>
+                                                        <div className="text-center">
+                                                            {isPairCorrect ? (
+                                                                <span className="flex items-center justify-center gap-2 text-green-700">
+                                                                    <CheckCircle2 className="h-4 w-4"/> {studentAnswer}
+                                                                </span>
+                                                            ) : (
+                                                                <div className="flex flex-col items-center">
+                                                                    <span className="line-through text-red-700">{studentAnswer || '(No answer)'}</span>
+                                                                    <span className="text-green-700">{opt.answer}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {question.explanation && (
+                                        <div className="p-3 bg-secondary rounded-lg text-sm text-muted-foreground">
+                                            <h4 className="font-semibold text-foreground mb-1">Explanation:</h4>
+                                            <p>{question.explanation}</p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
+                </div>
+            )}
+        </>
       ) : (
-         Object.keys(answers).length > 0 && !canShowAnalysis && (
-            <Card className="text-center p-8 bg-secondary">
-                <Clock className="h-12 w-12 mx-auto text-primary mb-4" />
-                <CardTitle className="text-2xl font-bold">Analysis Pending</CardTitle>
-                <CardDescription>Detailed results and explanations will be available after the quiz period ends.</CardDescription>
-                {quiz.endTime && <p className="font-bold text-lg mt-2">Available after: {format(quiz.endTime.toDate(), "PPP p")}</p>}
-            </Card>
-         )
+         <Card className="text-center p-8 bg-secondary border-dashed border-2 border-primary/20">
+            <Clock className="h-16 w-16 mx-auto text-primary mb-6 animate-pulse" />
+            <CardTitle className="text-2xl font-headline font-bold text-primary">Result Pending / परिणाम लंबित</CardTitle>
+            <CardDescription className="text-base mt-2">
+                Detailed results, leaderboard, and answer keys will be available at the scheduled time.
+                <br />विस्तृत परिणाम और टॉपर लिस्ट निर्धारित समय पर उपलब्ध होगी।
+            </CardDescription>
+            {quiz.resultAnnounceTime && (
+                <div className="mt-8 p-4 bg-background rounded-xl border shadow-sm inline-block">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Announcement at:</p>
+                    <p className="text-xl font-bold text-primary">{format(quiz.resultAnnounceTime.toDate(), "PPP p")}</p>
+                </div>
+            )}
+         </Card>
       )}
 
     </div>

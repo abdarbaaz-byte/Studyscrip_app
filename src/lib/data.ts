@@ -243,6 +243,7 @@ export type Quiz = {
     questions: Question[];
     startTime?: Timestamp; // Optional start time for the quiz
     endTime?: Timestamp;   // Optional end time for the quiz
+    resultAnnounceTime?: Timestamp; // New: When Top 3 and Analysis should be shown
     targetClass: string; // Legacy
     targetClasses?: string[]; // New: support multiple targets
     createdAt?: Timestamp; // Added for sorting
@@ -1053,6 +1054,12 @@ export async function saveQuiz(quiz: Quiz): Promise<void> {
         dataToSave.endTime = data.endTime instanceof Timestamp ? data.endTime : Timestamp.fromDate(data.endTime as any);
     } else {
         delete dataToSave.endTime; // Remove if undefined or null
+    }
+
+    if (data.resultAnnounceTime) {
+        dataToSave.resultAnnounceTime = data.resultAnnounceTime instanceof Timestamp ? data.resultAnnounceTime : Timestamp.fromDate(data.resultAnnounceTime as any);
+    } else {
+        delete dataToSave.resultAnnounceTime;
     }
 
     if (id) {
