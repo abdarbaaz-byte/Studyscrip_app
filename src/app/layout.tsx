@@ -9,6 +9,7 @@ import { NotificationPermissionHandler } from "@/components/notification-permiss
 import { ConditionalLayout } from "@/components/conditional-layout";
 import { AudioPlayerProvider } from "@/hooks/use-audio-player";
 import { AudioPlayer } from "@/components/audio-player";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 
 export const metadata: Metadata = {
@@ -76,6 +77,7 @@ export default function RootLayout({
             </ClientSideLayout>
           </AudioPlayerProvider>
         </AuthProvider>
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""} />
       </body>
     </html>
   );
