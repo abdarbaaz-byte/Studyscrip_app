@@ -153,6 +153,8 @@ export default function AdminDashboardPage() {
   const [isAddingSchool, setIsAddingSchool] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState<School | null>(null);
 
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
+
 
   useEffect(() => {
     // Redirect non-admin/employee users
@@ -581,8 +583,27 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     if (!notificationTitle || !notificationMessage) return;
 
+    setIsSendingNotification(true);
     try {
+        // 1. Save to Firestore for In-App list
         await sendNotification(notificationTitle, notificationMessage, notificationLink);
+        
+        // 2. Trigger Push Notification via API Route (Next.js server-side)
+        // This works on Spark plan because it's a direct API call from client to your own server.
+        const response = await fetch('/api/push-notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: notificationTitle,
+            body: notificationMessage,
+            link: notificationLink,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('API failed to send push notifications');
+        }
+
         toast({
             title: "Notification Sent!",
             description: "Your notification has been sent to all users.",
@@ -594,6 +615,7 @@ export default function AdminDashboardPage() {
         console.error("Failed to send notification:", error);
         toast({ variant: "destructive", title: "Failed to send notification." });
     }
+    setIsSendingNotification(false);
   }
 
   const handleDeleteNotificationClick = (notification: Notification) => {
@@ -2082,8 +2104,8 @@ export default function AdminDashboardPage() {
                     onChange={(e) => setNotificationLink(e.target.value)}
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  <Send className="mr-2 h-4 w-4" />
+                <Button type="submit" className="w-full" disabled={isSendingNotification}>
+                  {isSendingNotification ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                   Send Notification
                 </Button>
               </form>
