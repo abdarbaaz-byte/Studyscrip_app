@@ -1,3 +1,4 @@
+
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
@@ -70,14 +71,19 @@ export const sendPushNotifications = functions.firestore
 
 /**
  * Secure API to send manual push notifications via Firebase Callable Function.
+ * Accepts title, body, link and targetToken.
  */
 export const sendManualPush = functions.https.onCall(async (data, context) => {
-  // Security Check: Only admins/employees should call this
+  // Security Check: Ensure the user is authenticated (ideally check for admin role here)
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Login required');
   }
 
   const { title, body, link, targetToken } = data;
+
+  if (!targetToken) {
+    throw new functions.https.HttpsError('invalid-argument', 'Target token is required');
+  }
 
   const message = {
     token: targetToken,
@@ -85,6 +91,7 @@ export const sendManualPush = functions.https.onCall(async (data, context) => {
       title: title || "StudyScript",
       body: body || "",
       link: link || "/",
+      icon: "/icons/icon-192x192.png",
     }
   };
 
@@ -98,7 +105,7 @@ export const sendManualPush = functions.https.onCall(async (data, context) => {
 });
 
 /**
- * Cleanup read notifications logic remains the same.
+ * Cleanup read notifications logic.
  */
 export const cleanupReadNotifications = functions.firestore
   .document("notifications/{notificationId}")
@@ -108,6 +115,7 @@ export const cleanupReadNotifications = functions.firestore
     try {
       const querySnapshot = await usersRef.where("readNotifications", "array-contains", notificationId).get();
       if (querySnapshot.empty) return;
+      
       const docs = querySnapshot.docs;
       for (let i = 0; i < docs.length; i += 500) {
         const batch = db.batch();
