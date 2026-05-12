@@ -34,8 +34,8 @@ export const sendPushNotifications = functions.firestore
         tokens.push(doc.id);
       });
 
-      // Data-only payload (No 'notification' key)
-      // This ensures the Service Worker has full control and avoids duplicate alerts.
+      // Data-only payload (No 'notification' key at the top level)
+      // This ensures the Service Worker has full control and avoids duplicate browser alerts.
       const messages = tokens.map(token => ({
         token: token,
         data: {
@@ -43,6 +43,7 @@ export const sendPushNotifications = functions.firestore
           body: notificationData.description || "You have a new message",
           link: notificationData.link || "/",
           icon: "/icons/icon-192x192.png",
+          click_action: notificationData.link || "/", // Fallback for some clients
         }
       }));
 
@@ -71,10 +72,8 @@ export const sendPushNotifications = functions.firestore
 
 /**
  * Secure API to send manual push notifications via Firebase Callable Function.
- * Accepts title, body, link and targetToken.
  */
 export const sendManualPush = functions.https.onCall(async (data, context) => {
-  // Security Check: Ensure the user is authenticated (ideally check for admin role here)
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Login required');
   }
