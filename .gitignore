@@ -26,7 +26,7 @@ pnpm-debug.log*
 
 # Local environment files
 .env*.local
-
+.env
 # Vercel
 .vercel
 
