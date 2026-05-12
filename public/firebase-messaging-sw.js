@@ -1,65 +1,58 @@
 
-/* 
-  StudyScript FCM Service Worker
-  Kripya neeche diye gaye config mein apni ORIGINAL KEYS paste karein.
-*/
-
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+// Kripya apni original Firebase keys yahan restore karein
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "PASTE_YOUR_API_KEY_HERE",
+  authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
+  projectId: "PASTE_YOUR_PROJECT_ID_HERE",
+  storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
+  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
+  appId: "PASTE_YOUR_APP_ID_HERE"
 };
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Handle background messages
+// Handle background messages (Data-only payload)
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  // Payload data se values nikalna
   const notificationTitle = payload.data.title || "StudyScript Update";
   const notificationOptions = {
-    body: payload.data.body || "Aapke liye ek naya sandesh hai.",
+    body: payload.data.body || "New content available!",
     icon: payload.data.icon || '/icons/icon-192x192.png',
     data: {
       link: payload.data.link || '/'
     }
   };
 
-  // Notification dikhana
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Notification click handle karna
+// Handle notification click event
 self.addEventListener('notificationclick', (event) => {
-  console.log('[firebase-messaging-sw.js] Notification click Received.');
-  
   event.notification.close();
+  const urlToOpen = event.notification.data.link || '/';
 
-  // Link read karna
-  const targetUrl = event.notification.data.link || '/';
-
-  // Browser tab open ya focus karna
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Check if window is already open
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url === targetUrl && 'focus' in client) {
+      // Check if the link is an external URL (YouTube etc)
+      if (urlToOpen.startsWith('http')) {
+        return clients.openWindow(urlToOpen);
+      }
+      
+      // For internal links, try to focus an existing window or open new
+      for (var i = 0; i < windowClients.length; i++) {
+        var client = windowClients[i];
+        if (client.url.includes(urlToOpen) && 'focus' in client) {
           return client.focus();
         }
       }
-      // If not, open a new window
+      
       if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
+        return clients.openWindow(urlToOpen);
       }
     })
   );
