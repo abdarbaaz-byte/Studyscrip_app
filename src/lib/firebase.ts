@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
@@ -26,11 +25,13 @@ const app: FirebaseApp = createFirebaseApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-let messaging;
+let messaging: any;
 
 if (typeof window !== 'undefined') {
   try {
+    // Only initialize messaging if supported
     messaging = getMessaging(app);
+    
     enableIndexedDbPersistence(db)
       .then(() => console.log("Firestore offline persistence enabled."))
       .catch((err) => {

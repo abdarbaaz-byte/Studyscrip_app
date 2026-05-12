@@ -8,7 +8,7 @@ const messaging = admin.messaging();
 
 /**
  * Triggered when a new notification is created in the 'notifications' collection.
- * Uses the modern FCM HTTP v1 API for reliable delivery.
+ * Sends a DATA-ONLY payload to FCM so the Service Worker can handle display.
  */
 export const sendPushNotifications = functions.firestore
   .document("notifications/{notificationId}")
@@ -21,11 +21,10 @@ export const sendPushNotifications = functions.firestore
     }
 
     try {
-      // Get all active FCM tokens
       const tokensSnapshot = await db.collection("fcmTokens").get();
 
       if (tokensSnapshot.empty) {
-        console.log("No FCM tokens found in the database.");
+        console.log("No FCM tokens found.");
         return;
       }
 
@@ -34,103 +33,93 @@ export const sendPushNotifications = functions.firestore
         tokens.push(doc.id);
       });
 
-      console.log(`Attempting to send notification to ${tokens.length} tokens.`);
-
-      // Modern FCM sendEach API (replaces legacy sendToDevice)
+      // Data-only payload (No 'notification' key)
+      // This ensures the Service Worker has full control and avoids duplicate alerts.
       const messages = tokens.map(token => ({
         token: token,
-        notification: {
-          title: notificationData.title,
-          body: notificationData.description,
-        },
-        webpush: {
-          notification: {
-            icon: "/icons/icon-192x192.png",
-            badge: "/icons/icon-192x192.png",
-            click_action: notificationData.link || "/",
-          },
-          fcm_options: {
-            link: notificationData.link || "/",
-          }
-        },
-        // Data payload for background processing if needed
         data: {
-          title: notificationData.title,
-          body: notificationData.description,
+          title: notificationData.title || "StudyScript Update",
+          body: notificationData.description || "You have a new message",
           link: notificationData.link || "/",
+          icon: "/icons/icon-192x192.png",
         }
       }));
 
-      // Firebase Admin SDK v12+ uses sendEach for multicast
       const response = await messaging.sendEach(messages);
-
-      console.log(`Successfully sent ${response.successCount} notifications.`);
+      console.log(`Sent ${response.successCount} data-push messages.`);
       
-      // Cleanup invalid/expired tokens
+      // Cleanup stale tokens
       if (response.failureCount > 0) {
         const tokensToRemove: Promise<any>[] = [];
         response.responses.forEach((resp, index) => {
           if (!resp.success && resp.error) {
-            const error = resp.error;
-            // Common codes for stale tokens
             if (
-              error.code === 'messaging/registration-token-not-registered' ||
-              error.code === 'messaging/invalid-registration-token'
+              resp.error.code === 'messaging/registration-token-not-registered' ||
+              resp.error.code === 'messaging/invalid-registration-token'
             ) {
-              console.log(`Removing invalid token: ${tokens[index]}`);
-              tokensToRemove.push(
-                db.collection("fcmTokens").doc(tokens[index]).delete()
-              );
+              tokensToRemove.push(db.collection("fcmTokens").doc(tokens[index]).delete());
             }
           }
         });
         await Promise.all(tokensToRemove);
-        console.log(`Cleaned up ${tokensToRemove.length} invalid tokens.`);
       }
-
     } catch (error) {
-      console.error("Error in sendPushNotifications function:", error);
+      console.error("Error in sendPushNotifications:", error);
     }
   });
 
 /**
- * Triggered when a notification is deleted from the 'notifications' collection.
- * Cleans up the 'readNotifications' array in all user documents to save space.
+ * Secure API to send manual push notifications via Firebase Callable Function.
+ */
+export const sendManualPush = functions.https.onCall(async (data, context) => {
+  // Security Check: Only admins/employees should call this
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Login required');
+  }
+
+  const { title, body, link, targetToken } = data;
+
+  const message = {
+    token: targetToken,
+    data: {
+      title: title || "StudyScript",
+      body: body || "",
+      link: link || "/",
+    }
+  };
+
+  try {
+    await messaging.send(message);
+    return { success: true };
+  } catch (error) {
+    console.error("Manual push failed:", error);
+    throw new functions.https.HttpsError('internal', 'Failed to send notification');
+  }
+});
+
+/**
+ * Cleanup read notifications logic remains the same.
  */
 export const cleanupReadNotifications = functions.firestore
   .document("notifications/{notificationId}")
   .onDelete(async (snapshot, context) => {
     const notificationId = context.params.notificationId;
     const usersRef = db.collection("users");
-
     try {
-      // Find users who have this notificationId in their readNotifications array
       const querySnapshot = await usersRef.where("readNotifications", "array-contains", notificationId).get();
-
-      if (querySnapshot.empty) {
-        console.log(`No users had read notification ${notificationId}.`);
-        return;
-      }
-
-      console.log(`Found ${querySnapshot.size} users to cleanup read notification ${notificationId}.`);
-
+      if (querySnapshot.empty) return;
       const docs = querySnapshot.docs;
-      // Firestore batches are limited to 500 operations
       for (let i = 0; i < docs.length; i += 500) {
         const batch = db.batch();
         const chunk = docs.slice(i, i + 500);
-        
         chunk.forEach((userDoc) => {
           batch.update(userDoc.ref, {
             readNotifications: admin.firestore.FieldValue.arrayRemove(notificationId)
           });
         });
-
         await batch.commit();
       }
-
-      console.log(`Successfully removed ${notificationId} from all user read arrays.`);
     } catch (error) {
-      console.error("Error in cleanupReadNotifications function:", error);
+      console.error("Error in cleanupReadNotifications:", error);
     }
   });

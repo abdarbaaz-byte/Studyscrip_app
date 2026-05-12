@@ -5,7 +5,7 @@ import HomeClient from "./home-client";
 export const revalidate = false; // Manual revalidation only
 
 export const metadata: Metadata = {
-  title: "StudyScript | Home - NCERT & MP Board Solutions",
+  title: "StudyScript | Home - NCERT Notes for class 8-12",
   description: "Join StudyScript for live classes, quizzes, and free pdf notes. Your partner in digital learning for NCERT and MP Board.",
 };
 

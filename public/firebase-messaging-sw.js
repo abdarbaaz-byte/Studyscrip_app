@@ -1,74 +1,57 @@
-// This script is executed in the background by the browser.
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// 1. AAPKI ORIGINAL FIREBASE CONFIGURATION (Safe)
+// These values will be replaced with your actual Firebase config during build
+// or you can hardcode them here if they are constant.
 firebase.initializeApp({
-  apiKey: "AIzaSyAogMOncvmZLqQ1qom0d3RDihdqOB9XRiY", 
-  projectId: "studyscript", 
-  messagingSenderId: "891979418045", 
-  appId: "1:891979418045:web:047bfd8a00e148c14dead4" 
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 });
 
 const messaging = firebase.messaging();
 
-// 2. NOTIFICATION RECEIVE HONE KA LOGIC
+/**
+ * Handle Background Messages (Data-only payloads)
+ * This is where we manually show the notification.
+ */
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  const notificationTitle = payload.notification?.title || 'StudyScript';
+  const notificationTitle = payload.data.title || 'StudyScript';
   const notificationOptions = {
-    body: payload.notification?.body || '',
-    icon: '/icons/icon-192x192.png',
+    body: payload.data.body || 'You have a new update.',
+    icon: payload.data.icon || '/icons/icon-192x192.png',
     badge: '/icons/icon-192x192.png',
-    
-    // Popup laane aur 3 second baad tray mein bhejne ka setup
-    requireInteraction: false, 
-    vibrate: [200, 100, 200], 
-    
-    // Double notification ko ek mein merge karne ka setup
-    tag: 'studyscript-msg',
-    renotify: true,
-    
-    // Link read karna
     data: {
-      url: payload.data && payload.data.url ? payload.data.url : '/' 
+      url: payload.data.link || '/'
     }
   };
 
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// 3. NOTIFICATION PAR CLICK KARNE KA LOGIC (DEEP LINKING)
+/**
+ * Handle Notification Clicks
+ */
 self.addEventListener('notificationclick', (event) => {
-  event.notification.close(); 
-  
-  const targetUrl = event.notification.data?.url || '/';
+  event.notification.close();
+  const targetUrl = event.notification.data.url;
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      
-      // Agar Instagram/YouTube ka link hai
-      if (targetUrl.startsWith('http')) {
-        return clients.openWindow(targetUrl);
-      }
-
-      // Agar App ka internal page hai (jaise /quizzes)
-      const fullTargetUrl = new URL(targetUrl, self.location.origin).href;
-
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          client.focus();
-          if ('navigate' in client) {
-            return client.navigate(fullTargetUrl);
-          }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // If a tab is already open at the target URL, focus it
+      for (const client of clientList) {
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
         }
       }
-      
-      // Agar app band hai toh naya kholo
+      // Otherwise, open a new window
       if (clients.openWindow) {
-        return clients.openWindow(fullTargetUrl);
+        return clients.openWindow(targetUrl);
       }
     })
   );
