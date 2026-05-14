@@ -35,13 +35,16 @@ if (typeof window !== 'undefined') {
     
     // Register the unified service worker that handles both PWA and FCM
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => {
-          console.log('Unified Service Worker (PWA + FCM) registered:', registration.scope);
-        })
-        .catch((err) => {
-          console.error('Service Worker registration failed:', err);
-        });
+      // Register after page load to ensure PWA manifest is correctly detected
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          .then((registration) => {
+            console.log('Unified Service Worker (PWA + FCM) registered with scope:', registration.scope);
+          })
+          .catch((err) => {
+            console.error('Unified Service Worker registration failed:', err);
+          });
+      });
     }
 
     enableIndexedDbPersistence(db)
