@@ -33,14 +33,14 @@ if (typeof window !== 'undefined') {
     // Only initialize messaging if supported
     messaging = getMessaging(app);
     
-    // Standard SW registration logic
+    // Register the unified service worker that handles both PWA and FCM
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js')
         .then((registration) => {
-          console.log('FCM Service Worker registered with scope:', registration.scope);
+          console.log('Unified Service Worker (PWA + FCM) registered:', registration.scope);
         })
         .catch((err) => {
-          console.error('FCM Service Worker registration failed:', err);
+          console.error('Service Worker registration failed:', err);
         });
     }
 
