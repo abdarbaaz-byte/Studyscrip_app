@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -153,8 +152,16 @@ export default function QuizzesPage() {
           <TabsContent value="practice" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
             {selectedFolderId ? (
                 <div className="space-y-6">
-                    <div className="flex items-center justify-center">
-                        <h2 className="text-2xl font-bold font-headline text-center">
+                    <div className="flex items-center gap-3">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setSelectedFolderId(null)}
+                            className="hover:bg-indigo-100 text-indigo-600 rounded-full"
+                        >
+                            <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                        <h2 className="text-2xl font-bold font-headline">
                             {folders.find(f => f.id === selectedFolderId)?.name} Quizzes
                         </h2>
                     </div>
