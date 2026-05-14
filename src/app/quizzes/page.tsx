@@ -153,11 +153,8 @@ export default function QuizzesPage() {
           <TabsContent value="practice" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
             {selectedFolderId ? (
                 <div className="space-y-6">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" onClick={() => setSelectedFolderId(null)} className="rounded-full">
-                            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Folders
-                        </Button>
-                        <h2 className="text-2xl font-bold font-headline">
+                    <div className="flex items-center justify-center">
+                        <h2 className="text-2xl font-bold font-headline text-center">
                             {folders.find(f => f.id === selectedFolderId)?.name} Quizzes
                         </h2>
                     </div>
