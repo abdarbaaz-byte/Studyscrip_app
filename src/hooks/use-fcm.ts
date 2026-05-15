@@ -15,16 +15,21 @@ const useFcmToken = () => {
     const retrieveToken = async () => {
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator && messaging) {
         try {
+          // 1. Request Permission
           const status = await Notification.requestPermission();
           setNotificationPermissionStatus(status);
 
           if (status === 'granted') {
-            // Register the unified service worker manually
+            // 2. Register/Get Unified Service Worker
             const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
               scope: '/'
             });
 
-            // Pass the registration to getToken to avoid 'failed-service-worker-registration' error
+            // 3. IMPORTANT: Wait for the service worker to be ready
+            // This ensures that the worker is fully activated before we ask for a token
+            await navigator.serviceWorker.ready;
+
+            // 4. Get FCM Token using the ready registration
             const currentToken = await getToken(messaging, {
               vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
               serviceWorkerRegistration: registration,
@@ -32,8 +37,14 @@ const useFcmToken = () => {
 
             if (currentToken) {
               setToken(currentToken);
+              // Save token to Firestore
               const tokenDocRef = doc(db, 'fcmTokens', currentToken);
-              await setDoc(tokenDocRef, { token: currentToken, createdAt: new Date() });
+              await setDoc(tokenDocRef, { 
+                token: currentToken, 
+                lastUpdated: new Date(),
+                platform: 'web'
+              });
+              console.log('FCM Token retrieved and saved successfully.');
             } else {
               console.warn('No registration token available. Request permission to generate one.');
             }
