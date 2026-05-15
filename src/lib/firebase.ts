@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
@@ -30,22 +29,11 @@ let messaging: any;
 
 if (typeof window !== 'undefined') {
   try {
-    // Only initialize messaging if supported
+    // Messaging initialization
     messaging = getMessaging(app);
     
-    // Register the unified service worker that handles both PWA and FCM
-    if ('serviceWorker' in navigator) {
-      // Register after page load to ensure PWA manifest is correctly detected
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-          .then((registration) => {
-            console.log('Unified Service Worker (PWA + FCM) registered with scope:', registration.scope);
-          })
-          .catch((err) => {
-            console.error('Unified Service Worker registration failed:', err);
-          });
-      });
-    }
+    // Note: Service Worker registration is handled in use-fcm.ts hook
+    // to ensure it's synced with FCM token generation.
 
     enableIndexedDbPersistence(db)
       .then(() => console.log("Firestore offline persistence enabled."))
