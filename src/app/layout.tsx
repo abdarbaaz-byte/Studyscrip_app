@@ -1,17 +1,13 @@
 
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "@/components/ui/toaster";
-import { ChatWidget } from "@/components/chat-widget";
 import { AuthProvider } from "@/hooks/use-auth";
-import { InstallPwaButton } from "@/components/install-pwa-button";
 import "./globals.css";
 import { ClientSideLayout } from "@/components/client-side-layout";
 import { ConditionalLayout } from "@/components/conditional-layout";
 import { AudioPlayerProvider } from "@/hooks/use-audio-player";
-import { AudioPlayer } from "@/components/audio-player";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { FCMInit } from "@/components/fcm-init";
-
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://studyscript.netlify.app"),
