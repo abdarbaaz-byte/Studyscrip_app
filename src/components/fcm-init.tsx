@@ -1,12 +1,10 @@
-
 'use client';
 
 import useFcmToken from '@/hooks/use-fcm';
 
 /**
  * FCMInit Component
- * This is a headless component used to auto-initialize the FCM hook 
- * globally within the app layout.
+ * Headless component that auto-initializes the FCM hook on the client side.
  */
 export function FCMInit() {
   useFcmToken();
