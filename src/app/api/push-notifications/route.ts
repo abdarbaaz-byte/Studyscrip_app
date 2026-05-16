@@ -1,10 +1,9 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { adminMessaging, adminDb } from '@/lib/firebase-admin';
 
 /**
  * API Route to send FCM Push Notifications.
- * This replaces Cloud Functions for users on the Firebase Spark plan.
+ * This works on Spark plan because it uses Firebase Admin SDK.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -14,11 +13,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title and Body are required' }, { status: 400 });
     }
 
-    // 1. Fetch all FCM tokens from Firestore
+    // 1. Fetch all tokens from the 'fcmTokens' collection
     const tokensSnapshot = await adminDb.collection('fcmTokens').get();
     
     if (tokensSnapshot.empty) {
-      return NextResponse.json({ success: true, message: 'No tokens found' });
+      return NextResponse.json({ success: true, message: 'No tokens found in Firestore' });
     }
 
     const tokens: string[] = [];
@@ -26,8 +25,7 @@ export async function POST(request: NextRequest) {
       tokens.push(doc.id);
     });
 
-    // 2. Prepare Data-only payloads (No 'notification' key to avoid duplicates)
-    // This allows the Service Worker to have full control over display.
+    // 2. Prepare Data-only payloads for the Unified Service Worker
     const messages = tokens.map(token => ({
       token: token,
       data: {
@@ -37,11 +35,11 @@ export async function POST(request: NextRequest) {
       }
     }));
 
-    // 3. Send via FCM
+    // 3. Send notifications
     const response = await adminMessaging.sendEach(messages);
     console.log(`Sent ${response.successCount} push messages.`);
 
-    // 4. Cleanup stale tokens
+    // 4. Cleanup invalid tokens
     if (response.failureCount > 0) {
       const tokensToRemove: Promise<any>[] = [];
       response.responses.forEach((resp, index) => {

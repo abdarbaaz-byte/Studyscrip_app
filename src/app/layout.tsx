@@ -71,6 +71,7 @@ export default function RootLayout({
         <AuthProvider>
           <AudioPlayerProvider>
             <ClientSideLayout>
+                <NotificationPermissionHandler />
                 <ConditionalLayout>
                   {children}
                 </ConditionalLayout>
