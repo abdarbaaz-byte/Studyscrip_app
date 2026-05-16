@@ -3,8 +3,10 @@ const createNextPwa = require('next-pwa');
 
 const withPWA = createNextPwa({
   dest: 'public',
+  // Disable PWA automatic registration because we are manually 
+  // registering a unified service worker in src/hooks/use-fcm.ts
   disable: process.env.NODE_ENV === 'development',
-  register: true,
+  register: false, 
   skipWaiting: true,
   sw: 'sw.js',
   runtimeCaching: [

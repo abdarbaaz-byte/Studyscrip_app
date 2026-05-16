@@ -18,50 +18,52 @@ const useFcmToken = () => {
       }
 
       try {
-        console.log("FCM: Initializing...");
+        console.log("FCM: Initializing Registration...");
         
-        // 2. Request Permission
+        // 2. Request Notification Permission
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-          console.log("FCM: Notification permission denied.");
+          console.warn("FCM: Notification permission denied by user.");
           return;
         }
 
-        // 3. Register Unified Service Worker manually
-        // This prevents conflicts between PWA worker and Firebase worker
-        console.log("FCM: Registering service worker...");
+        // 3. Register our UNIFIED Service Worker manually
+        // This worker handles both PWA (via importScripts) and FCM.
+        console.log("FCM: Registering Unified Service Worker...");
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
           scope: '/',
         });
 
-        // 4. Wait for SW to be ready
+        // 4. Wait for the Service Worker to be fully ready
+        // This is critical to avoid 'failed-service-worker-registration'
         await navigator.serviceWorker.ready;
-        console.log("FCM: Service Worker Ready.");
+        console.log("FCM: Service Worker is Ready.");
 
-        // 5. Get Token with explicit registration
+        // 5. Generate FCM Token
         const currentToken = await getToken(messaging, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
           serviceWorkerRegistration: registration,
         });
 
         if (currentToken) {
-          console.log("FCM: Token generated:", currentToken);
+          console.log("FCM: Token generated successfully:", currentToken);
           setToken(currentToken);
 
-          // 6. Save token to Firestore
+          // 6. Save/Update token in Firestore
           const tokenDocRef = doc(db, 'fcmTokens', currentToken);
           await setDoc(tokenDocRef, {
             token: currentToken,
             lastSeen: serverTimestamp(),
-            platform: 'web'
+            platform: 'web',
+            updatedAt: new Date().toISOString()
           }, { merge: true });
           
-          console.log("FCM: Token saved to Firestore successfully.");
+          console.log("FCM: Token saved to Firestore 'fcmTokens' collection.");
         } else {
-          console.log("FCM: No registration token available.");
+          console.warn("FCM: No registration token available. Check VAPID key or browser support.");
         }
       } catch (error) {
-        console.error("FCM: Error during initialization:", error);
+        console.error("FCM: Critical error during initialization:", error);
       }
     };
 
