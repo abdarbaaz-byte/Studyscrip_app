@@ -9,7 +9,6 @@ import { AudioPlayer } from "@/components/audio-player";
 import { Toaster } from "@/components/ui/toaster";
 import { ChatWidget } from "@/components/chat-widget";
 import { InstallPwaButton } from "@/components/install-pwa-button";
-import { NotificationPermissionHandler } from "@/components/notification-permission-handler";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,7 +36,6 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
         </>
       )}
       <Toaster />
-      <NotificationPermissionHandler />
       <BottomNavigation />
     </div>
   );
