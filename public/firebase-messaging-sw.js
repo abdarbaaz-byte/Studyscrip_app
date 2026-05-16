@@ -13,12 +13,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-comp
 // 3. Initialize Firebase in the Service Worker
 // REPLACE THESE WITH YOUR ACTUAL CONFIG FROM FIREBASE CONSOLE
 firebase.initializeApp({
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAogMOncvmZLqQ1qom0d3RDihdqOB9XRiY",
+  authDomain: "studyscript.firebaseapp.com",
+  projectId: "studyscript",
+  storageBucket: "studyscript.firebasestorage.app",
+  messagingSenderId: "891979418045",
+  appId: "1:891979418045:web:047bfd8a00e148c14dead4"
 });
 
 const messaging = firebase.messaging();
