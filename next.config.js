@@ -6,11 +6,7 @@ const withPWA = createNextPwa({
   // Disable PWA automatic registration because we are manually 
   // registering a unified service worker in src/hooks/use-fcm.ts
   disable: process.env.NODE_ENV === 'development',
-<<<<<<< HEAD
-  register: false, 
-=======
   register: false, // Disable auto-registration to avoid conflict with Firebase SW
->>>>>>> f6bcd8dc5885b1c0903beea896d03865f3bde2db
   skipWaiting: true,
   sw: 'sw.js',
   runtimeCaching: [
