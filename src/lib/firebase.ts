@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
@@ -30,11 +31,10 @@ let messaging: any;
 if (typeof window !== 'undefined') {
   try {
     // Messaging initialization
+    // We only initialize messaging object here, registration is handled in use-fcm.ts
     messaging = getMessaging(app);
     
-    // Note: Service Worker registration is handled in use-fcm.ts hook
-    // to ensure it's synced with FCM token generation.
-
+    // Enable offline persistence for Firestore
     enableIndexedDbPersistence(db)
       .then(() => console.log("Firestore offline persistence enabled."))
       .catch((err) => {
