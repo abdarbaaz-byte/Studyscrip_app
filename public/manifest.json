@@ -1,16 +1,27 @@
-
 {
   "name": "StudyScript",
   "short_name": "StudyScript",
-  "description": "StudyScript - Online Learning Platform for Class 8-12",
+  "description": "A modern e-learning platform for academic and professional courses.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#227447",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
@@ -18,7 +29,7 @@
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512x512.png",
@@ -27,48 +38,49 @@
       "purpose": "any"
     }
   ],
+  "lang": "en",
+  "categories": [
+    "education"
+  ],
   "shortcuts": [
     {
-      "name": "Home",
-      "url": "/",
-      "description": "Go to Home",
+      "name": "Class 10th",
+      "url": "/class/class-10",
+      "description": "View for class 10th Notes",
       "icons": [
-        {
-          "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+        { 
+          "src": "/icons/icon-192x192.png", 
+          "sizes": "192x192" 
         }
       ]
     },
     {
-      "name": "My Courses",
-      "url": "/my-courses",
-      "description": "View your enrolled courses",
+      "name": "Class 12th",
+      "url": "/class/class-1755422669110-9cr0p",
+      "description": "View for class 12th Notes",
       "icons": [
-        {
-          "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+        { "src": "/icons/icon-192x192.png", 
+          "sizes": "192x192" 
         }
       ]
     },
     {
-      "name": "Batches",
+      "name": "Batch",
       "url": "/batches",
-      "description": "Explore active batches",
+      "description": "View for professional courses",
       "icons": [
-        {
-          "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+        { "src": "/icons/icon-192x192.png", 
+          "sizes": "192x192" 
         }
       ]
     },
     {
-      "name": "Quizzes",
-      "url": "/quizzes",
-      "description": "Take practice or live quizzes",
+      "name": "Bookstore ",
+      "url": "/bookstore",
+      "description": "Download free pdf books",
       "icons": [
-        {
-          "src": "/icons/icon-192x192.png",
-          "sizes": "192x192"
+        { "src": "/icons/icon-192x192.png", 
+          "sizes": "192x192" 
         }
       ]
     }
