@@ -1,30 +1,12 @@
 {
   "name": "StudyScript",
   "short_name": "StudyScript",
-  "description": "A modern e-learning platform for academic and professional courses.",
+  "description": "Premium E-Learning Platform",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f8fafc",
   "theme_color": "#227447",
   "icons": [
-    {
-      "src": "/icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
@@ -32,57 +14,42 @@
       "purpose": "any"
     },
     {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ],
-  "lang": "en",
-  "categories": [
-    "education"
   ],
   "shortcuts": [
     {
-      "name": "Class 10th",
-      "url": "/class/class-10",
-      "description": "View for class 10th Notes",
-      "icons": [
-        { 
-          "src": "/icons/icon-192x192.png", 
-          "sizes": "192x192" 
-        }
-      ]
+      "name": "My Courses",
+      "url": "/my-courses",
+      "description": "View your enrolled courses",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Class 12th",
-      "url": "/class/class-1755422669110-9cr0p",
-      "description": "View for class 12th Notes",
-      "icons": [
-        { "src": "/icons/icon-192x192.png", 
-          "sizes": "192x192" 
-        }
-      ]
+      "name": "Live Quizzes",
+      "url": "/quizzes",
+      "description": "Participate in live tests",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Batch",
-      "url": "/batches",
-      "description": "View for professional courses",
-      "icons": [
-        { "src": "/icons/icon-192x192.png", 
-          "sizes": "192x192" 
-        }
-      ]
-    },
-    {
-      "name": "Bookstore ",
-      "url": "/bookstore",
-      "description": "Download free pdf books",
-      "icons": [
-        { "src": "/icons/icon-192x192.png", 
-          "sizes": "192x192" 
-        }
-      ]
+      "name": "Free Notes",
+      "url": "/free-notes",
+      "description": "Access free study material",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
