@@ -3,60 +3,83 @@
 import { useEffect, useState } from 'react';
 import { getToken } from 'firebase/messaging';
 import { messaging, db } from '../lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import { useToast } from './use-toast';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const useFcmToken = () => {
   const [token, setToken] = useState<string | null>(null);
   const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<PermissionState | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     const retrieveToken = async () => {
-      if (typeof window !== 'undefined' && 'serviceWorker' in navigator && messaging) {
-        try {
-          // 1. Request Permission
-          const status = await Notification.requestPermission();
-          setNotificationPermissionStatus(status);
+      if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        console.log('Service workers are not supported in this environment.');
+        return;
+      }
 
-          if (status === 'granted') {
-            // 2. Register/Get Unified Service Worker
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-              scope: '/'
-            });
+      if (!messaging) {
+        console.log('Firebase Messaging is not initialized (likely server-side or unsupported browser).');
+        return;
+      }
 
-            // 3. IMPORTANT: Wait for the service worker to be ready
-            // This ensures that the worker is fully activated before we ask for a token
-            await navigator.serviceWorker.ready;
+      try {
+        console.log('FCM: Starting token retrieval process...');
+        
+        // 1. Check/Request Permission
+        const status = await Notification.requestPermission();
+        setNotificationPermissionStatus(status);
+        console.log('FCM: Notification permission status:', status);
 
-            // 4. Get FCM Token using the ready registration
-            const currentToken = await getToken(messaging, {
-              vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-              serviceWorkerRegistration: registration,
-            });
+        if (status === 'granted') {
+          // 2. Register Unified Service Worker
+          console.log('FCM: Registering Service Worker...');
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+            scope: '/'
+          });
+          
+          // 3. Wait for Service Worker to be fully ready
+          await navigator.serviceWorker.ready;
+          console.log('FCM: Service Worker is ready.');
 
-            if (currentToken) {
-              setToken(currentToken);
-              // Save token to Firestore
-              const tokenDocRef = doc(db, 'fcmTokens', currentToken);
-              await setDoc(tokenDocRef, { 
-                token: currentToken, 
-                lastUpdated: new Date(),
-                platform: 'web'
-              });
-              console.log('FCM Token retrieved and saved successfully.');
-            } else {
-              console.warn('No registration token available. Request permission to generate one.');
-            }
+          // 4. Get FCM Token
+          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+          if (!vapidKey) {
+            console.error('FCM: VAPID Key is missing in environment variables!');
+            return;
           }
-        } catch (error) {
-          console.error('An error occurred while retrieving token: ', error);
+
+          console.log('FCM: Requesting token from Firebase...');
+          const currentToken = await getToken(messaging, {
+            vapidKey: vapidKey,
+            serviceWorkerRegistration: registration,
+          });
+
+          if (currentToken) {
+            console.log('FCM: Token generated successfully:', currentToken);
+            setToken(currentToken);
+
+            // 5. Save/Update token in Firestore
+            console.log('FCM: Saving token to Firestore...');
+            const tokenDocRef = doc(db, 'fcmTokens', currentToken);
+            await setDoc(tokenDocRef, { 
+              token: currentToken, 
+              lastUpdated: serverTimestamp(),
+              platform: 'web'
+            }, { merge: true });
+            
+            console.log('FCM: Token successfully stored in Firestore.');
+          } else {
+            console.warn('FCM: No registration token available. User might need to re-grant permission.');
+          }
+        } else {
+          console.warn('FCM: Notification permission was denied.');
         }
+      } catch (error) {
+        console.error('FCM: Error occurred during token retrieval:', error);
       }
     };
 
     retrieveToken();
-  }, [toast]);
+  }, []);
 
   return { token, notificationPermissionStatus };
 };
