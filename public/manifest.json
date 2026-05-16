@@ -1,7 +1,8 @@
+
 {
   "name": "StudyScript",
   "short_name": "StudyScript",
-  "description": "StudyScript se online padhai karein! Structured courses, quizzes, aur free pdf notes.",
+  "description": "StudyScript - Online Learning Platform for Class 8-12",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -29,31 +30,47 @@
   "shortcuts": [
     {
       "name": "Home",
-      "short_name": "Home",
-      "description": "Go to Homepage",
       "url": "/",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "description": "Go to Home",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "name": "My Learning",
-      "short_name": "Learning",
-      "description": "View your purchased courses",
+      "name": "My Courses",
       "url": "/my-courses",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Live Quizzes",
-      "short_name": "Quizzes",
-      "description": "Attempt live tests",
-      "url": "/quizzes",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "description": "View your enrolled courses",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Batches",
-      "short_name": "Batches",
-      "description": "View active batches",
       "url": "/batches",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "description": "Explore active batches",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Quizzes",
+      "url": "/quizzes",
+      "description": "Take practice or live quizzes",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
