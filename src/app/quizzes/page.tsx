@@ -159,10 +159,10 @@ export default function QuizzesPage() {
                             onClick={() => setSelectedFolderId(null)}
                             className="hover:bg-indigo-100 text-indigo-600 rounded-full"
                         >
-                            <ChevronLeft className="h-6 w-6" />
+                            <ChevronLeft className="h-6 w-6" />back 
                         </Button>
                         <h2 className="text-2xl font-bold font-headline">
-                            {folders.find(f => f.id === selectedFolderId)?.name} Quizzes
+                            {folders.find(f => f.id === selectedFolderId)?.name} 
                         </h2>
                     </div>
                     {filteredPracticeQuizzes.length === 0 ? (

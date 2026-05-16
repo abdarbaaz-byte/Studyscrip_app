@@ -4,7 +4,7 @@ const createNextPwa = require('next-pwa');
 const withPWA = createNextPwa({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
-  register: true,
+  register: false, // Disable auto-registration to avoid conflict with Firebase SW
   skipWaiting: true,
   sw: 'sw.js',
   runtimeCaching: [
@@ -80,7 +80,6 @@ const withPWA = createNextPwa({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -95,7 +94,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '**', // Allows all hostnames
+        hostname: '**',
       },
     ],
   },

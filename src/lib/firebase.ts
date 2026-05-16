@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
@@ -30,19 +29,11 @@ let messaging: any;
 
 if (typeof window !== 'undefined') {
   try {
-    // Only initialize messaging if supported
+    // Messaging initialization
     messaging = getMessaging(app);
     
-    // Standard SW registration logic
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => {
-          console.log('FCM Service Worker registered with scope:', registration.scope);
-        })
-        .catch((err) => {
-          console.error('FCM Service Worker registration failed:', err);
-        });
-    }
+    // Note: Service Worker registration is handled in use-fcm.ts hook
+    // to ensure it's synced with FCM token generation.
 
     enableIndexedDbPersistence(db)
       .then(() => console.log("Firestore offline persistence enabled."))

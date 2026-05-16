@@ -5,8 +5,8 @@ import HomeClient from "./home-client";
 export const revalidate = false; // Manual revalidation only
 
 export const metadata: Metadata = {
-  title: "StudyScript | Home - NCERT Notes for class 8-12",
-  description: "Join StudyScript for live NCERT solutions for class 8 to 12, Free pdf notes, Professional Courses, Online test and Download pdf books.",
+  title: "StudyScript | NCERT Notes for class 8-12 All Subjects",
+  description: "Join StudyScript for NCERT solutions for class 8-12, quizzes, professional Courses and free pdf notes for board exams.",
 };
 
 export default function Home() {
