@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,6 +7,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const useFcmToken = () => {
   const [token, setToken] = useState<string | null>(null);
+  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState<PermissionState | null>(null);
 
   useEffect(() => {
     const initializeFCM = async () => {
@@ -22,26 +22,31 @@ const useFcmToken = () => {
         
         // 2. Request Notification Permission
         const permission = await Notification.requestPermission();
+        setNotificationPermissionStatus(permission);
         if (permission !== 'granted') {
           console.warn("FCM: Notification permission denied by user.");
           return;
         }
 
         // 3. Register our UNIFIED Service Worker manually
-        // This worker handles both PWA (via importScripts) and FCM.
         console.log("FCM: Registering Unified Service Worker...");
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
           scope: '/',
         });
 
         // 4. Wait for the Service Worker to be fully ready
-        // This is critical to avoid 'failed-service-worker-registration'
         await navigator.serviceWorker.ready;
         console.log("FCM: Service Worker is Ready.");
 
         // 5. Generate FCM Token
+        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        if (!vapidKey) {
+          console.error('FCM: VAPID Key missing.');
+          return;
+        }
+        
         const currentToken = await getToken(messaging, {
-          vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          vapidKey: vapidKey,
           serviceWorkerRegistration: registration,
         });
 
@@ -53,9 +58,8 @@ const useFcmToken = () => {
           const tokenDocRef = doc(db, 'fcmTokens', currentToken);
           await setDoc(tokenDocRef, {
             token: currentToken,
-            lastSeen: serverTimestamp(),
+            lastUpdated: serverTimestamp(),
             platform: 'web',
-            updatedAt: new Date().toISOString()
           }, { merge: true });
           
           console.log("FCM: Token saved to Firestore 'fcmTokens' collection.");
@@ -70,7 +74,7 @@ const useFcmToken = () => {
     initializeFCM();
   }, []);
 
-  return { token };
+  return { token, notificationPermissionStatus };
 };
 
 export default useFcmToken;
