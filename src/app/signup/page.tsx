@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -11,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff, Gift } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 function SignupForm() {
   const router = useRouter();
@@ -25,6 +25,7 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -35,6 +36,10 @@ function SignupForm() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      toast({ variant: "destructive", title: "Please accept the terms and conditions." });
+      return;
+    }
     if (password !== confirmPassword) {
       toast({ variant: "destructive", title: "Passwords do not match." });
       return;
@@ -125,7 +130,27 @@ function SignupForm() {
               )}
             </div>
 
-            <Button type="submit" className="w-full mt-2" disabled={loading}>
+            <div className="flex items-start space-x-2 py-2">
+              <Checkbox 
+                id="terms-signup" 
+                checked={acceptedTerms} 
+                onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                required
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="terms-signup"
+                  className="text-xs font-medium text-muted-foreground leading-normal cursor-pointer"
+                >
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-primary hover:underline">Terms & Conditions</Link>
+                  {" "}and{" "}
+                  <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                </label>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full mt-2" disabled={loading || !acceptedTerms}>
                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
             </Button>

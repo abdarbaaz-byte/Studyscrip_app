@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -26,9 +27,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleLogin = async (e?: React.FormEvent, force: boolean = false) => {
     if (e) e.preventDefault();
+    if (!acceptedTerms) return;
+
     setLoading(true);
     
     const status = await logIn(email, password, force);
@@ -94,7 +98,28 @@ export default function LoginPage() {
                 </Button>
               </div>
             </div>
-            <Button type="submit" className="w-full mt-2" disabled={loading}>
+
+            <div className="flex items-start space-x-2 pt-2">
+              <Checkbox 
+                id="terms" 
+                checked={acceptedTerms} 
+                onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                required
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="terms"
+                  className="text-xs font-medium text-muted-foreground leading-normal cursor-pointer"
+                >
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-primary hover:underline">Terms & Conditions</Link>
+                  {" "}and{" "}
+                  <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                </label>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full mt-2" disabled={loading || !acceptedTerms}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Log In
             </Button>
