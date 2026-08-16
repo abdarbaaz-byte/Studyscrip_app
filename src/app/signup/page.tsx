@@ -58,11 +58,11 @@ function SignupForm() {
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" type="text" placeholder="Your full name" required value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="name" type="text" placeholder="Your full name" required value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your@gmail.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="email" type="email" placeholder="your@gmail.com" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Create Password</Label>
@@ -73,6 +73,7 @@ function SignupForm() {
                   required 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
+                  autoComplete="new-password"
                 />
                 <Button 
                   type="button" 
@@ -94,6 +95,7 @@ function SignupForm() {
                   required 
                   value={confirmPassword} 
                   onChange={(e) => setConfirmPassword(e.target.value)} 
+                  autoComplete="new-password"
                 />
                 <Button 
                   type="button" 
@@ -130,8 +132,8 @@ function SignupForm() {
           </form>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
-             <Link href="/login" passHref>
-               <Button variant="link" className="px-0 h-auto">Login</Button>
+             <Link href="/login" className="font-medium text-primary hover:underline">
+                Login
             </Link>
           </div>
         </CardContent>

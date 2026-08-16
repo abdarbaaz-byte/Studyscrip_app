@@ -40,13 +40,24 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your@gmail.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="your@gmail.com" 
+                required 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                autoComplete="email"
+              />
             </div>
             <div className="space-y-2">
                <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" passHref>
-                  <Button variant="link" className="px-0 h-auto text-sm">Forgot password?</Button>
+                <Link 
+                  href="/forgot-password" 
+                  className="text-sm font-medium text-primary hover:underline transition-colors"
+                >
+                  Forgot password?
                 </Link>
               </div>
               <div className="relative">
@@ -56,6 +67,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                 />
                  <Button
                   type="button"
@@ -75,8 +87,8 @@ export default function LoginPage() {
           </form>
            <div className="mt-4 text-center text-sm">
             Don't have an account?{" "}
-            <Link href="/signup" passHref>
-               <Button variant="link" className="px-0 h-auto">New Account</Button>
+            <Link href="/signup" className="font-medium text-primary hover:underline">
+               New Account
             </Link>
           </div>
         </CardContent>

@@ -89,8 +89,8 @@ export default function VerifyEmailPage() {
               Resend Verification Email
             </Button>
            <div className="mt-4 text-center">
-             <Link href="/login" passHref>
-               <Button variant="link">Back to Login</Button>
+             <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+               Back to Login
             </Link>
           </div>
         </CardContent>

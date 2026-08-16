@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -32,7 +33,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleReset} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)}/>
+              <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
             </div>
             <Button type="submit" className="w-full mt-2" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -40,8 +41,8 @@ export default function ForgotPasswordPage() {
             </Button>
           </form>
            <div className="mt-4 text-center">
-             <Link href="/login" passHref>
-               <Button variant="link">Back to Login</Button>
+             <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+               Back to Login
             </Link>
           </div>
         </CardContent>
