@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Lock, Eye, Database, Bell, UserCheck, MessageCircle } from "lucide-react";
+import { ShieldCheck, Lock, Eye, Database, Bell, UserCheck, MessageCircle, Globe, CreditCard } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
 
 export default function PrivacyPage() {
@@ -20,7 +20,7 @@ export default function PrivacyPage() {
                         Privacy Policy
                     </CardTitle>
                     <CardDescription className="text-lg md:text-xl text-muted-foreground pt-4 font-medium max-w-2xl mx-auto">
-                        Hamari priority aapki privacy aur data security hai. Jaaniye hum aapki jaankari ko kaise handle karte hain.
+                        Your privacy is our priority. This policy outlines how StudyScript collects, uses, and protects your information.
                     </CardDescription>
                     <div className="mt-4 inline-block px-4 py-1.5 bg-secondary rounded-full text-xs font-bold uppercase tracking-widest text-muted-foreground">
                         Last Updated: {lastUpdated}
@@ -29,6 +29,13 @@ export default function PrivacyPage() {
                 
                 <CardContent className="p-8 md:p-14 space-y-12 bg-white">
                     
+                    {/* Introduction */}
+                    <div className="prose prose-neutral max-w-none">
+                        <p className="text-lg text-muted-foreground leading-relaxed italic border-l-4 border-primary/20 pl-6">
+                            At StudyScript, we are committed to protecting the privacy of our students and educators. This Privacy Policy describes our practices regarding the collection, use, and disclosure of information through our digital learning platform.
+                        </p>
+                    </div>
+
                     {/* Section 1: Information Collection */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 text-primary border-b border-primary/10 pb-2">
@@ -38,51 +45,51 @@ export default function PrivacyPage() {
                             <h2 className="text-2xl font-bold font-headline">1. Information We Collect</h2>
                         </div>
                         <p className="text-muted-foreground leading-relaxed">
-                            StudyScript ka upyog karne ke liye hum niche di gayi jaankari collect karte hain:
+                            To provide a personalized learning experience, we collect the following types of information:
                         </p>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 list-none p-0">
                             <li className="p-4 bg-secondary/50 rounded-2xl border text-sm">
-                                <strong>Account Info:</strong> Registration ke waqt aapka naam aur email address. (Passwords Firebase dwara encrypted hote hain).
+                                <strong>Account Data:</strong> Name, email address, and encrypted password provided during registration via Google Firebase Authentication.
                             </li>
                             <li className="p-4 bg-secondary/50 rounded-2xl border text-sm">
-                                <strong>Profile Details:</strong> Mobile number, school/college ka naam, class, roll number aur address (optional).
+                                <strong>Profile Information:</strong> Mobile number, school/institute name, class/grade, roll number, and residential address.
                             </li>
                             <li className="p-4 bg-secondary/50 rounded-2xl border text-sm">
-                                <strong>Referral Data:</strong> Aapka unique referral code aur aapke link se join karne wale users ki sankhya.
+                                <strong>Transactional Data:</strong> Payment confirmation details, including Razorpay Order IDs or manual UPI Transaction/Reference IDs for course access verification.
                             </li>
                             <li className="p-4 bg-secondary/50 rounded-2xl border text-sm">
-                                <strong>Transaction Info:</strong> Razorpay payment details ya manual UPI verification ke liye Transaction/Reference ID.
+                                <strong>Referral Data:</strong> Unique referral codes assigned to your account and the number of successful sign-ups attributed to your link.
                             </li>
                         </ul>
                     </div>
 
-                    {/* Section 2: Usage */}
+                    {/* Section 2: Use of Data */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 text-primary border-b border-primary/10 pb-2">
                             <div className="p-2 bg-primary/10 rounded-lg">
                                 <UserCheck className="h-6 w-6" />
                             </div>
-                            <h2 className="text-2xl font-bold font-headline">2. How We Use Your Data</h2>
+                            <h2 className="text-2xl font-bold font-headline">2. How We Use Your Information</h2>
                         </div>
                         <div className="space-y-4 text-muted-foreground leading-relaxed">
-                            <p>Hum collect ki gayi jaankari ka upyog in kaamo ke liye karte hain:</p>
+                            <p>StudyScript uses the collected data for the following legitimate business purposes:</p>
                             <ul className="list-disc pl-5 space-y-2">
-                                <li>Aapke purchased courses aur academic materials tak access pradan karne ke liye.</li>
-                                <li>Referral rewards aur "Share & Earn" program ko manage karne ke liye.</li>
-                                <li>UPI payments ko manually verify karke aapko access dene ke liye.</li>
-                                <li>Personalized updates aur dashboard experience ke liye.</li>
+                                <li><strong>Service Delivery:</strong> To provide access to purchased academic courses, notes, and interactive quizzes.</li>
+                                <li><strong>Manual Verification:</strong> To verify UPI payments manually and grant access to premium content within the stipulated time frame (typically 24 hours).</li>
+                                <li><strong>Referral Management:</strong> To track referral milestones and reward users through our "Share & Earn" program.</li>
+                                <li><strong>Communication:</strong> To send critical updates regarding live classes, test schedules, and account security.</li>
                             </ul>
                         </div>
                     </div>
 
-                    {/* Section 3: Tech Features */}
+                    {/* Section 3: Technical Features */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="p-6 bg-blue-50 rounded-3xl space-y-3">
                             <div className="flex items-center gap-2 text-blue-800 font-bold">
                                 <Bell className="h-5 w-5" /> Push Notifications
                             </div>
                             <p className="text-sm text-blue-900/70">
-                                Hum FCM (Firebase Cloud Messaging) ka upyog karte hain taaki aapko live classes, naye courses aur important updates ke notifications mil sakein. Iske liye hum ek unique device token store karte hain.
+                                We utilize Firebase Cloud Messaging (FCM) to deliver real-time push notifications. We store a unique device token to ensure you receive timely alerts about live sessions and new content.
                             </p>
                         </div>
                         <div className="p-6 bg-purple-50 rounded-3xl space-y-3">
@@ -90,47 +97,66 @@ export default function PrivacyPage() {
                                 <MessageCircle className="h-5 w-5" /> Support Chat
                             </div>
                             <p className="text-sm text-purple-900/70">
-                                Hamara in-app support chat aapke doubts clear karne ke liye hai. Chat history ko store kiya jata hai taaki aapko behtar aur fast response mil sake.
+                                Our integrated support chat stores conversation history to provide efficient technical assistance. This data is used solely for troubleshooting and quality assurance.
                             </p>
                         </div>
                     </div>
 
-                    {/* Section 4: Security */}
+                    {/* Section 4: Data Security */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 text-primary border-b border-primary/10 pb-2">
                             <div className="p-2 bg-primary/10 rounded-lg">
                                 <Lock className="h-6 w-6" />
                             </div>
-                            <h2 className="text-2xl font-bold font-headline">3. Data Security & Storage</h2>
+                            <h2 className="text-2xl font-bold font-headline">3. Security and Protection</h2>
                         </div>
                         <p className="text-muted-foreground leading-relaxed">
-                            Hum aapka data <strong>Google Firebase</strong> ke secure servers par store karte hain jo industry-standard encryption pradan karta hai. Hum aapka koi bhi personal data kisi third-party marketing agency ko nahi bechte hain. Payment processing sirf authorized partners (Razorpay) dwara ki jati hai.
+                            We implement industry-standard security measures to safeguard your data:
                         </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex gap-3 items-start">
+                                <div className="mt-1 bg-green-100 p-1 rounded-full"><UserCheck className="h-4 w-4 text-green-600" /></div>
+                                <p className="text-sm"><strong>One-Device Policy:</strong> To prevent unauthorized access, accounts are restricted to one active session at a time.</p>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <div className="mt-1 bg-green-100 p-1 rounded-full"><Globe className="h-4 w-4 text-green-600" /></div>
+                                <p className="text-sm"><strong>Encrypted Storage:</strong> All user data is hosted on secure Google Firebase servers with multi-layer encryption.</p>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <div className="mt-1 bg-green-100 p-1 rounded-full"><CreditCard className="h-4 w-4 text-green-600" /></div>
+                                <p className="text-sm"><strong>Secure Payments:</strong> We do not store full credit card information; all digital transactions are processed by PCI-compliant partners like Razorpay.</p>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <div className="mt-1 bg-green-100 p-1 rounded-full"><Eye className="h-4 w-4 text-green-600" /></div>
+                                <p className="text-sm"><strong>Data Privacy:</strong> StudyScript never sells your personal information to third-party marketing agencies.</p>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Section 5: Control */}
+                    {/* Section 5: User Rights */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 text-primary border-b border-primary/10 pb-2">
                             <div className="p-2 bg-primary/10 rounded-lg">
-                                <Eye className="h-6 w-6" />
+                                <ShieldCheck className="h-6 w-6" />
                             </div>
-                            <h2 className="text-2xl font-bold font-headline">4. Your Control & Rights</h2>
+                            <h2 className="text-2xl font-bold font-headline">4. Your Rights and Controls</h2>
                         </div>
-                        <div className="space-y-4 text-muted-foreground leading-relaxed">
-                            <p>Aapke paas apne data par pura control hai:</p>
-                            <ul className="list-disc pl-5 space-y-2">
-                                <li><strong>Profile Update:</strong> Aap "My Profile" section mein jaakar kabhi bhi apni details badal sakte hain.</li>
-                                <li><strong>Device Security:</strong> Hamari "One Device Policy" aapke account ko unauthorized access se bachati hai.</li>
-                                <li><strong>Account Deletion:</strong> Agar aap apna account delete karna chahte hain, toh hamari support team ko message kar sakte hain.</li>
-                            </ul>
-                        </div>
+                        <p className="text-muted-foreground leading-relaxed">
+                            You maintain full control over your personal data on StudyScript:
+                        </p>
+                        <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                            <li><strong>Access and Rectification:</strong> You can update your profile information at any time through the "My Profile" section.</li>
+                            <li><strong>Data Portability:</strong> You may request a summary of your payment history and enrolled courses.</li>
+                            <li><strong>Account Deletion:</strong> If you wish to permanently delete your account, please contact our support team through the in-app chat.</li>
+                        </ul>
                     </div>
 
+                    {/* Contact Footer */}
                     <div className="text-center pt-10 border-t">
                          <p className="text-sm text-muted-foreground font-medium">
-                            Privacy Policy ke bare mein sawal hone par humein support chat ya email par sampark karein.
+                            If you have any questions or concerns regarding this Privacy Policy, please reach out to us at:
                             <br />
-                            <a href="mailto:studyscript001@gmail.com" className="text-primary hover:underline font-bold">studyscript001@gmail.com</a>
+                            <a href="mailto:studyscript001@gmail.com" className="text-primary hover:underline font-bold text-lg mt-2 inline-block">studyscript001@gmail.com</a>
                          </p>
                     </div>
 
