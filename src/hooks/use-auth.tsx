@@ -15,7 +15,6 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
-  sendEmailVerification,
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -49,6 +48,8 @@ export type UserPermission =
   | 'manage_games'
   | 'manage_audio_lectures';
 
+export type LoginStatus = 'success' | 'conflict' | 'error';
+
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
@@ -58,7 +59,7 @@ interface AuthContextType {
   loading: boolean;
   hasPermission: (permission: UserPermission) => boolean;
   signUp: (name: string, email: string, password: string, referralCode?: string) => Promise<boolean>;
-  logIn: (email: string, password: string) => Promise<boolean>;
+  logIn: (email: string, password: string, force?: boolean) => Promise<LoginStatus>;
   logOut: () => void;
   resetPassword: (email: string) => Promise<boolean>;
 }
@@ -217,14 +218,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logIn = async (email: string, password: string) => {
+  const logIn = async (email: string, password: string, force: boolean = false): Promise<LoginStatus> => {
     try {
+      // 1. Initial sign in to get the UID
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const loggedInUser = userCredential.user;
       
       const userDocRef = doc(db, 'users', loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
       
+      // 2. Check for active session if not forcing
+      if (userDoc.exists()) {
+        const existingData = userDoc.data();
+        if (existingData.activeSessionToken && !force) {
+          // If a session exists and user didn't click "Continue", log them out from current attempt
+          await signOut(auth);
+          return 'conflict';
+        }
+      }
+
+      // 3. Proceed with successful session creation
       const sessionToken = Date.now().toString();
       localStorage.setItem('sessionToken', sessionToken);
 
@@ -269,7 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       else {
         router.push("/");
       }
-      return true;
+      return 'success';
     } catch (error: any) {
       let description = "An unexpected error occurred. Please try again.";
       switch (error.code) {
@@ -284,7 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           break;
       }
       toast({ variant: "destructive", title: "Login failed", description });
-      return false;
+      return 'error';
     }
   };
 
