@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -111,8 +112,8 @@ export default function FreeNotesClient() {
     <>
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
-          <h1 className="font-headline text-4xl md:text-5xl font-bold">Free Notes</h1>
-          <p className="text-lg text-muted-foreground mt-2">Access free study materials for various topics.</p>
+          <h1 className="font-headline text-4xl md:text-5xl font-extrabold tracking-tight">Free Notes</h1>
+          <p className="text-lg text-muted-foreground mt-2 font-medium">Access high-quality study materials for various topics.</p>
         </div>
 
         {loading ? (
@@ -126,13 +127,13 @@ export default function FreeNotesClient() {
                     <TabsList className="grid w-full grid-cols-2 max-w-md h-14 bg-secondary/50 p-1.5 rounded-2xl border shadow-inner">
                         <TabsTrigger 
                           value="online" 
-                          className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-emerald-600/10"
+                          className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline font-semibold transition-all duration-300 hover:bg-emerald-600/10"
                         >
                           <Globe className="h-5 w-5"/> Online Notes
                         </TabsTrigger>
                         <TabsTrigger 
                           value="offline" 
-                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-orange-500/10"
+                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline font-semibold transition-all duration-300 hover:bg-orange-500/10"
                         >
                           <Smartphone className="h-5 w-5"/> Offline (Download)
                         </TabsTrigger>
@@ -143,24 +144,24 @@ export default function FreeNotesClient() {
                     {onlineNotes.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {onlineNotes.map((note) => (
-                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card overflow-hidden">
-                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline hover:bg-secondary/10">
+                            <AccordionItem value={note.id} key={note.id} className="border rounded-xl bg-card shadow-sm overflow-hidden border-border/50">
+                                <AccordionTrigger className="p-6 text-xl font-headline font-bold hover:no-underline hover:bg-secondary/10 transition-all">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
-                                <p className="text-muted-foreground mb-4">{note.description}</p>
+                                <p className="text-muted-foreground mb-5 leading-relaxed">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
                                         <li 
                                           key={index} 
-                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent"
+                                          className="flex items-center gap-4 p-4 rounded-xl bg-secondary/40 cursor-pointer hover:bg-secondary/80 transition-all border border-transparent hover:border-primary/20 group"
                                           onClick={() => setContentToView(item)}
                                         >
-                                          <div className="bg-primary/10 p-2 rounded-lg">
+                                          <div className="bg-primary/10 p-2.5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
                                             {getContentIcon(item.type)}
                                           </div>
-                                          <span className="font-medium flex-1">{item.title}</span>
-                                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                          <span className="font-semibold flex-1 text-base">{item.title}</span>
+                                          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </li>
                                     ))}
                                 </ul>
@@ -177,24 +178,24 @@ export default function FreeNotesClient() {
                     {offlineNotes.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {offlineNotes.map((note) => (
-                            <AccordionItem value={note.id} key={note.id} className="border rounded-lg bg-card overflow-hidden">
-                                <AccordionTrigger className="p-6 text-xl font-headline hover:no-underline hover:bg-secondary/10">
+                            <AccordionItem value={note.id} key={note.id} className="border rounded-xl bg-card shadow-sm overflow-hidden border-border/50">
+                                <AccordionTrigger className="p-6 text-xl font-headline font-bold hover:no-underline hover:bg-secondary/10 transition-all">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
-                                <p className="text-muted-foreground mb-4">{note.description}</p>
+                                <p className="text-muted-foreground mb-5 leading-relaxed">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
                                         <li 
                                           key={index} 
-                                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors border border-transparent"
+                                          className="flex items-center gap-4 p-4 rounded-xl bg-secondary/40 cursor-pointer hover:bg-secondary/80 transition-all border border-transparent hover:border-primary/20 group"
                                           onClick={() => window.open(item.url, '_blank')}
                                         >
-                                          <div className="bg-primary/10 p-2 rounded-lg">
+                                          <div className="bg-primary/10 p-2.5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
                                             {getContentIcon(item.type)}
                                           </div>
-                                          <span className="font-medium flex-1">{item.title}</span>
-                                          <Download className="h-5 w-5 text-muted-foreground" />
+                                          <span className="font-semibold flex-1 text-base">{item.title}</span>
+                                          <Download className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </li>
                                     ))}
                                 </ul>
@@ -212,10 +213,10 @@ export default function FreeNotesClient() {
       </div>
 
       <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
-        <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
-          <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
-            <DialogTitle className="truncate pl-4">{contentToView?.title}</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-5 w-5"/></Button>
+        <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col rounded-none border-none">
+          <DialogHeader className="p-3 border-b shrink-0 flex flex-row items-center justify-between bg-background">
+            <DialogTitle className="truncate pl-4 font-headline text-lg font-bold">{contentToView?.title}</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)} className="rounded-full"><X className="h-5 w-5"/></Button>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0">
             {renderContentInDialog()}
@@ -228,9 +229,9 @@ export default function FreeNotesClient() {
 
 function EmptyState({ message }: { message: string }) {
     return (
-        <div className="text-center py-16 border-2 border-dashed rounded-3xl bg-secondary/10">
+        <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10 border-border">
             <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-            <p className="text-muted-foreground font-medium">{message}</p>
+            <p className="text-muted-foreground font-semibold text-lg">{message}</p>
         </div>
     );
 }
