@@ -48,6 +48,7 @@ export type BatchNote = {
     id: string;
     title: string;
     content: ContentItem[];
+    subFolders?: BatchNote[]; // Recursive for nested folders
 };
 
 export type BatchInformation = {
@@ -80,10 +81,10 @@ export type Batch = {
     thumbnail: string;
     createdAt: Timestamp;
     notes: BatchNote[];
-    downloadContent?: BatchDownloadItem[]; // Added for premium downloads
-    quizIds: string[]; // Keep for legacy, though we'll use targetClasses in Quizzes now
+    downloadContent?: BatchDownloadItem[];
+    quizIds: string[];
     includes: string[];
-    chatEnabled?: boolean; // New: Toggle for group chat
+    chatEnabled?: boolean;
 };
 
 export async function getBatches(): Promise<Batch[]> {
@@ -121,7 +122,7 @@ export async function saveBatch(batch: Omit<Batch, 'id' | 'createdAt'> & { id?: 
         const docRef = await addDoc(collection(db, 'batches'), { ...data, createdAt: serverTimestamp(), chatEnabled: true });
         triggerRevalidation(`/batches/${docRef.id}`);
     }
-    triggerRevalidation('/'); // Batch list on home might change
+    triggerRevalidation('/');
 }
 
 export async function deleteBatch(id: string): Promise<void> {
@@ -172,11 +173,11 @@ export type AudioTrack = {
   id: string;
   title: string;
   url: string;
-  duration: string; // e.g., "10:35"
+  duration: string;
 };
 
 export type AudioLecture = {
-  id: string; // docId
+  id: string;
   title: string;
   description: string;
   audios: AudioTrack[];
@@ -189,7 +190,7 @@ export type SchoolTeacher = {
 };
 
 export type School = {
-  id?: string; // Firestore doc ID
+  id?: string;
   name: string;
   teachers: SchoolTeacher[];
   students?: SchoolStudent[];
@@ -207,7 +208,7 @@ export type SchoolNote = {
     id: string;
     title: string;
     content: ContentItem[];
-    targetClass: string; // e.g. '10th', '11th', 'all'
+    targetClass: string;
 };
 
 export type SchoolInformation = {
@@ -231,30 +232,30 @@ export type Question = {
     id: string;
     text: string;
     type: QuestionType;
-    options: string[]; // Used for MCQ
-    matchOptions: MatchOption[]; // Used for Match the Following
-    correctAnswer: number; // Index for MCQ, 0 for True/1 for False
-    answerText: string; // Used for fill_in_blank
+    options: string[];
+    matchOptions: MatchOption[];
+    correctAnswer: number;
+    answerText: string;
     explanation: string;
-    marks: number; // Points for correct answer
-    negativeMarks: number; // Points to deduct for incorrect answer
-    imageUrl?: string; // Added optional image support
+    marks: number;
+    negativeMarks: number;
+    imageUrl?: string;
 };
 
 
 export type Quiz = {
-    id: string; // docId
+    id: string;
     title: string;
     description: string;
-    duration?: number; // Duration in minutes
+    duration?: number;
     questions: Question[];
-    startTime?: Timestamp; // Optional start time for the quiz
-    endTime?: Timestamp;   // Optional end time for the quiz
-    resultAnnounceTime?: Timestamp; // New: When Top 3 and Analysis should be shown
-    targetClass: string; // Legacy
-    targetClasses?: string[]; // New: support multiple targets
-    createdAt?: Timestamp; // Added for sorting
-    folderId?: string; // Added for folder support
+    startTime?: Timestamp;
+    endTime?: Timestamp;
+    resultAnnounceTime?: Timestamp;
+    targetClass: string;
+    targetClasses?: string[];
+    createdAt?: Timestamp;
+    folderId?: string;
 };
 
 export type QuizFolder = {
@@ -263,20 +264,19 @@ export type QuizFolder = {
     createdAt: Timestamp;
 };
 
-// This type will be used to store a user's attempt in Firestore
 export type QuizAttempt = {
-  id?: string; // Firestore doc ID
+  id?: string;
   quizId: string;
   quizTitle: string;
   userId: string | null;
   userEmail: string | null;
   userName: string;
   userClass: string;
-  userSchool?: string; // For general live quizzes
+  userSchool?: string;
   answers: { [questionId: string]: number | string | { [matchId: string]: string } };
-  score: number; // This is the total marks earned
+  score: number;
   totalQuestions: number;
-  maxMarks: number; // Sum of all question marks
+  maxMarks: number;
   percentage: number;
   submittedAt: Timestamp;
   schoolId?: string | null;
@@ -284,7 +284,7 @@ export type QuizAttempt = {
 
 // --- REVIEWS ---
 export type Review = {
-    id: string; // Firestore doc ID
+    id: string;
     name: string;
     className: string;
     comment: string;
@@ -342,13 +342,11 @@ export async function getCourse(docId: string): Promise<Course | null> {
   if (courseSnap.exists()) {
     const data = courseSnap.data();
     
-    // Serialize Firestore Timestamp to a plain string
     const sanitizedData = {
       ...data,
       createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate().toISOString() : null,
     };
 
-    // Ensure nested folders and content arrays are properly serialized for Next.js server components
     const folders = sanitizedData.folders ? JSON.parse(JSON.stringify(sanitizedData.folders)) : [];
     return { docId: courseSnap.id, ...sanitizedData, folders } as Course;
   } else {
@@ -360,7 +358,6 @@ export async function saveCourse(courseData: Omit<Course, 'docId'> & { docId?: s
     const { docId, ...data } = courseData;
     if (docId) {
         const courseDocRef = doc(db, 'courses', docId);
-        // Don't update createdAt when editing an existing course
         const { createdAt, ...updateData } = data;
         const res = await setDoc(courseDocRef, updateData, { merge: true });
         triggerRevalidation(`/courses/${docId}`);
@@ -385,18 +382,17 @@ export async function deleteCourse(docId: string): Promise<void> {
 
 // --- Purchase & Payment Logic ---
 export type Purchase = {
-  id: string; // The document ID
+  id: string;
   userId: string;
-  itemId: string; // Can be courseId, subjectId, or batchId
+  itemId: string;
   itemType: 'course' | 'subject' | 'batch';
   purchaseDate: Timestamp;
   expiryDate: Timestamp;
 };
 
-// This type is enriched with full object details for displaying in "My Courses"
 export type EnrichedPurchase = Omit<Purchase, 'itemId'> & {
     itemId: string;
-    item: any; // Can be a Course, Subject, or Batch object
+    item: any;
     userEmail: string;
     itemName: string;
 };
@@ -414,9 +410,8 @@ export type Payment = {
   razorpayPaymentId: string;
 };
 
-// For Manual UPI Verification
 export type PaymentRequest = {
-    id: string; // doc id
+    id: string;
     userId: string;
     userName: string;
     itemId: string;
@@ -442,10 +437,9 @@ export async function createPurchase(
 
   const batch = writeBatch(db);
 
-  // 1. Create Purchase Record
   const purchasesCol = collection(db, 'purchases');
   const newPurchaseRef = doc(purchasesCol);
-  const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1)); // 1 year access
+  const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
 
 
   const newPurchase: Omit<Purchase, 'id'> = {
@@ -457,7 +451,6 @@ export async function createPurchase(
   };
   batch.set(newPurchaseRef, newPurchase);
   
-  // 2. Create Payment Record
   const paymentsCol = collection(db, 'payments');
   const newPaymentRef = doc(paymentsCol);
   const newPayment: Omit<Payment, 'id'> = {
@@ -485,7 +478,6 @@ export async function grantManualAccess(
   itemType: 'course' | 'subject' | 'batch',
   expiryDate: Date
 ): Promise<void> {
-  // 1. Find user by email
   const user = await findUserByEmail(userEmail);
 
   if (!user) {
@@ -494,7 +486,6 @@ export async function grantManualAccess(
 
   const userId = user.uid;
 
-  // 2. Create a purchase record for the user
   const purchasesCol = collection(db, 'purchases');
   const newPurchase: Omit<Purchase, 'id'> = {
     userId,
@@ -522,19 +513,18 @@ export async function checkUserPurchase(userId: string, itemId: string): Promise
   const querySnapshot = await getDocs(q);
   
   if (querySnapshot.empty) {
-    return false; // No purchase record found
+    return false;
   }
 
-  // Check if any of the purchases is still valid
   const now = new Date();
   for (const docSnap of querySnapshot.docs) {
     const purchase = docSnap.data() as Purchase;
     if (purchase.expiryDate.toDate() > now) {
-      return true; // Found a valid, many-expired purchase
+      return true;
     }
   }
 
-  return false; // All purchases found are expired
+  return false;
 }
 
 export async function getPayments(): Promise<Payment[]> {
@@ -550,7 +540,6 @@ export async function getUserPayments(userId: string): Promise<Payment[]> {
     const q = query(paymentsCol, where('userId', '==', userId));
     const paymentSnapshot = await getDocs(q);
     const payments = paymentSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Payment));
-    // Sort in code to avoid composite index
     return payments.sort((a, b) => b.paymentDate.toMillis() - a.paymentDate.toMillis());
 }
 
@@ -595,7 +584,7 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
             item: {
                 id: purchase.itemId,
                 name: itemName,
-                title: itemName, // for course card compatibility
+                title: itemName,
             },
             userEmail: usersMap.get(purchase.userId) || 'Unknown User',
             itemName,
@@ -612,7 +601,6 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
     
     if (purchaseSnapshot.empty) return [];
 
-    // Fetch all courses, subjects, and batches once to avoid multiple reads
     const allCourses = await getCourses();
     const allAcademicData = await getAcademicData();
     const allBatches = await getBatches();
@@ -629,7 +617,6 @@ export async function getUserPurchases(userId: string): Promise<EnrichedPurchase
     for (const docSnap of purchaseSnapshot.docs) {
         const purchase = { id: docSnap.id, ...docSnap.data() } as Purchase;
         
-        // Filter out expired purchases
         if (purchase.expiryDate.toDate() < now) {
             continue;
         }
@@ -694,10 +681,9 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
     const batch = writeBatch(db);
     const now = new Date();
 
-    // 1. Create a purchase record for the user
     const purchasesCol = collection(db, 'purchases');
     const newPurchaseRef = doc(purchasesCol);
-    const expiry = new Date(new Date().setFullYear(now.getFullYear() + 1)); // 1 year access
+    const expiry = new Date(new Date().setFullYear(now.getFullYear() + 1));
 
     const newPurchase: Omit<Purchase, 'id'> = {
         userId: request.userId,
@@ -708,7 +694,6 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
     };
     batch.set(newPurchaseRef, newPurchase);
 
-    // 2. Create a "succeeded" payment record for history
     const paymentsCol = collection(db, 'payments');
     const newPaymentRef = doc(paymentsCol);
     const newPayment: Omit<Payment, 'id'> = {
@@ -720,11 +705,10 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
         amount: request.itemPrice,
         status: 'succeeded',
         paymentDate: Timestamp.fromDate(now),
-        razorpayPaymentId: `UPI: ${request.upiReferenceId}`, // Store UPI ref ID here
+        razorpayPaymentId: `UPI: ${request.upiReferenceId}`,
     };
     batch.set(newPaymentRef, newPayment);
 
-    // 3. Update the request status to 'approved'
     const requestDocRef = doc(db, 'paymentRequests', request.id);
     batch.update(requestDocRef, {
         status: 'approved',
@@ -739,7 +723,6 @@ export async function rejectPaymentRequest(requestId: string, reason: string, re
     const batch = writeBatch(db);
     const now = new Date();
     
-    // 1. Create a "failed" payment record for history
     const paymentsCol = collection(db, 'payments');
     const newPaymentRef = doc(paymentsCol);
     const newPayment: Omit<Payment, 'id'> = {
@@ -751,11 +734,10 @@ export async function rejectPaymentRequest(requestId: string, reason: string, re
         amount: request.itemPrice,
         status: 'failed',
         paymentDate: Timestamp.fromDate(now),
-        razorpayPaymentId: `UPI: ${request.upiReferenceId}`, // Store UPI ref ID here
+        razorpayPaymentId: `UPI: ${request.upiReferenceId}`,
     };
     batch.set(newPaymentRef, newPayment);
     
-    // 2. Update the request status to 'rejected'
     const requestDocRef = doc(db, 'paymentRequests', requestId);
     batch.update(requestDocRef, {
         status: 'rejected',
@@ -772,7 +754,6 @@ export async function rejectPaymentRequest(requestId: string, reason: string, re
 export async function sendMessage(chatId: string, message: ChatMessage, userInfo: { userId: string; userName: string }) {
   const chatDocRef = doc(db, 'chats', chatId);
   
-  // Ensure the user's document exists first
   const userDocRef = doc(db, 'users', userInfo.userId);
   const userDoc = await getDoc(userDocRef);
   if (!userDoc.exists()) {
@@ -874,7 +855,7 @@ export function listenToNotifications(callback: (notifications: Notification[]) 
                 id: docSnap.id,
                 title: data.title,
                 description: data.description,
-                timestamp: data.timestamp, // Keep as ISO string
+                timestamp: data.timestamp,
                 link: data.link,
             } as Notification;
         });
@@ -901,7 +882,6 @@ export function listenToUserReadNotifications(userId: string, callback: (readIds
 
 export async function markNotificationAsRead(userId: string, notificationId: string) {
     const userDocRef = doc(db, 'users', userId);
-    // Use setDoc with merge:true to avoid error if document doesn't exist
     await setDoc(userDocRef, {
         readNotifications: arrayUnion(notificationId)
     }, { merge: true });
@@ -909,11 +889,11 @@ export async function markNotificationAsRead(userId: string, notificationId: str
 
 // --- FREE NOTES ---
 export type FreeNote = {
-  id: string; // docId
+  id: string;
   title: string;
   description: string;
   content: CourseContent[];
-  category: 'online' | 'offline'; // Added Category
+  category: 'online' | 'offline';
 };
 
 export async function getFreeNotes(): Promise<FreeNote[]> {
@@ -941,10 +921,10 @@ export async function deleteFreeNote(id: string): Promise<void> {
 
 // --- BOOKSTORE ---
 export type BookstoreItem = {
-    id: string; // docId
+    id: string;
     title: string;
-    url: string; // PDF URL
-    thumbnailUrl: string; // Image URL
+    url: string;
+    thumbnailUrl: string;
     createdAt?: Timestamp;
 };
 
@@ -1003,7 +983,6 @@ export async function getQuiz(id: string): Promise<Quiz | null> {
         } as Quiz;
     }
 
-    // Fallback: Check if it's a school test
     const schoolsSnapshot = await getDocs(collection(db, 'schools'));
     for (const schoolDoc of schoolsSnapshot.docs) {
         const testDocRef = doc(db, 'schools', schoolDoc.id, 'tests', id);
@@ -1021,7 +1000,6 @@ export async function getQuizzes(): Promise<Quiz[]> {
     const snapshot = await getDocs(quizzesCol);
     const quizzes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
     
-    // Sort client-side to ensure newest first, even if createdAt is missing in some old docs
     return quizzes.sort((a, b) => {
         const timeA = a.createdAt?.toMillis() || 0;
         const timeB = b.createdAt?.toMillis() || 0;
@@ -1031,12 +1009,10 @@ export async function getQuizzes(): Promise<Quiz[]> {
 
 export async function getQuizzesForTarget(targetId: string): Promise<Quiz[]> {
     const quizzesCol = collection(db, 'quizzes');
-    // Query quizzes where targetClasses array contains targetId
     const q = query(quizzesCol, where('targetClasses', 'array-contains', targetId));
     const snapshot = await getDocs(q);
     const quizzes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
     
-    // Sort client-side to avoid composite index requirement
     return quizzes.sort((a, b) => {
         const timeA = a.createdAt?.toMillis() || 0;
         const timeB = b.createdAt?.toMillis() || 0;
@@ -1047,20 +1023,18 @@ export async function getQuizzesForTarget(targetId: string): Promise<Quiz[]> {
 export async function saveQuiz(quiz: Quiz): Promise<void> {
     const { id, ...data } = quiz;
 
-    // Create a mutable copy to work with
     const dataToSave: { [key: string]: any } = { ...data };
 
-    // Convert Date objects to Timestamps and handle undefined values
     if (data.startTime) {
         dataToSave.startTime = data.startTime instanceof Timestamp ? data.startTime : Timestamp.fromDate(data.startTime as any);
     } else {
-        delete dataToSave.startTime; // Remove if undefined or null
+        delete dataToSave.startTime;
     }
 
     if (data.endTime) {
         dataToSave.endTime = data.endTime instanceof Timestamp ? data.endTime : Timestamp.fromDate(data.endTime as any);
     } else {
-        delete dataToSave.endTime; // Remove if undefined or null
+        delete dataToSave.endTime;
     }
 
     if (data.resultAnnounceTime) {
@@ -1073,7 +1047,7 @@ export async function saveQuiz(quiz: Quiz): Promise<void> {
         await setDoc(doc(db, 'quizzes', id), dataToSave, { merge: true });
         triggerRevalidation(`/quizzes/${id}`);
     } else {
-        dataToSave.createdAt = serverTimestamp(); // Ensure new quizzes have a timestamp
+        dataToSave.createdAt = serverTimestamp();
         const docRef = await addDoc(collection(db, 'quizzes'), dataToSave);
         triggerRevalidation(`/quizzes/${docRef.id}`);
     }
@@ -1101,7 +1075,6 @@ export async function saveQuizFolder(folder: { id?: string, name: string }): Pro
 
 export async function deleteQuizFolder(id: string): Promise<void> {
     await deleteDoc(doc(db, 'quizFolders', id));
-    // Optional: unlink quizzes from this folder
     const quizzesCol = collection(db, 'quizzes');
     const q = query(quizzesCol, where('folderId', '==', id));
     const snapshot = await getDocs(q);
@@ -1137,7 +1110,6 @@ export async function getQuizAttempts(options?: { generalOnly?: boolean }): Prom
     const attemptsCol = collection(db, 'quizAttempts');
     let q;
     if (options?.generalOnly) {
-        // Fetch only attempts that are NOT from a school test
         q = query(attemptsCol, where('schoolId', '==', null), orderBy('submittedAt', 'desc'));
     } else {
         q = query(attemptsCol, orderBy('submittedAt', 'desc'));
@@ -1148,17 +1120,14 @@ export async function getQuizAttempts(options?: { generalOnly?: boolean }): Prom
 
 export async function getQuizAttemptsForQuiz(quizId: string): Promise<QuizAttempt[]> {
     const attemptsCol = collection(db, 'quizAttempts');
-    // Simplified query to avoid composite index
     const q = query(attemptsCol, where('quizId', '==', quizId));
     const snapshot = await getDocs(q);
     const attempts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizAttempt));
     
-    // Sort in code instead of in the query
     return attempts.sort((a, b) => {
         if (b.score !== a.score) {
-            return b.score - a.score; // Higher score first
+            return b.score - a.score;
         }
-        // If scores are equal, sort by submission time (earlier first)
         return a.submittedAt.toMillis() - b.submittedAt.toMillis();
     });
 }
@@ -1261,7 +1230,7 @@ export type BannerItem = {
 
 export type BannerSettings = {
   banners: BannerItem[];
-  referralBanner?: BannerItem; // Optional banner for Share & Earn page
+  referralBanner?: BannerItem;
 };
 
 export async function getBannerSettings(): Promise<BannerSettings> {
@@ -1274,7 +1243,6 @@ export async function getBannerSettings(): Promise<BannerSettings> {
             referralBanner: data.referralBanner || undefined
         };
     }
-    // Return a default structure if the document doesn't exist
     return { banners: [] };
 }
 
@@ -1287,12 +1255,10 @@ export async function saveBannerSettings(settings: BannerSettings): Promise<void
 // --- STUDENT REVIEWS ---
 export async function getReviews(status: 'approved' | 'pending' | 'all' = 'approved'): Promise<Review[]> {
     const reviewsCol = collection(db, 'reviews');
-    // Fetch all reviews first
     const q = query(reviewsCol, orderBy('submittedAt', 'desc'));
     const snapshot = await getDocs(q);
     let allReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
 
-    // Then filter in code
     if (status !== 'all') {
         allReviews = allReviews.filter(review => review.status === status);
     }
@@ -1323,15 +1289,15 @@ export async function deleteReview(id: string): Promise<void> {
 
 // --- LIVE CLASSES ---
 export type LiveClass = {
-    id: string; // docId
+    id: string;
     title: string;
     startTime: Timestamp;
     endTime: Timestamp;
     meetingLink: string;
-    associatedItemId: string; // course or subject id
+    associatedItemId: string;
     itemType: 'course' | 'subject';
-    associatedItemName: string; // denormalized for display
-    classId?: string; // only for subjects
+    associatedItemName: string;
+    classId?: string;
 };
 
 export async function saveLiveClass(liveClass: Omit<LiveClass, 'id'>): Promise<void> {
@@ -1372,7 +1338,6 @@ export async function getScheduledLiveClassesForItem(itemId: string): Promise<Li
     }
 
     const now = new Date();
-    // Filter and sort in code to avoid composite index
     const upcomingClasses = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as LiveClass))
         .filter(lc => lc.endTime.toDate() > now)
@@ -1426,9 +1391,7 @@ export async function processReferral(referralCode: string, newUserId: string) {
         const referrerId = referrerDoc.id;
         
         const batch = writeBatch(db);
-        // Increment referrer's count
         batch.update(referrerDoc.ref, { referralCount: increment(1) });
-        // Mark the new user as referred
         batch.update(doc(db, 'users', newUserId), { referredBy: referrerId });
         
         await batch.commit();
@@ -1469,7 +1432,6 @@ export async function deleteSchool(schoolId: string): Promise<void> {
     const schoolData = schoolSnap.data() as School;
     const batch = writeBatch(db);
 
-    // Unlink all teachers
     if (schoolData.teachers && schoolData.teachers.length > 0) {
         schoolData.teachers.forEach(teacher => {
             const userDocRef = doc(db, 'users', teacher.uid);
@@ -1477,7 +1439,6 @@ export async function deleteSchool(schoolId: string): Promise<void> {
         });
     }
 
-    // Unlink all students
     if (schoolData.students && schoolData.students.length > 0) {
         schoolData.students.forEach(student => {
             const userDocRef = doc(db, 'users', student.uid);
@@ -1485,10 +1446,6 @@ export async function deleteSchool(schoolId: string): Promise<void> {
         });
     }
     
-    // Note: This does not delete subcollections like 'notes' or 'tests'.
-    // A more robust solution would involve a Cloud Function to recursively delete subcollections.
-
-    // Delete the school document itself
     batch.delete(schoolDocRef);
 
     await batch.commit();
@@ -1503,14 +1460,12 @@ export async function addTeacherToSchool(schoolId: string, teacherEmail: string)
 
   const batch = writeBatch(db);
 
-  // 1. Update user's role and schoolId
   const userDocRef = doc(db, 'users', teacherUser.uid);
   batch.update(userDocRef, {
     role: 'teacher',
     schoolId: schoolId
   });
 
-  // 2. Add teacher to the school's teacher list
   const schoolDocRef = doc(db, 'schools', schoolId);
   batch.update(schoolDocRef, {
     teachers: arrayUnion({
@@ -1538,14 +1493,12 @@ export async function removeTeacherFromSchool(schoolId: string, teacherId: strin
 
   const batch = writeBatch(db);
 
-  // 1. Remove role and schoolId from user
   const userDocRef = doc(db, 'users', teacherId);
   batch.update(userDocRef, {
     role: null,
     schoolId: null
   });
 
-  // 2. Remove teacher from school's teacher list
   batch.update(schoolDocRef, {
     teachers: arrayRemove(teacherToRemove)
   });
@@ -1569,7 +1522,6 @@ export async function addStudentToSchool(schoolId: string, studentEmail: string,
     });
     
     const schoolDocRef = doc(db, 'schools', schoolId);
-    // Remove old entry if exists to update name and class
     const schoolData = (await getDoc(schoolDocRef)).data() as School;
     const existingStudent = schoolData.students?.find(s => s.uid === studentUser.uid);
     if (existingStudent) {
