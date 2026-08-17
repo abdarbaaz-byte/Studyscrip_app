@@ -176,7 +176,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     <Accordion type="single" collapsible className="w-full space-y-3">
         {notes.map(folder => (
             <AccordionItem value={folder.id} key={folder.id} className="border rounded-md px-4 bg-secondary/10">
-                <AccordionTrigger className="hover:no-underline font-bold text-base">
+                <AccordionTrigger className="hover:no-underline font-semibold text-base">
                     <div className="flex items-center gap-2">
                         <Folder className="h-4 w-4 text-primary opacity-70" />
                         {folder.title}
@@ -292,7 +292,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                 <div key={item.id} className={cn("flex items-center justify-between p-4 rounded-xl border", hasAccess ? "bg-background" : "bg-secondary/20 opacity-80")}>
                                     <div className="flex items-center gap-4">
                                         <div className={cn("p-2 rounded-lg", hasAccess ? "bg-indigo-100 text-indigo-600" : "bg-gray-200 text-gray-400")}><FileText className="h-6 w-6" /></div>
-                                        <div className="flex flex-col"><span className="font-bold text-sm">{item.title}</span>{!hasAccess && <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Unlock on Purchase</span>}</div>
+                                        <div className="flex flex-col"><span className="font-semibold text-sm">{item.title}</span>{!hasAccess && <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Unlock on Purchase</span>}</div>
                                     </div>
                                     {hasAccess ? (
                                         <Button asChild size="sm" variant="secondary" className="hover:bg-primary hover:text-white"><a href={item.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4 mr-2" /> Download</a></Button>
@@ -426,7 +426,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
         <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
-                    <span className="text-2xl font-black text-primary">{isFree ? 'Free' : `Rs. ${batch.price}`}</span>
+                    <span className="text-2xl font-bold text-primary">{isFree ? 'Free' : `Rs. ${batch.price}`}</span>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Full Batch Access</span>
                 </div>
                 <Button 
