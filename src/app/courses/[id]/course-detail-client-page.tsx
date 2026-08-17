@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { type Course, type CourseContent } from "@/lib/courses";
+import { type Course, type CourseContent, type DownloadItem } from "@/lib/courses";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio, ArrowRight, ChevronRight } from "lucide-react";
+import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio, ArrowRight, ChevronRight, Download, PlayCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { checkUserPurchase, createPurchase, getScheduledLiveClassesForItem, type LiveClass } from "@/lib/data";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 export default function CourseDetailClientPage({ course }: { course: Course }) {
@@ -195,75 +196,137 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
     <>
       <div className={cn("container mx-auto px-4 py-8 md:py-12", !isPurchased && !isFree && "pb-32")}>
         <div className="grid md:grid-cols-3 gap-8 md:gap-12">
-          <div className="md:col-span-2">
-            <h1 className="font-headline text-3xl md:text-5xl font-bold mb-4">{course.title}</h1>
-            <p className="text-lg text-muted-foreground mb-6">{course.longDescription}</p>
+          <div className="md:col-span-2 space-y-6">
+            <div>
+              <h1 className="font-headline text-3xl md:text-5xl font-bold mb-4">{course.title}</h1>
+              <p className="text-lg text-muted-foreground">{course.longDescription}</p>
+            </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-headline text-2xl">Course Content</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="single" collapsible className="w-full space-y-3">
-                  {(course.folders || []).map((folder) => (
-                    <AccordionItem value={folder.id} key={folder.id} className="border rounded-md px-4 bg-secondary/50">
-                      <AccordionTrigger className="hover:no-underline text-lg font-medium">{folder.name}</AccordionTrigger>
-                      <AccordionContent className="pt-2">
-                        <ul className="space-y-3">
-                          {folder.content.map((item) => (
-                            <li 
-                              key={item.id} 
-                              className="flex items-center gap-4 p-4 rounded-lg bg-background cursor-pointer hover:bg-secondary/10 transition-colors"
-                              onClick={() => handleViewContent(item)}
-                            >
-                              {getContentIcon(item.type)}
-                              <span className="font-medium flex-1">{item.title}</span>
-                              {isPurchased ? (
-                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                              ) : (
-                                <Lock className="h-5 w-5 text-muted-foreground" />
+            <Tabs defaultValue="content" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 h-12 bg-secondary/50">
+                <TabsTrigger value="content" className="gap-2"><PlayCircle className="h-4 w-4"/> Course Content</TabsTrigger>
+                <TabsTrigger value="downloads" className="gap-2"><Download className="h-4 w-4"/> Downloads</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="content">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-headline text-2xl">Online Viewing</CardTitle>
+                    <CardDescription>Watch videos and view notes inside the app.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Accordion type="single" collapsible className="w-full space-y-3">
+                      {(course.folders || []).map((folder) => (
+                        <AccordionItem value={folder.id} key={folder.id} className="border rounded-md px-4 bg-secondary/20">
+                          <AccordionTrigger className="hover:no-underline text-lg font-medium">{folder.name}</AccordionTrigger>
+                          <AccordionContent className="pt-2">
+                            <ul className="space-y-3">
+                              {folder.content.map((item) => (
+                                <li 
+                                  key={item.id} 
+                                  className="flex items-center gap-4 p-4 rounded-lg bg-background cursor-pointer hover:bg-secondary/10 transition-colors"
+                                  onClick={() => handleViewContent(item)}
+                                >
+                                  {getContentIcon(item.type)}
+                                  <span className="font-medium flex-1">{item.title}</span>
+                                  {isPurchased ? (
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                  ) : (
+                                    <Lock className="h-5 w-5 text-muted-foreground" />
+                                  )}
+                                </li>
+                              ))}
+                              {folder.content.length === 0 && (
+                                <p className="text-center text-sm text-muted-foreground py-4">No content in this folder yet.</p>
                               )}
-                            </li>
-                          ))}
-                          {folder.content.length === 0 && (
-                            <p className="text-center text-sm text-muted-foreground py-4">No content in this folder yet.</p>
-                          )}
-                        </ul>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-                {(course.folders || []).length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">No content available for this course yet.</p>
-                )}
-              </CardContent>
-            </Card>
+                            </ul>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                    {(course.folders || []).length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">No content available for this course yet.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="downloads">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-headline text-2xl">Downloadable Files</CardTitle>
+                    <CardDescription>Premium PDFs and resources for offline access.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!isPurchased ? (
+                        <div className="text-center py-12 bg-secondary/10 rounded-xl border-2 border-dashed">
+                             <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+                             <p className="font-bold text-lg">Downloads are Locked</p>
+                             <p className="text-sm text-muted-foreground">Purchase the course to unlock premium downloadable content.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {(course.downloadContent || []).map((item) => (
+                                <div 
+                                    key={item.id}
+                                    className="flex items-center justify-between p-4 rounded-xl border bg-background hover:border-primary/50 transition-all group"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                                            <FileText className="h-6 w-6" />
+                                        </div>
+                                        <span className="font-bold">{item.title}</span>
+                                    </div>
+                                    <Button asChild size="sm" variant="secondary" className="group-hover:bg-primary group-hover:text-white">
+                                        <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                            <Download className="h-4 w-4 mr-2" /> Download
+                                        </a>
+                                    </Button>
+                                </div>
+                            ))}
+                            {(course.downloadContent || []).length === 0 && (
+                                <p className="text-center text-muted-foreground py-10">No downloadable files added for this course yet.</p>
+                            )}
+                        </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
           
           <aside className="md:col-span-1">
-            <Card className="sticky top-24">
+            <Card className="sticky top-24 overflow-hidden border-2 border-primary/10 shadow-xl">
               <CardContent className="p-0">
-                <Image
-                  src={thumbnailUrl}
-                  alt={course.title}
-                  width={600}
-                  height={400}
-                  className="w-full h-auto rounded-t-lg prevent-long-press"
-                  data-ai-hint="online course"
-                  onContextMenu={(e) => e.preventDefault()}
-                />
+                <div className="relative aspect-video">
+                  <Image
+                    src={thumbnailUrl}
+                    alt={course.title}
+                    fill
+                    className="object-cover prevent-long-press"
+                    data-ai-hint="online course"
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                </div>
                 <div className="p-6">
-                  <div className="text-3xl font-bold mb-4">Rs. {course.price}</div>
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-sm font-medium text-muted-foreground">Course Fee</span>
+                    <div className="text-right">
+                       <span className="text-3xl font-black text-primary block">Rs. {course.price}</span>
+                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Lifetime Access</span>
+                    </div>
+                  </div>
+                  
                   {loadingPurchase && <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
                   
                   {showPurchasedMessage && (
-                    <div className="text-center font-semibold text-green-600 p-2 rounded-md bg-green-100 mb-4">
-                      You have access to this course!
+                    <div className="text-center font-bold text-green-700 p-3 rounded-xl bg-green-100 mb-4 border border-green-200 flex items-center justify-center gap-2">
+                      <Unlock className="h-4 w-4"/> Enrolled Successfully
                     </div>
                   )}
 
                   {isLiveClassActive && (
-                    <Button asChild size="lg" className="w-full mb-2 bg-red-600 hover:bg-red-700 animate-pulse">
+                    <Button asChild size="lg" className="w-full mb-3 bg-red-600 hover:bg-red-700 animate-pulse rounded-xl">
                       <Link href={`/live-class/${liveClass!.id}`}>
                         <Radio className="mr-2 h-4 w-4"/> Join Live Now
                       </Link>
@@ -271,17 +334,17 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                   )}
 
                   {showPurchaseButton && (
-                    <Button size="lg" className="w-full" onClick={handleBuyClick} disabled={isBuying}>
+                    <Button size="lg" className="w-full rounded-xl shadow-lg h-12" onClick={handleBuyClick} disabled={isBuying}>
                       {isBuying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Unlock className="mr-2 h-4 w-4" />}
-                      {isBuying ? "Processing..." : "Buy Now"}
+                      {isBuying ? "Processing..." : "Enroll Now"}
                     </Button>
                   )}
                   
                    {liveClass && !isLiveClassActive && (
-                     <div className="mt-4 text-center text-sm text-muted-foreground p-3 bg-secondary rounded-lg">
-                        <p className="font-semibold">Upcoming Live Class:</p>
-                        <p>{liveClass.title}</p>
-                        <p>on {format(liveClass.startTime.toDate(), "PPP p")}</p>
+                     <div className="mt-6 text-center text-xs text-muted-foreground p-4 bg-secondary/50 rounded-xl border border-dashed">
+                        <p className="font-bold text-foreground mb-1 uppercase tracking-tight">Upcoming Live Session:</p>
+                        <p className="font-medium text-primary mb-1">{liveClass.title}</p>
+                        <p>{format(liveClass.startTime.toDate(), "PPP p")}</p>
                     </div>
                   )}
 
@@ -297,7 +360,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
                     <span className="text-2xl font-bold text-primary">Rs. {course.price}</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Course Content Access</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Exam Resources Access</span>
                 </div>
                 <Button 
                     size="lg" 
@@ -312,8 +375,9 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
       
        <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
-          <DialogHeader className="p-2 border-b shrink-0">
-            <DialogTitle>{contentToView?.title}</DialogTitle>
+          <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="truncate pl-4">{contentToView?.title}</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><Download className="h-5 w-5"/></Button>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0 overflow-auto">
             {renderContentInDialog()}

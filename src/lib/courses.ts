@@ -13,6 +13,12 @@ export type CourseFolder = {
   content: CourseContent[];
 };
 
+export type DownloadItem = {
+  id: string;
+  title: string;
+  url: string;
+};
+
 export type Course = {
   id: string; // Original mock ID, can be deprecated
   docId?: string; // Firestore document ID
@@ -22,6 +28,7 @@ export type Course = {
   thumbnail: string;
   price: number;
   folders: CourseFolder[];
+  downloadContent?: DownloadItem[]; // New field for downloadable files
   createdAt?: Timestamp; // Added for sorting
 };
 
@@ -52,5 +59,6 @@ export const courses: Course[] = [
             ]
         }
     ],
+    downloadContent: []
   },
 ];

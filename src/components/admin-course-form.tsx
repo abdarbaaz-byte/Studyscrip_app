@@ -1,14 +1,13 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Course, CourseFolder, CourseContent } from "@/lib/courses";
+import type { Course, CourseFolder, CourseContent, DownloadItem } from "@/lib/courses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, PlusCircle } from "lucide-react";
+import { Trash2, PlusCircle, Download, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -36,6 +35,7 @@ const emptyCourse: Omit<Course, "id" | "docId"> = {
   thumbnail: "https://placehold.co/600x400.png",
   price: 0,
   folders: [],
+  downloadContent: [],
 };
 
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -52,6 +52,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
         thumbnail: course.thumbnail,
         price: course.price,
         folders: course.folders || [],
+        downloadContent: course.downloadContent || [],
       });
     } else {
        setFormData(emptyCourse);
@@ -63,6 +64,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
     setFormData((prev) => ({ ...prev, [name]: name === 'price' ? parseFloat(value) || 0 : value }));
   };
 
+  // Folder handlers
   const handleFolderChange = (index: number, value: string) => {
     const newFolders = [...formData.folders];
     newFolders[index].name = value;
@@ -81,6 +83,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
     setFormData(prev => ({ ...prev, folders: newFolders }));
   };
   
+  // Content Item handlers
   const handleContentChange = (folderIndex: number, contentIndex: number, field: keyof CourseContent, value: string) => {
     const newFolders = [...formData.folders];
     const newContent = [...newFolders[folderIndex].content];
@@ -101,12 +104,33 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
     setFormData(prev => ({...prev, folders: newFolders}));
   };
 
+  // Download Content handlers
+  const addDownloadItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      downloadContent: [...(prev.downloadContent || []), { id: generateId('dl'), title: '', url: '' }]
+    }));
+  };
+
+  const removeDownloadItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      downloadContent: (prev.downloadContent || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDownloadChange = (index: number, field: keyof DownloadItem, value: string) => {
+    const newDownloads = [...(formData.downloadContent || [])];
+    newDownloads[index] = { ...newDownloads[index], [field]: value };
+    setFormData(prev => ({ ...prev, downloadContent: newDownloads }));
+  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
       ...formData,
-      id: course?.id || "", // This is the mock id, Firestore id will be docId
+      id: course?.id || "",
       docId: course?.docId
     });
   };
@@ -127,7 +151,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
           <Textarea id="longDescription" name="longDescription" value={formData.longDescription} onChange={handleChange} required rows={5}/>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="price">Price</Label>
+          <Label htmlFor="price">Price (Rs.)</Label>
           <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} required />
         </div>
          <div className="space-y-2">
@@ -138,12 +162,12 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
       
       <Separator className="my-6" />
 
+      {/* Online Viewing Content */}
       <div>
         <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Course Content Folders</h3>
+            <h3 className="text-lg font-bold flex items-center gap-2 text-primary"><FileText className="h-5 w-5"/> Course Content (Online)</h3>
             <Button type="button" variant="outline" size="sm" onClick={addFolder}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Folder
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Folder
             </Button>
         </div>
         <Accordion type="single" collapsible className="w-full space-y-3">
@@ -201,7 +225,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
                                   <Input 
                                     id={`content-url-${folderIndex}-${contentIndex}`}
                                     type="text"
-                                    placeholder="https://example.com/file.pdf"
+                                    placeholder="Google Drive link..."
                                     value={item.url}
                                     onChange={(e) => handleContentChange(folderIndex, contentIndex, 'url', e.target.value)}
                                     required
@@ -214,7 +238,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
                                     onValueChange={(value: 'pdf' | 'video' | 'image') => handleContentChange(folderIndex, contentIndex, 'type', value)}
                                   >
                                     <SelectTrigger id={`content-type-${folderIndex}-${contentIndex}`}>
-                                      <SelectValue placeholder="Select type" />
+                                      <SelectValue placeholder="Type" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="pdf">PDF</SelectItem>
@@ -232,18 +256,63 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
             </AccordionItem>
           ))}
         </Accordion>
-        
         {formData.folders.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">No folders yet. Click "Add Folder" to get started.</p>
         )}
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
+      <Separator className="my-6" />
+
+      {/* Downloadable Content */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold flex items-center gap-2 text-indigo-600"><Download className="h-5 w-5"/> Download Section (Offline)</h3>
+            <Button type="button" variant="outline" size="sm" onClick={addDownloadItem}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Download Link
+            </Button>
+        </div>
+        <div className="space-y-4">
+            {(formData.downloadContent || []).map((item, index) => (
+                <div key={item.id} className="p-4 border rounded-md space-y-3 relative bg-indigo-50/50">
+                    <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 text-destructive" onClick={() => removeDownloadItem(index)}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor={`dl-title-${index}`}>File Title</Label>
+                            <Input 
+                                id={`dl-title-${index}`}
+                                placeholder="e.g. Full Notes PDF"
+                                value={item.title}
+                                onChange={e => handleDownloadChange(index, 'title', e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor={`dl-url-${index}`}>Download URL</Label>
+                            <Input 
+                                id={`dl-url-${index}`}
+                                placeholder="https://..."
+                                value={item.url}
+                                onChange={e => handleDownloadChange(index, 'url', e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
+                </div>
+            ))}
+            {(formData.downloadContent || []).length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4 border-2 border-dashed rounded-lg">No downloadable files added yet.</p>
+            )}
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-6 sticky bottom-0 bg-background py-4 border-t z-10">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">
-          Save Course
+          Save Course Details
         </Button>
       </div>
     </form>
