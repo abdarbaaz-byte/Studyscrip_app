@@ -193,6 +193,10 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   const isFree = course.price === 0;
   const hasAccess = isPurchased || isFree;
 
+  const discountPercentage = (course.originalPrice && course.price < course.originalPrice) 
+    ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100) 
+    : null;
+
   return (
     <>
       <div className={cn("container mx-auto px-4 py-8 md:py-12", !hasAccess && "pb-32")}>
@@ -319,13 +323,21 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                     data-ai-hint="online course"
                     onContextMenu={(e) => e.preventDefault()}
                   />
+                  {discountPercentage && !isPurchased && (
+                    <div className="absolute top-4 right-4 bg-orange-600 text-white font-black px-3 py-1 rounded-lg text-sm shadow-xl animate-bounce">
+                        {discountPercentage}% OFF
+                    </div>
+                  )}
                 </div>
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-sm font-medium text-muted-foreground">Course Fee</span>
                     <div className="text-right">
                        <span className="text-3xl font-black text-primary block">Rs. {course.price}</span>
-                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Lifetime Access</span>
+                       {course.originalPrice && course.originalPrice > course.price && (
+                          <span className="text-sm text-muted-foreground line-through font-medium">Rs. {course.originalPrice}</span>
+                       )}
+                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest block mt-1">Lifetime Access</span>
                     </div>
                   </div>
                   
@@ -371,8 +383,15 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
         <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
-                    <span className="text-2xl font-bold text-primary">Rs. {course.price}</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Exam Resources Access</span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-primary">Rs. {course.price}</span>
+                    </div>
+                    {course.originalPrice && course.originalPrice > course.price && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground line-through">Rs. {course.originalPrice}</span>
+                            {discountPercentage && <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded ml-1">{discountPercentage}% OFF</span>}
+                        </div>
+                    )}
                 </div>
                 <Button 
                     size="lg" 

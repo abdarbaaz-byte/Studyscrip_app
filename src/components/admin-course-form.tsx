@@ -34,6 +34,7 @@ const emptyCourse: Omit<Course, "id" | "docId"> = {
   longDescription: "",
   thumbnail: "https://placehold.co/600x400.png",
   price: 0,
+  originalPrice: 0,
   folders: [],
   downloadContent: [],
 };
@@ -51,6 +52,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
         longDescription: course.longDescription,
         thumbnail: course.thumbnail,
         price: course.price,
+        originalPrice: course.originalPrice || 0,
         folders: course.folders || [],
         downloadContent: course.downloadContent || [],
       });
@@ -61,7 +63,7 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: name === 'price' ? parseFloat(value) || 0 : value }));
+    setFormData((prev) => ({ ...prev, [name]: (name === 'price' || name === 'originalPrice') ? parseFloat(value) || 0 : value }));
   };
 
   // Folder handlers
@@ -151,10 +153,14 @@ export function AdminCourseForm({ course, onSave, onCancel }: AdminCourseFormPro
           <Textarea id="longDescription" name="longDescription" value={formData.longDescription} onChange={handleChange} required rows={5}/>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="price">Price (Rs.)</Label>
+          <Label htmlFor="price">Selling Price (Rs.)</Label>
           <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} required />
         </div>
-         <div className="space-y-2">
+        <div className="space-y-2">
+          <Label htmlFor="originalPrice">Original Price (Rs.) - Optional</Label>
+          <Input id="originalPrice" name="originalPrice" type="number" value={formData.originalPrice} onChange={handleChange} placeholder="e.g., 999" />
+        </div>
+         <div className="space-y-2 col-span-2">
           <Label htmlFor="thumbnail">Thumbnail URL</Label>
           <Input id="thumbnail" name="thumbnail" value={formData.thumbnail} onChange={handleChange} required />
         </div>

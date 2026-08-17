@@ -27,6 +27,7 @@ export type Course = {
   longDescription: string;
   thumbnail: string;
   price: number;
+  originalPrice?: number; // Added for discount display
   folders: CourseFolder[];
   downloadContent?: DownloadItem[]; // New field for downloadable files
   createdAt?: Timestamp; // Added for sorting
@@ -41,6 +42,7 @@ export const courses: Course[] = [
     longDescription: 'This comprehensive bootcamp covers everything you need to become a job-ready web developer. We start with the fundamentals of HTML5 and CSS3, move on to modern JavaScript (ES6+), and finish with an in-depth exploration of the React ecosystem, including hooks, context, and Redux.',
     thumbnail: 'https://placehold.co/600x400.png',
     price: 49.99,
+    originalPrice: 99.99,
     folders: [
         {
             id: 'folder-1',
