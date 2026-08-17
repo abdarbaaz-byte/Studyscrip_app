@@ -145,11 +145,11 @@ export default function FreeNotesClient() {
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {onlineNotes.map((note) => (
                             <AccordionItem value={note.id} key={note.id} className="border rounded-xl bg-card shadow-sm overflow-hidden border-border/50">
-                                <AccordionTrigger className="p-6 text-xl font-headline font-bold hover:no-underline hover:bg-secondary/10 transition-all">
+                                <AccordionTrigger className="p-6 text-xl font-headline font-semibold hover:no-underline hover:bg-secondary/10 transition-all">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
-                                <p className="text-muted-foreground mb-5 leading-relaxed">{note.description}</p>
+                                <p className="text-muted-foreground mb-5 leading-relaxed text-sm">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
                                         <li 
@@ -160,7 +160,7 @@ export default function FreeNotesClient() {
                                           <div className="bg-primary/10 p-2.5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
                                             {getContentIcon(item.type)}
                                           </div>
-                                          <span className="font-semibold flex-1 text-base">{item.title}</span>
+                                          <span className="font-medium flex-1 text-base">{item.title}</span>
                                           <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </li>
                                     ))}
@@ -179,11 +179,11 @@ export default function FreeNotesClient() {
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {offlineNotes.map((note) => (
                             <AccordionItem value={note.id} key={note.id} className="border rounded-xl bg-card shadow-sm overflow-hidden border-border/50">
-                                <AccordionTrigger className="p-6 text-xl font-headline font-bold hover:no-underline hover:bg-secondary/10 transition-all">
+                                <AccordionTrigger className="p-6 text-xl font-headline font-semibold hover:no-underline hover:bg-secondary/10 transition-all">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
-                                <p className="text-muted-foreground mb-5 leading-relaxed">{note.description}</p>
+                                <p className="text-muted-foreground mb-5 leading-relaxed text-sm">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
                                         <li 
@@ -194,7 +194,7 @@ export default function FreeNotesClient() {
                                           <div className="bg-primary/10 p-2.5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
                                             {getContentIcon(item.type)}
                                           </div>
-                                          <span className="font-semibold flex-1 text-base">{item.title}</span>
+                                          <span className="font-medium flex-1 text-base">{item.title}</span>
                                           <Download className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </li>
                                     ))}
