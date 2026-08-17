@@ -13,43 +13,43 @@ const useFcmToken = () => {
     const initializeFCM = async () => {
       // 1. Basic checks
       if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !messaging) {
-        console.log("FCM: Browser not supported or Messaging not available.");
         return;
       }
 
       try {
-        console.log("FCM: 1. Initializing process...");
-
         // 2. Request Permission
         const permission = await Notification.requestPermission();
-        console.log("FCM: 2. Permission status:", permission);
-        
         if (permission !== 'granted') {
           console.warn("FCM: Notifications not allowed by user.");
           return;
         }
 
         // 3. Register our Unified Service Worker
-        console.log("FCM: 3. Registering /firebase-messaging-sw.js...");
+        // Note: Using firebase-messaging-sw.js as the primary entry point
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
           scope: '/',
         });
 
         // 4. Wait for it to be fully READY and ACTIVE
-        // Sometimes .ready resolves but state is still 'installing'
-        console.log("FCM: 4. Waiting for Service Worker to be READY...");
-        await navigator.serviceWorker.ready;
+        // Use a more robust check for activation to avoid 'bad-precaching' stalls
+        let sw = registration.active || registration.waiting || registration.installing;
         
-        // Ensure the worker is active before asking for token
-        if (registration.installing) {
-            console.log("FCM: SW is installing, waiting...");
+        if (sw?.state !== 'activated') {
             await new Promise((resolve) => {
-                registration.installing?.addEventListener('statechange', (e: any) => {
-                    if (e.target.state === 'activated') resolve(null);
-                });
+                const checkState = (target: any) => {
+                    if (target.state === 'activated') {
+                        resolve(null);
+                    }
+                };
+                
+                if (registration.installing) registration.installing.addEventListener('statechange', (e: any) => checkState(e.target));
+                if (registration.waiting) registration.waiting.addEventListener('statechange', (e: any) => checkState(e.target));
+                if (registration.active) registration.active.addEventListener('statechange', (e: any) => checkState(e.target));
+                
+                // Safety timeout
+                setTimeout(resolve, 5000);
             });
         }
-        console.log("FCM: 5. Service Worker is ACTIVE.");
 
         // 5. Get Token with Explicit Registration
         const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
@@ -58,18 +58,16 @@ const useFcmToken = () => {
           return;
         }
 
-        console.log("FCM: 6. Fetching token from Firebase SDK...");
+        // We use the registration we just created
         const currentToken = await getToken(messaging, {
           vapidKey: vapidKey,
           serviceWorkerRegistration: registration,
         });
 
         if (currentToken) {
-          console.log("FCM: 7. Token generated successfully:", currentToken);
           setToken(currentToken);
 
           // 6. Save to Firestore
-          console.log("FCM: 8. Saving token to Firestore collection 'fcmTokens'...");
           const tokenDocRef = doc(db, 'fcmTokens', currentToken);
           await setDoc(tokenDocRef, {
             token: currentToken,
@@ -78,9 +76,7 @@ const useFcmToken = () => {
             createdAt: serverTimestamp(),
           }, { merge: true });
           
-          console.log("FCM: 9. TOKEN SAVED SUCCESSFULLY.");
-        } else {
-          console.warn("FCM: No token received. Check if VAPID key is correct in Firebase Console.");
+          console.log("FCM: Token successfully registered.");
         }
       } catch (error) {
         console.error("FCM ERROR:", error);

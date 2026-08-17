@@ -9,6 +9,13 @@ const withPWA = createNextPwa({
   register: false, // STAYS FALSE: We register manually to avoid conflicts
   skipWaiting: true,
   sw: 'sw.js',
+  // CRITICAL FIX: Exclude problematic manifest files that cause 404s on Netlify
+  buildExcludes: [
+    /app-build-manifest\.json$/,
+    /middleware-manifest\.json$/,
+    /_next\/static\/.*\.js$/,
+    /_next\/static\/.*\.css$/,
+  ],
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
