@@ -221,7 +221,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
              <p className="text-muted-foreground mt-1">{batch.description}</p>
           </div>
 
-          <Tabs defaultValue="notes" value={activeTab} onValueChange={handleTabChange} className="w-full h-full flex flex-col">
+          <Tabs defaultValue="notes" value={activeTab} onValueChange={handleTabChange} className={cn("w-full flex flex-col", isChatting ? "h-full" : "")}>
             <TabsList className="grid w-full grid-cols-5 h-12 bg-secondary/50 shrink-0 mb-4 overflow-x-auto">
               <TabsTrigger value="notes" className="gap-2 text-xs md:text-sm"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
               <TabsTrigger value="quizzes" className="gap-2 text-xs md:text-sm"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
@@ -233,8 +233,8 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 min-h-0 relative">
-                <TabsContent value="notes" className="h-full mt-0 overflow-y-auto pb-10">
+            <div className={cn("flex-1 min-h-0 relative", isChatting ? "" : "h-auto")}>
+                <TabsContent value="notes" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
                     <Card>
                         <CardContent className="pt-6">
                             {renderRecursiveNotes(batch.notes)}
@@ -243,7 +243,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="quizzes" className="h-full mt-0 overflow-y-auto pb-10">
+                <TabsContent value="quizzes" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
                     {quizzes.map(quiz => {
                         const now = new Date();
@@ -275,7 +275,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                         )
                     })}
                     {quizzes.length === 0 && (
-                        <div className="text-center col-span-full py-16 border-2 border-dashed rounded-xl bg-secondary/10">
+                        <div className="text-center col-span-full py-16 border-2 border-dashed rounded-xl bg-secondary/10 w-full">
                             <BrainCircuit className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-30" />
                             <p className="text-muted-foreground font-medium">No quizzes available for this batch yet.</p>
                         </div>
@@ -283,7 +283,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="downloads" className="h-full mt-0 overflow-y-auto pb-10">
+                <TabsContent value="downloads" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-xl font-headline flex items-center gap-2"><Download className="h-5 w-5"/> Premium Resources</CardTitle>
@@ -350,7 +350,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     )}
                 </TabsContent>
 
-                <TabsContent value="information" className="h-full mt-0 overflow-y-auto pb-10">
+                <TabsContent value="information" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
                     <Card>
                         <CardHeader><CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary"/> Batch Announcements</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
@@ -365,9 +365,12 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                             </div>
                         ))}
                         {infoList.length === 0 && (
-                            <div className="text-center py-16 border-2 border-dashed rounded-xl bg-secondary/10">
-                                <Megaphone className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-30" />
-                                <p className="text-muted-foreground">No announcements have been posted yet.</p>
+                            <div className="text-center py-12 px-6 border-2 border-dashed rounded-3xl bg-secondary/5">
+                                <Megaphone className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+                                <h4 className="font-bold text-lg text-foreground/80">Abhi koi announcement nahi hai</h4>
+                                <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
+                                    Naye updates aur batch se judi zaroori jaankari yahan dikhayi denge. Stay tuned!
+                                </p>
                             </div>
                         )}
                         </CardContent>
