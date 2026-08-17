@@ -13,8 +13,6 @@ const withPWA = createNextPwa({
   buildExcludes: [
     /app-build-manifest\.json$/,
     /middleware-manifest\.json$/,
-    /_next\/static\/.*\.js$/,
-    /_next\/static\/.*\.css$/,
   ],
   runtimeCaching: [
     {
