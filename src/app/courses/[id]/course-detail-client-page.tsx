@@ -191,10 +191,11 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   const thumbnailUrl = getGoogleDriveImageUrl(course.thumbnail);
   const isLiveClassActive = liveClass && new Date() >= liveClass.startTime.toDate() && new Date() <= liveClass.endTime.toDate();
   const isFree = course.price === 0;
+  const hasAccess = isPurchased || isFree;
 
   return (
     <>
-      <div className={cn("container mx-auto px-4 py-8 md:py-12", !isPurchased && !isFree && "pb-32")}>
+      <div className={cn("container mx-auto px-4 py-8 md:py-12", !hasAccess && "pb-32")}>
         <div className="grid md:grid-cols-3 gap-8 md:gap-12">
           <div className="md:col-span-2 space-y-6">
             <div>
@@ -229,7 +230,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                                 >
                                   {getContentIcon(item.type)}
                                   <span className="font-medium flex-1">{item.title}</span>
-                                  {isPurchased ? (
+                                  {hasAccess ? (
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                   ) : (
                                     <Lock className="h-5 w-5 text-muted-foreground" />
@@ -258,37 +259,48 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                     <CardDescription>Premium PDFs and resources for offline access.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {!isPurchased ? (
-                        <div className="text-center py-12 bg-secondary/10 rounded-xl border-2 border-dashed">
-                             <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
-                             <p className="font-bold text-lg">Downloads are Locked</p>
-                             <p className="text-sm text-muted-foreground">Purchase the course to unlock premium downloadable content.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {(course.downloadContent || []).map((item) => (
-                                <div 
-                                    key={item.id}
-                                    className="flex items-center justify-between p-4 rounded-xl border bg-background hover:border-primary/50 transition-all group"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-                                            <FileText className="h-6 w-6" />
-                                        </div>
-                                        <span className="font-bold">{item.title}</span>
+                    <div className="space-y-4">
+                        {(course.downloadContent || []).map((item) => (
+                            <div 
+                                key={item.id}
+                                className={cn(
+                                    "flex items-center justify-between p-4 rounded-xl border transition-all group",
+                                    hasAccess ? "bg-background hover:border-primary/50" : "bg-secondary/20 opacity-80"
+                                )}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={cn(
+                                        "p-2 rounded-lg",
+                                        hasAccess ? "bg-indigo-100 text-indigo-600" : "bg-gray-200 text-gray-400"
+                                    )}>
+                                        <FileText className="h-6 w-6" />
                                     </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold">{item.title}</span>
+                                        {!hasAccess && (
+                                            <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase font-bold tracking-tight">
+                                                <Lock className="h-2.5 w-2.5" /> Unlock on Purchase
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                {hasAccess ? (
                                     <Button asChild size="sm" variant="secondary" className="group-hover:bg-primary group-hover:text-white">
                                         <a href={item.url} target="_blank" rel="noopener noreferrer">
                                             <Download className="h-4 w-4 mr-2" /> Download
                                         </a>
                                     </Button>
-                                </div>
-                            ))}
-                            {(course.downloadContent || []).length === 0 && (
-                                <p className="text-center text-muted-foreground py-10">No downloadable files added for this course yet.</p>
-                            )}
-                        </div>
-                    )}
+                                ) : (
+                                    <Button size="sm" variant="outline" className="text-muted-foreground" disabled>
+                                        <Lock className="h-4 w-4 mr-2" /> Locked
+                                    </Button>
+                                )}
+                            </div>
+                        ))}
+                        {(course.downloadContent || []).length === 0 && (
+                            <p className="text-center text-muted-foreground py-10">No downloadable files added for this course yet.</p>
+                        )}
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -355,7 +367,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
         </div>
       </div>
 
-      {!isPurchased && !isFree && (
+      {!hasAccess && (
         <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
