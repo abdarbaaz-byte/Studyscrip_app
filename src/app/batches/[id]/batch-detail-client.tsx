@@ -184,13 +184,11 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-2 space-y-4">
-                    {/* Render Sub-Folders */}
                     {folder.subFolders && folder.subFolders.length > 0 && (
                         <div className="pl-4 space-y-3 border-l-2 border-primary/10 ml-2">
                             {renderRecursiveNotes(folder.subFolders)}
                         </div>
                     )}
-                    {/* Render direct items in this folder */}
                     <div className="space-y-2">
                         {folder.content.map(item => renderContentItem(item))}
                     </div>
@@ -213,37 +211,37 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
   }
 
   return (
-    <div className={cn("container mx-auto px-4 py-4 md:py-8", isChatting ? "h-[calc(100dvh-128px)] overflow-hidden" : "pb-32")}>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-        <div className={cn(isChatting ? "lg:col-span-3 h-full" : "lg:col-span-2", "h-full flex flex-col")}>
+    <div className={cn("container mx-auto px-4 py-4 md:py-8", isChatting ? "h-[calc(100dvh-128px)] overflow-hidden" : "pb-32 min-h-screen")}>
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className={cn(isChatting ? "w-full" : "w-full lg:w-2/3", "flex flex-col min-w-0")}>
           <div className="mb-6">
-             <h1 className="font-headline text-3xl md:text-4xl font-bold">{batch.title}</h1>
-             <p className="text-muted-foreground mt-1">{batch.description}</p>
+             <h1 className="font-headline text-3xl md:text-4xl font-bold break-words">{batch.title}</h1>
+             <p className="text-muted-foreground mt-1 text-sm md:text-base">{batch.description}</p>
           </div>
 
-          <Tabs defaultValue="notes" value={activeTab} onValueChange={handleTabChange} className={cn("w-full flex flex-col", isChatting ? "h-full" : "")}>
+          <Tabs defaultValue="notes" value={activeTab} onValueChange={handleTabChange} className={cn("w-full flex flex-col", isChatting ? "h-full" : "h-auto")}>
             <TabsList className="grid w-full grid-cols-5 h-12 bg-secondary/50 shrink-0 mb-4 overflow-x-auto">
-              <TabsTrigger value="notes" className="gap-2 text-xs md:text-sm"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
-              <TabsTrigger value="quizzes" className="gap-2 text-xs md:text-sm"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
-              <TabsTrigger value="downloads" className="gap-2 text-xs md:text-sm"><Download className="h-4 w-4"/> Files</TabsTrigger>
-              <TabsTrigger value="chats" className="gap-2 text-xs md:text-sm"><MessageSquare className="h-4 w-4"/> Chat</TabsTrigger>
-              <TabsTrigger value="information" className="gap-2 text-xs md:text-sm relative">
-                <Megaphone className="h-4 w-4"/> Info
-                {hasNewInfo && <Circle className="h-2 w-2 fill-red-600 text-red-600 absolute top-1 right-1" />}
+              <TabsTrigger value="notes" className="gap-2 text-[10px] md:text-sm"><FileText className="h-3.5 w-3.5 md:h-4 md:w-4"/> Notes</TabsTrigger>
+              <TabsTrigger value="quizzes" className="gap-2 text-[10px] md:text-sm"><BrainCircuit className="h-3.5 w-3.5 md:h-4 md:w-4"/> Quiz</TabsTrigger>
+              <TabsTrigger value="downloads" className="gap-2 text-[10px] md:text-sm"><Download className="h-3.5 w-3.5 md:h-4 md:w-4"/> Files</TabsTrigger>
+              <TabsTrigger value="chats" className="gap-2 text-[10px] md:text-sm"><MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4"/> Chat</TabsTrigger>
+              <TabsTrigger value="information" className="gap-2 text-[10px] md:text-sm relative">
+                <Megaphone className="h-3.5 w-3.5 md:h-4 md:w-4"/> Info
+                {hasNewInfo && <Circle className="h-2 w-2 fill-red-600 text-red-600 absolute top-1 right-0.5" />}
               </TabsTrigger>
             </TabsList>
 
-            <div className={cn("flex-1 min-h-0 relative", isChatting ? "" : "h-auto")}>
-                <TabsContent value="notes" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
-                    <Card>
+            <div className={cn("relative min-w-0", isChatting ? "flex-1 min-h-0" : "h-auto")}>
+                <TabsContent value="notes" className="mt-0 pb-10 focus-visible:outline-none">
+                    <Card className="border shadow-sm">
                         <CardContent className="pt-6">
                             {renderRecursiveNotes(batch.notes)}
-                            {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground">No notes folders assigned yet.</p>}
+                            {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground text-sm">Abhi tak koi notes add nahi kiye gaye hain.</p>}
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="quizzes" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
+                <TabsContent value="quizzes" className="mt-0 pb-10 focus-visible:outline-none">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
                     {quizzes.map(quiz => {
                         const now = new Date();
@@ -254,7 +252,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                         const hasAttempted = userAttemptAnswers !== undefined;
 
                         return (
-                        <Card key={quiz.id} className="flex flex-col relative">
+                        <Card key={quiz.id} className="flex flex-col relative shadow-sm">
                             {isCurrentlyLive && (
                                 <div className="absolute top-3 right-3 z-10"><Badge variant="destructive" className="animate-pulse bg-red-600 text-[10px]">LIVE</Badge></div>
                             )}
@@ -277,14 +275,14 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     {quizzes.length === 0 && (
                         <div className="text-center col-span-full py-16 border-2 border-dashed rounded-xl bg-secondary/10 w-full">
                             <BrainCircuit className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-30" />
-                            <p className="text-muted-foreground font-medium">No quizzes available for this batch yet.</p>
+                            <p className="text-muted-foreground font-medium">Is batch ke liye koi quiz available nahi hai.</p>
                         </div>
                     )}
                     </div>
                 </TabsContent>
 
-                <TabsContent value="downloads" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
-                    <Card>
+                <TabsContent value="downloads" className="mt-0 pb-10 focus-visible:outline-none">
+                    <Card className="shadow-sm">
                         <CardHeader>
                             <CardTitle className="text-xl font-headline flex items-center gap-2"><Download className="h-5 w-5"/> Premium Resources</CardTitle>
                             <CardDescription>Download detailed PDF notes and materials for offline study.</CardDescription>
@@ -303,12 +301,12 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                     )}
                                 </div>
                             ))}
-                            {(batch.downloadContent || []).length === 0 && <p className="text-center py-10 text-muted-foreground">No downloadable files added yet.</p>}
+                            {(batch.downloadContent || []).length === 0 && <p className="text-center py-10 text-muted-foreground text-sm">Koi downloadable files available nahi hain.</p>}
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="chats" className="h-full mt-0 flex flex-col bg-secondary/10 rounded-xl overflow-hidden border">
+                <TabsContent value="chats" className="mt-0 h-full flex flex-col bg-secondary/10 rounded-xl overflow-hidden border focus-visible:outline-none">
                     {!hasAccess ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-background">
                             <MessageSquare className="h-16 w-16 text-muted-foreground mb-4 opacity-20" />
@@ -337,7 +335,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                             </div>
                                         </div>
                                     ))}
-                                    {batchMessages.length === 0 && <p className="text-center text-xs text-muted-foreground py-10 italic">No messages yet. Say hi! 👋</p>}
+                                    {batchMessages.length === 0 && <p className="text-center text-xs text-muted-foreground py-10 italic">Yahan abhi tak koi message nahi hai. Say hi! 👋</p>}
                                 </div>
                             </ScrollArea>
                             <form onSubmit={handleSendMessage} className="p-4 bg-background border-t flex gap-2">
@@ -350,14 +348,14 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     )}
                 </TabsContent>
 
-                <TabsContent value="information" className={cn("mt-0 pb-10", isChatting ? "h-full overflow-y-auto" : "h-auto")}>
-                    <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary"/> Batch Announcements</CardTitle></CardHeader>
+                <TabsContent value="information" className="mt-0 pb-10 focus-visible:outline-none">
+                    <Card className="shadow-sm">
+                        <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-lg md:text-xl"><Megaphone className="h-5 w-5 text-primary"/> Batch Announcements</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                         {infoList.map(info => (
-                            <div key={info.id} className="p-4 border rounded-xl bg-secondary/20 relative overflow-hidden">
+                            <div key={info.id} className="p-4 border rounded-xl bg-secondary/20 relative overflow-hidden shadow-sm">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-primary/30" />
-                                <h4 className="font-bold text-lg">{info.title}</h4>
+                                <h4 className="font-bold text-base md:text-lg">{info.title}</h4>
                                 <p className="text-sm mt-2 whitespace-pre-wrap leading-relaxed">{info.message}</p>
                                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-4 font-bold uppercase tracking-wider">
                                     <Clock className="h-3 w-3" /> {format(info.createdAt.toDate(), "PPP p")}
@@ -365,10 +363,10 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                             </div>
                         ))}
                         {infoList.length === 0 && (
-                            <div className="text-center py-12 px-6 border-2 border-dashed rounded-3xl bg-secondary/5">
-                                <Megaphone className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-                                <h4 className="font-bold text-lg text-foreground/80">Abhi koi announcement nahi hai</h4>
-                                <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
+                            <div className="text-center py-8 px-6 border-2 border-dashed rounded-3xl bg-secondary/5">
+                                <Megaphone className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-20" />
+                                <h4 className="font-bold text-base text-foreground/80">Abhi koi announcement nahi hai</h4>
+                                <p className="text-xs md:text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
                                     Naye updates aur batch se judi zaroori jaankari yahan dikhayi denge. Stay tuned!
                                 </p>
                             </div>
@@ -380,9 +378,10 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
           </Tabs>
         </div>
 
+        {/* Aside Sidebar - Only sticky on desktop */}
         {!isChatting && (
-          <aside className="space-y-6">
-            <Card className="sticky top-24 overflow-hidden shadow-lg border-2 border-primary/10">
+          <aside className="w-full lg:w-1/3 space-y-6 lg:mt-[100px]">
+            <Card className="overflow-hidden shadow-lg border-2 border-primary/10 lg:sticky lg:top-24 z-10">
               <div className="aspect-[16/9] relative">
                 <Image src={getGoogleDriveImageUrl(batch.thumbnail)} alt={batch.title} fill className="object-cover" />
               </div>
