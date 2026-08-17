@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Layers, Loader2, ArrowRight, FileText, BrainCircuit } from "lucide-react";
+import { Layers, Loader2, ArrowRight, FileText, BrainCircuit, Download } from "lucide-react";
 import { listenToBatches, getQuizzes, type Batch, type Quiz } from "@/lib/data";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { ScrollAnimation } from "@/components/scroll-animation";
@@ -64,6 +65,10 @@ export default function BatchesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {batches.map((batch, index) => {
             const quizCount = getQuizCountForBatch(batch.id);
+            const discountPercent = (batch.originalPrice && batch.price < batch.originalPrice) 
+                ? Math.round(((batch.originalPrice - batch.price) / batch.originalPrice) * 100) 
+                : null;
+
             return (
               <ScrollAnimation key={batch.id} delay={index * 100}>
                 <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
@@ -80,14 +85,6 @@ export default function BatchesPage() {
                   <CardHeader className="flex-grow p-6">
                     <div className="flex justify-between items-start mb-2">
                       <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">Active Batch</Badge>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-primary">
-                            {batch.price === 0 ? <Badge className="bg-green-600">Free</Badge> : `Rs. ${batch.price}`}
-                        </p>
-                        {batch.originalPrice && batch.originalPrice > batch.price && (
-                          <p className="text-xs text-muted-foreground line-through">Rs. {batch.originalPrice}</p>
-                        )}
-                      </div>
                     </div>
                     <CardTitle className="font-headline text-2xl leading-tight mb-2">
                       {batch.title}
@@ -96,12 +93,30 @@ export default function BatchesPage() {
                       {batch.description}
                     </CardDescription>
                   </CardHeader>
-                  <CardFooter className="p-6 pt-0 flex flex-col gap-3">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                      <div className="flex items-center gap-1"><FileText className="h-4 w-4" /> {batch.notes?.length || 0} Topics</div>
-                      <div className="flex items-center gap-1"><BrainCircuit className="h-4 w-4" /> {quizCount} Quizzes</div>
+                  <CardFooter className="p-6 pt-0 flex flex-col gap-4">
+                    <div className="flex items-center justify-between w-full border-b pb-4">
+                        <div className="flex flex-col">
+                            <p className="text-2xl font-black text-primary">
+                                {batch.price === 0 ? <span className="text-green-600">Free</span> : `Rs. ${batch.price}`}
+                            </p>
+                            {batch.originalPrice && batch.originalPrice > batch.price && (
+                                <p className="text-sm text-muted-foreground line-through">Rs. {batch.originalPrice}</p>
+                            )}
+                        </div>
+                        {discountPercent && (
+                            <Badge className="bg-orange-100 text-orange-600 border-none font-bold py-1">
+                                {discountPercent}% OFF
+                            </Badge>
+                        )}
                     </div>
-                    <Button asChild className="w-full h-11">
+                    
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> {batch.notes?.length || 0} Topics</div>
+                      <div className="flex items-center gap-1"><Download className="h-3.5 w-3.5" /> {(batch.downloadContent || []).length} Files</div>
+                      <div className="flex items-center gap-1"><BrainCircuit className="h-3.5 w-3.5" /> {quizCount} Quizzes</div>
+                    </div>
+
+                    <Button asChild className="w-full h-11 font-bold">
                       <Link href={`/batches/${batch.id}`}>
                         View Details & Enroll <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>

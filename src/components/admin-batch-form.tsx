@@ -1,12 +1,13 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Batch, BatchNote, BatchInformation, ContentItem } from "@/lib/data";
+import type { Batch, BatchNote, BatchInformation, ContentItem, BatchDownloadItem } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, ListPlus, MessageSquare } from "lucide-react";
+import { Trash2, PlusCircle, Save, Loader2, Edit, Megaphone, FileText, ListPlus, MessageSquare, Download } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -16,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { saveBatchInformation, getBatchInformation, deleteBatchInformation } from "@/lib/data";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -47,6 +49,7 @@ export function AdminBatchForm({ initialBatches, onSave, onDelete }: AdminBatchF
         originalPrice: 0,
         thumbnail: '',
         notes: [],
+        downloadContent: [],
         quizIds: [],
         includes: [],
         createdAt: null as any,
@@ -108,6 +111,7 @@ export function AdminBatchForm({ initialBatches, onSave, onDelete }: AdminBatchF
               <TableCell>
                 <div className="flex gap-2">
                   <Badge variant="outline">{batch.notes.length} Topics</Badge>
+                  <Badge variant="outline">{(batch.downloadContent || []).length} DL</Badge>
                   {batch.chatEnabled === false && <Badge variant="destructive">Chat Off</Badge>}
                 </div>
               </TableCell>
@@ -151,6 +155,7 @@ function BatchForm({ batch, onSave, onCancel, isSaving }: { batch: Batch, onSave
     ...batch,
     includes: batch.includes || [],
     chatEnabled: batch.chatEnabled !== false, // default to true
+    downloadContent: batch.downloadContent || [],
   });
   const [infoTitle, setInfoTitle] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -206,6 +211,26 @@ function BatchForm({ batch, onSave, onCancel, isSaving }: { batch: Batch, onSave
     const newNotes = [...formData.notes];
     (newNotes[noteIndex].content[itemIndex] as any)[field] = value;
     setFormData(prev => ({ ...prev, notes: newNotes }));
+  };
+
+  const addDownloadItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      downloadContent: [...(prev.downloadContent || []), { id: generateId('dl'), title: '', url: '' }]
+    }));
+  };
+
+  const removeDownloadItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      downloadContent: (prev.downloadContent || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDownloadChange = (index: number, field: keyof BatchDownloadItem, value: string) => {
+    const newDownloads = [...(formData.downloadContent || [])];
+    (newDownloads[index] as any)[field] = value;
+    setFormData(prev => ({ ...prev, downloadContent: newDownloads }));
   };
 
   const addIncludePoint = () => {
@@ -343,6 +368,38 @@ function BatchForm({ batch, onSave, onCancel, isSaving }: { batch: Batch, onSave
                 </div>
             ))}
           </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="downloads" className="border rounded-md px-4 bg-secondary/30">
+            <AccordionTrigger><div className="flex items-center gap-2"><Download className="h-4 w-4"/> Downloads Management (Offline)</div></AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-4">
+                <div className="flex justify-between items-center">
+                    <h4 className="font-semibold text-sm">Premium Download Files</h4>
+                    <Button type="button" variant="outline" size="sm" onClick={addDownloadItem}><PlusCircle className="mr-2 h-4 w-4" /> Add File</Button>
+                </div>
+                <div className="space-y-4">
+                    {(formData.downloadContent || []).map((item, index) => (
+                        <div key={item.id} className="p-4 border rounded-md space-y-3 relative bg-background">
+                            <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 text-destructive" onClick={() => removeDownloadItem(index)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>File Title</Label>
+                                    <Input placeholder="e.g. Complete Batch Notes PDF" value={item.title} onChange={e => handleDownloadChange(index, 'title', e.target.value)} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Download URL</Label>
+                                    <Input placeholder="https://..." value={item.url} onChange={e => handleDownloadChange(index, 'url', e.target.value)} required />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {(formData.downloadContent || []).length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-4 border-2 border-dashed rounded-lg">No downloadable files added yet.</p>
+                    )}
+                </div>
+            </AccordionContent>
         </AccordionItem>
 
         {batch.id && (

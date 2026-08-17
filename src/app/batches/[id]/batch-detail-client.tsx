@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy, Send, User, Users, X, ChevronRight } from "lucide-react";
+import { Loader2, Lock, Unlock, FileText, BrainCircuit, MessageSquare, Megaphone, ArrowRight, Video, ImageIcon, CheckCircle, Circle, Clock, Trophy, Send, User, Users, X, ChevronRight, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -194,11 +195,12 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         <div className={cn(isChatting ? "lg:col-span-3 h-full" : "lg:col-span-2", "h-full flex flex-col")}>
           <Tabs defaultValue="notes" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 h-12 bg-secondary/50 shrink-0 mb-4">
-              <TabsTrigger value="notes" className="gap-2"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
-              <TabsTrigger value="quizzes" className="gap-2"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
-              <TabsTrigger value="chats" className="gap-2"><MessageSquare className="h-4 w-4"/> Chat</TabsTrigger>
-              <TabsTrigger value="information" onClick={handleInfoTabClick} className="gap-2 relative">
+            <TabsList className="grid w-full grid-cols-5 h-12 bg-secondary/50 shrink-0 mb-4 overflow-x-auto">
+              <TabsTrigger value="notes" className="gap-2 text-xs md:text-sm"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
+              <TabsTrigger value="quizzes" className="gap-2 text-xs md:text-sm"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
+              <TabsTrigger value="downloads" className="gap-2 text-xs md:text-sm"><Download className="h-4 w-4"/> DL</TabsTrigger>
+              <TabsTrigger value="chats" className="gap-2 text-xs md:text-sm"><MessageSquare className="h-4 w-4"/> Chat</TabsTrigger>
+              <TabsTrigger value="information" onClick={handleInfoTabClick} className="gap-2 text-xs md:text-sm relative">
                 <Megaphone className="h-4 w-4"/> Info
                 {hasNewInfo && <Circle className="h-2 w-2 fill-red-600 text-red-600 absolute top-1 right-1" />}
               </TabsTrigger>
@@ -319,6 +321,57 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     })}
                     {quizzes.length === 0 && <p className="col-span-2 text-center py-10 text-muted-foreground">No quizzes assigned yet.</p>}
                     </div>
+                </TabsContent>
+
+                <TabsContent value="downloads" className="h-full mt-0 overflow-y-auto">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-xl font-headline flex items-center gap-2"><Download className="h-5 w-5"/> Batch Resources</CardTitle>
+                            <CardDescription>Premium PDF notes and study materials for offline use.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {(batch.downloadContent || []).map((item) => (
+                                <div 
+                                    key={item.id}
+                                    className={cn(
+                                        "flex items-center justify-between p-4 rounded-xl border transition-all",
+                                        hasAccess ? "bg-background hover:border-primary/50" : "bg-secondary/20 opacity-80"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn(
+                                            "p-2 rounded-lg",
+                                            hasAccess ? "bg-indigo-100 text-indigo-600" : "bg-gray-200 text-gray-400"
+                                        )}>
+                                            <FileText className="h-6 w-6" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-sm md:text-base">{item.title}</span>
+                                            {!hasAccess && (
+                                                <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase font-bold tracking-tight">
+                                                    <Lock className="h-2.5 w-2.5" /> Unlock on Purchase
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {hasAccess ? (
+                                        <Button asChild size="sm" variant="secondary" className="hover:bg-primary hover:text-white shrink-0">
+                                            <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                                <Download className="h-4 w-4 mr-2" /> Download
+                                            </a>
+                                        </Button>
+                                    ) : (
+                                        <Button size="sm" variant="outline" className="text-muted-foreground shrink-0" disabled>
+                                            <Lock className="h-4 w-4 mr-2" /> Locked
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                            {(batch.downloadContent || []).length === 0 && (
+                                <p className="text-center text-muted-foreground py-16">No downloadable resources added yet.</p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 <TabsContent value="chats" className="h-full mt-0 overflow-hidden">

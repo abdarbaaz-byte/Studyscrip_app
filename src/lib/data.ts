@@ -65,6 +65,12 @@ export type BatchMessage = {
     timestamp: Timestamp;
 };
 
+export type BatchDownloadItem = {
+    id: string;
+    title: string;
+    url: string;
+};
+
 export type Batch = {
     id: string; // docId
     title: string;
@@ -74,6 +80,7 @@ export type Batch = {
     thumbnail: string;
     createdAt: Timestamp;
     notes: BatchNote[];
+    downloadContent?: BatchDownloadItem[]; // Added for premium downloads
     quizIds: string[]; // Keep for legacy, though we'll use targetClasses in Quizzes now
     includes: string[];
     chatEnabled?: boolean; // New: Toggle for group chat

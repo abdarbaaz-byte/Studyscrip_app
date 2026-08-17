@@ -284,46 +284,61 @@ export default function HomeClient() {
                 }}
               >
                 <CarouselContent>
-                  {batches.map((batch) => (
-                    <CarouselItem key={batch.id} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                      <div className="p-1 h-full">
-                        <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group border-2 border-transparent hover:border-primary/10">
-                          <Link href={`/batches/${batch.id}`} className="aspect-[16/9] overflow-hidden block">
-                            <Image
-                              src={getGoogleDriveImageUrl(batch.thumbnail)}
-                              alt={batch.title}
-                              width={600}
-                              height={400}
-                              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                            />
-                          </Link>
-                          <CardHeader className="flex-grow p-5">
-                            <div className="flex justify-between items-start mb-2">
-                              <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] uppercase font-bold tracking-wider">Active Batch</Badge>
-                              <div className="text-right">
-                                <p className="text-lg font-bold text-primary">
-                                    {batch.price === 0 ? <span className="text-green-600">Free</span> : `Rs. ${batch.price}`}
-                                </p>
-                              </div>
-                            </div>
-                            <CardTitle className="font-headline text-xl leading-tight mb-2 line-clamp-1">
-                              {batch.title}
-                            </CardTitle>
-                            <CardDescription className="line-clamp-2 text-sm">
-                              {batch.description}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardFooter className="p-5 pt-0">
-                            <Button asChild className="w-full h-10 text-sm">
-                              <Link href={`/batches/${batch.id}`}>
-                                View Details & Enroll
-                              </Link>
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      </div>
-                    </CarouselItem>
-                  ))}
+                  {batches.map((batch) => {
+                    const discountPercent = (batch.originalPrice && batch.price < batch.originalPrice) 
+                        ? Math.round(((batch.originalPrice - batch.price) / batch.originalPrice) * 100) 
+                        : null;
+                    return (
+                        <CarouselItem key={batch.id} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                        <div className="p-1 h-full">
+                            <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group border-2 border-transparent hover:border-primary/10">
+                            <Link href={`/batches/${batch.id}`} className="aspect-[16/9] overflow-hidden block">
+                                <Image
+                                src={getGoogleDriveImageUrl(batch.thumbnail)}
+                                alt={batch.title}
+                                width={600}
+                                height={400}
+                                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                                />
+                            </Link>
+                            <CardHeader className="flex-grow p-5">
+                                <div className="flex justify-between items-start mb-2">
+                                <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] uppercase font-bold tracking-wider">Active Batch</Badge>
+                                </div>
+                                <CardTitle className="font-headline text-xl leading-tight mb-2 line-clamp-1">
+                                {batch.title}
+                                </CardTitle>
+                                <CardDescription className="line-clamp-2 text-sm">
+                                {batch.description}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardFooter className="px-5 pb-5 pt-0 flex flex-col gap-4">
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex flex-col">
+                                        <p className="text-xl font-black text-primary">
+                                            {batch.price === 0 ? <span className="text-green-600">Free</span> : `Rs. ${batch.price}`}
+                                        </p>
+                                        {batch.originalPrice && batch.originalPrice > batch.price && (
+                                            <p className="text-xs text-muted-foreground line-through">Rs. {batch.originalPrice}</p>
+                                        )}
+                                    </div>
+                                    {discountPercent && (
+                                        <Badge className="bg-orange-100 text-orange-600 border-none font-bold text-[10px] py-1">
+                                            {discountPercent}% OFF
+                                        </Badge>
+                                    )}
+                                </div>
+                                <Button asChild className="w-full h-10 text-sm">
+                                <Link href={`/batches/${batch.id}`}>
+                                    View Details & Enroll
+                                </Link>
+                                </Button>
+                            </CardFooter>
+                            </Card>
+                        </div>
+                        </CarouselItem>
+                    );
+                  })}
                 </CarouselContent>
               </Carousel>
               {batches.length > 0 && (
