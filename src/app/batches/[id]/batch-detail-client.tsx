@@ -215,7 +215,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
       <div className="flex flex-col lg:flex-row gap-8">
         <div className={cn(isChatting ? "w-full" : "w-full lg:w-2/3", "flex flex-col min-w-0")}>
           <div className="mb-6">
-             <h1 className="font-headline text-3xl md:text-4xl font-bold break-words">{batch.title}</h1>
+             <h1 className="font-headline text-xl md:text-2xl font-bold break-words">{batch.title}</h1>
              <p className="text-muted-foreground mt-1 text-sm md:text-base">{batch.description}</p>
           </div>
 
