@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -150,6 +149,17 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     return <ImageIcon className="h-5 w-5 text-primary" />;
   };
 
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    if (val === 'information') {
+      setHasNewInfo(false);
+      localStorage.setItem(`batch-info-viewed-${batch.id}`, Date.now().toString());
+    }
+    if (val === 'chats') {
+      scrollToBottom();
+    }
+  };
+
   const renderContentItem = (item: ContentItem) => (
     <div 
         key={item.id} 
@@ -170,13 +180,13 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     <div className="flex items-center gap-2">
                         <Folder className="h-4 w-4 text-primary opacity-70" />
                         {folder.title}
-                        {!hasAccess && <Lock className="h-3 w-3 text-muted-foreground" />}
+                        {!hasAccess && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
                     </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-2 space-y-4">
                     {/* Render Sub-Folders */}
                     {folder.subFolders && folder.subFolders.length > 0 && (
-                        <div className="pl-4 space-y-3">
+                        <div className="pl-4 space-y-3 border-l-2 border-primary/10 ml-2">
                             {renderRecursiveNotes(folder.subFolders)}
                         </div>
                     )}
@@ -192,7 +202,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
 
   const renderContentInDialog = () => {
     if (!contentToView) return null;
-    const { type, url, title } = contentToView;
+    const { url, title } = contentToView;
     const driveId = url.match(/file\/d\/([^/]+)/)?.[1];
     let contentUrl = driveId ? `https://drive.google.com/file/d/${driveId}/preview` : url;
     return <iframe src={contentUrl} className="w-full h-full border-0" title={title} allowFullScreen></iframe>;
@@ -206,11 +216,16 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     <div className={cn("container mx-auto px-4 py-4 md:py-8", isChatting ? "h-[calc(100dvh-128px)] overflow-hidden" : "pb-32")}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         <div className={cn(isChatting ? "lg:col-span-3 h-full" : "lg:col-span-2", "h-full flex flex-col")}>
-          <Tabs defaultValue="notes" value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
+          <div className="mb-6">
+             <h1 className="font-headline text-3xl md:text-4xl font-bold">{batch.title}</h1>
+             <p className="text-muted-foreground mt-1">{batch.description}</p>
+          </div>
+
+          <Tabs defaultValue="notes" value={activeTab} onValueChange={handleTabChange} className="w-full h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-5 h-12 bg-secondary/50 shrink-0 mb-4 overflow-x-auto">
               <TabsTrigger value="notes" className="gap-2 text-xs md:text-sm"><FileText className="h-4 w-4"/> Notes</TabsTrigger>
               <TabsTrigger value="quizzes" className="gap-2 text-xs md:text-sm"><BrainCircuit className="h-4 w-4"/> Quiz</TabsTrigger>
-              <TabsTrigger value="downloads" className="gap-2 text-xs md:text-sm"><Download className="h-4 w-4"/> DL</TabsTrigger>
+              <TabsTrigger value="downloads" className="gap-2 text-xs md:text-sm"><Download className="h-4 w-4"/> Files</TabsTrigger>
               <TabsTrigger value="chats" className="gap-2 text-xs md:text-sm"><MessageSquare className="h-4 w-4"/> Chat</TabsTrigger>
               <TabsTrigger value="information" className="gap-2 text-xs md:text-sm relative">
                 <Megaphone className="h-4 w-4"/> Info
@@ -219,16 +234,16 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
             </TabsList>
 
             <div className="flex-1 min-h-0 relative">
-                <TabsContent value="notes" className="h-full mt-0 overflow-y-auto">
-                <Card>
-                    <CardContent className="pt-6">
-                        {renderRecursiveNotes(batch.notes)}
-                        {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground">No notes assigned yet.</p>}
-                    </CardContent>
-                </Card>
+                <TabsContent value="notes" className="h-full mt-0 overflow-y-auto pb-10">
+                    <Card>
+                        <CardContent className="pt-6">
+                            {renderRecursiveNotes(batch.notes)}
+                            {batch.notes.length === 0 && <p className="text-center py-10 text-muted-foreground">No notes folders assigned yet.</p>}
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
-                <TabsContent value="quizzes" className="h-full mt-0 overflow-y-auto">
+                <TabsContent value="quizzes" className="h-full mt-0 overflow-y-auto pb-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
                     {quizzes.map(quiz => {
                         const now = new Date();
@@ -259,14 +274,20 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                         </Card>
                         )
                     })}
+                    {quizzes.length === 0 && (
+                        <div className="text-center col-span-full py-16 border-2 border-dashed rounded-xl bg-secondary/10">
+                            <BrainCircuit className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-30" />
+                            <p className="text-muted-foreground font-medium">No quizzes available for this batch yet.</p>
+                        </div>
+                    )}
                     </div>
                 </TabsContent>
 
-                <TabsContent value="downloads" className="h-full mt-0 overflow-y-auto">
+                <TabsContent value="downloads" className="h-full mt-0 overflow-y-auto pb-10">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-xl font-headline flex items-center gap-2"><Download className="h-5 w-5"/> Batch Resources</CardTitle>
-                            <CardDescription>Premium PDF notes and study materials for offline use.</CardDescription>
+                            <CardTitle className="text-xl font-headline flex items-center gap-2"><Download className="h-5 w-5"/> Premium Resources</CardTitle>
+                            <CardDescription>Download detailed PDF notes and materials for offline study.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {(batch.downloadContent || []).map((item) => (
@@ -282,25 +303,73 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                     )}
                                 </div>
                             ))}
+                            {(batch.downloadContent || []).length === 0 && <p className="text-center py-10 text-muted-foreground">No downloadable files added yet.</p>}
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="chats" className="h-full mt-0 overflow-hidden">
-                    {/* Chat logic... */}
+                <TabsContent value="chats" className="h-full mt-0 flex flex-col bg-secondary/10 rounded-xl overflow-hidden border">
+                    {!hasAccess ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-background">
+                            <MessageSquare className="h-16 w-16 text-muted-foreground mb-4 opacity-20" />
+                            <h3 className="text-xl font-bold">Group Discussion Locked</h3>
+                            <p className="text-muted-foreground mt-2 max-w-sm">Join the batch to participate in real-time discussions with teachers and other students.</p>
+                            <Button className="mt-6" onClick={handleBuyClick}><Lock className="mr-2 h-4 w-4" /> Enroll to Unlock Chat</Button>
+                        </div>
+                    ) : !chatEnabled ? (
+                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-background">
+                            <MessageSquare className="h-16 w-16 text-muted-foreground mb-4 opacity-20" />
+                            <h3 className="text-xl font-bold">Chat is Currently Disabled</h3>
+                            <p className="text-muted-foreground mt-2">The group discussion is currently turned off by the admin.</p>
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <ScrollArea className="flex-1 p-4" ref={chatScrollRef}>
+                                <div className="space-y-4">
+                                    {batchMessages.map((msg) => (
+                                        <div key={msg.id} className={cn("flex flex-col", msg.senderId === user?.uid ? "items-end" : "items-start")}>
+                                            <div className="flex items-center gap-2 mb-1 px-1">
+                                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{msg.senderName}</span>
+                                            </div>
+                                            <div className={cn("max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm", msg.senderId === user?.uid ? "bg-primary text-white rounded-tr-none" : "bg-white text-foreground rounded-tl-none")}>
+                                                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                                                <p className={cn("text-[9px] mt-1 text-right", msg.senderId === user?.uid ? "text-white/70" : "text-muted-foreground")}>{format(msg.timestamp.toDate(), "p")}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {batchMessages.length === 0 && <p className="text-center text-xs text-muted-foreground py-10 italic">No messages yet. Say hi! 👋</p>}
+                                </div>
+                            </ScrollArea>
+                            <form onSubmit={handleSendMessage} className="p-4 bg-background border-t flex gap-2">
+                                <Input placeholder="Type your message..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="rounded-full bg-secondary/50" />
+                                <Button type="submit" size="icon" className="rounded-full shrink-0" disabled={isSending || !newMessage.trim()}>
+                                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                </Button>
+                            </form>
+                        </div>
+                    )}
                 </TabsContent>
 
-                <TabsContent value="information" className="h-full mt-0 overflow-y-auto">
+                <TabsContent value="information" className="h-full mt-0 overflow-y-auto pb-10">
                     <Card>
-                        <CardHeader><CardTitle>Latest Announcements</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary"/> Batch Announcements</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
                         {infoList.map(info => (
-                            <div key={info.id} className="p-4 border rounded-lg bg-secondary/20">
-                                <h4 className="font-bold">{info.title}</h4>
-                                <p className="text-sm mt-1 whitespace-pre-wrap">{info.message}</p>
-                                <p className="text-[10px] text-muted-foreground mt-2">{format(info.createdAt.toDate(), "PPP p")}</p>
+                            <div key={info.id} className="p-4 border rounded-xl bg-secondary/20 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-primary/30" />
+                                <h4 className="font-bold text-lg">{info.title}</h4>
+                                <p className="text-sm mt-2 whitespace-pre-wrap leading-relaxed">{info.message}</p>
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-4 font-bold uppercase tracking-wider">
+                                    <Clock className="h-3 w-3" /> {format(info.createdAt.toDate(), "PPP p")}
+                                </div>
                             </div>
                         ))}
+                        {infoList.length === 0 && (
+                            <div className="text-center py-16 border-2 border-dashed rounded-xl bg-secondary/10">
+                                <Megaphone className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-30" />
+                                <p className="text-muted-foreground">No announcements have been posted yet.</p>
+                            </div>
+                        )}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -322,10 +391,25 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                       {batch.originalPrice && batch.originalPrice > batch.price && <span className="text-sm text-muted-foreground line-through">Rs. {batch.originalPrice}</span>}
                   </div>
                 </div>
+                
                 {!hasAccess ? (
-                  <Button size="lg" className="w-full" onClick={handleBuyClick}>Enroll Now <ArrowRight className="ml-2"/></Button>
+                  <Button size="lg" className="w-full font-bold shadow-lg" onClick={handleBuyClick}>Enroll Now <ArrowRight className="ml-2 h-5 w-5"/></Button>
                 ) : (
-                  <div className="flex items-center justify-center gap-2 p-3 bg-green-100 text-green-700 rounded-lg font-bold"><Unlock className="h-5 w-5"/> Enrolled</div>
+                  <div className="flex items-center justify-center gap-2 p-3 bg-green-100 text-green-700 rounded-xl font-bold border border-green-200"><Unlock className="h-5 w-5"/> Enrolled Successfully</div>
+                )}
+
+                {(batch.includes || []).length > 0 && (
+                    <div className="mt-8 space-y-4">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b pb-2">What&apos;s Included</h4>
+                        <ul className="space-y-3">
+                            {batch.includes.map((inc, i) => (
+                                <li key={i} className="flex items-start gap-3 text-sm font-medium">
+                                    <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                                    <span>{inc}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 )}
               </CardContent>
             </Card>
@@ -335,11 +419,30 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
 
       <PaymentDialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen} itemName={batch.title} itemPrice={batch.price} isProcessing={isBuying} itemId={batch.id} itemType="batch" onConfirm={handlePurchaseConfirm} />
       
+      {/* Bottom Sticky Purchase Bar for Mobile */}
+      {!hasAccess && !isChatting && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t px-4 py-3 md:bottom-0 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div className="container mx-auto flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                    <span className="text-2xl font-black text-primary">{isFree ? 'Free' : `Rs. ${batch.price}`}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Full Batch Access</span>
+                </div>
+                <Button 
+                    size="lg" 
+                    onClick={handleBuyClick} 
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl transition-all active:scale-95 h-12 shadow-md"
+                >
+                    Enroll Now <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+            </div>
+        </div>
+      )}
+
       <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
-        <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
-          <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
-            <DialogTitle className="truncate">{contentToView?.title}</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-5 w-5"/></Button>
+        <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col rounded-none border-none">
+          <DialogHeader className="p-3 border-b shrink-0 flex flex-row items-center justify-between bg-background z-10">
+            <DialogTitle className="truncate text-base pl-2">{contentToView?.title}</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-6 w-6"/></Button>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0">{renderContentInDialog()}</div>
         </DialogContent>
