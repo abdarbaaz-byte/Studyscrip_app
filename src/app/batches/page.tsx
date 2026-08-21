@@ -1,36 +1,18 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Layers, Loader2, ArrowRight, FileText, BrainCircuit, Download } from "lucide-react";
-import { listenToBatches, getQuizzes, type Batch, type Quiz } from "@/lib/data";
+import { useData } from "@/hooks/use-data";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { Badge } from "@/components/ui/badge";
 
 export default function BatchesPage() {
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadInitialData() {
-      setLoading(true);
-      const allQuizzes = await getQuizzes();
-      setQuizzes(allQuizzes);
-      
-      const unsubscribe = listenToBatches((data) => {
-        setBatches(data);
-        setLoading(false);
-      });
-      return () => unsubscribe();
-    }
-    loadInitialData();
-  }, []);
+  const { batches, quizzes, loading } = useData();
 
   const getQuizCountForBatch = (batchId: string) => {
     return quizzes.filter(q => q.targetClasses?.includes(batchId)).length;

@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, FileText, Download, Search } from "lucide-react";
-import { getBookstoreItems, type BookstoreItem } from "@/lib/data";
+import { useData } from "@/hooks/use-data";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { Input } from "@/components/ui/input";
@@ -15,22 +15,11 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 export default function BookstoreClient() {
-  const [items, setItems] = useState<BookstoreItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { bookstoreItems: items, loading } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const bookstoreData = await getBookstoreItems();
-      setItems(bookstoreData);
-      setLoading(false);
-    }
-    loadData();
-  }, []);
 
   const handleDownload = (url: string) => {
     if (!user) {

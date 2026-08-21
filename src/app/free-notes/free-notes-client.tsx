@@ -1,32 +1,20 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, Video, Image as ImageIcon, Download, Eye, Globe, Smartphone, ChevronRight, X } from "lucide-react";
-import { getFreeNotes, type FreeNote, type ContentItem } from "@/lib/data";
+import { Loader2, FileText, Video, Image as ImageIcon, Download, Globe, Smartphone, ChevronRight, X } from "lucide-react";
+import { useData } from "@/hooks/use-data";
+import { type ContentItem } from "@/lib/data";
 
 export default function FreeNotesClient() {
-  const [notes, setNotes] = useState<FreeNote[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { freeNotes: notes, loading } = useData();
   const [contentToView, setContentToView] = useState<ContentItem | null>(null);
   const [activeTab, setActiveTab] = useState("online");
-
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const freeNotesData = await getFreeNotes();
-      setNotes(freeNotesData);
-      setLoading(false);
-    }
-    loadData();
-  }, []);
 
   const getContentIcon = (type: ContentItem['type']) => {
     if (type === 'pdf') return <FileText className="h-5 w-5 text-primary" />;

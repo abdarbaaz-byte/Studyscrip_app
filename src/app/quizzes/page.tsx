@@ -1,11 +1,13 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft, ChevronRight, Lock, Clock } from "lucide-react";
-import { getQuizzes, getQuizFolders, type Quiz, type QuizFolder } from "@/lib/data";
+import { Loader2, BrainCircuit, ArrowRight, Timer, ListChecks, Orbit, ShieldCheck, Circle, Folder, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { useData } from "@/hooks/use-data";
+import type { Quiz } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollAnimation } from "@/components/scroll-animation";
@@ -14,41 +16,19 @@ import { format } from "date-fns";
 const ACADEMIC_CLASSES = ["5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
 export default function QuizzesPage() {
-  const [liveQuizzes, setLiveQuizzes] = useState<Quiz[]>([]);
-  const [practiceQuizzes, setPracticeQuizzes] = useState<Quiz[]>([]);
-  const [folders, setFolders] = useState<QuizFolder[]>([]);
+  const { quizzes, quizFolders: folders, loading } = useData();
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadQuizzesAndFolders() {
-      setLoading(true);
-      const [allQuizzes, allFolders] = await Promise.all([
-          getQuizzes(),
-          getQuizFolders()
-      ]);
-      
-      setFolders(allFolders);
+  // Filter quizzes to only show those targeted at academic classes
+  const generalQuizzes = quizzes.filter(quiz => {
+    const targets = quiz.targetClasses || [];
+    const hasAcademicTarget = targets.some(t => ACADEMIC_CLASSES.includes(t));
+    const isLegacyAcademic = quiz.targetClass && ACADEMIC_CLASSES.includes(quiz.targetClass);
+    return hasAcademicTarget || isLegacyAcademic;
+  });
 
-      // Filter quizzes to only show those targeted at academic classes
-      const generalQuizzes = allQuizzes.filter(quiz => {
-        const targets = quiz.targetClasses || [];
-        // Check if any selected target is an academic class
-        const hasAcademicTarget = targets.some(t => ACADEMIC_CLASSES.includes(t));
-        // Legacy support: also check singular targetClass
-        const isLegacyAcademic = quiz.targetClass && ACADEMIC_CLASSES.includes(quiz.targetClass);
-        
-        return hasAcademicTarget || isLegacyAcademic;
-      });
-
-      const live = generalQuizzes.filter(q => q.startTime || q.endTime);
-      const practice = generalQuizzes.filter(q => !q.startTime && !q.endTime);
-      setLiveQuizzes(live);
-      setPracticeQuizzes(practice);
-      setLoading(false);
-    }
-    loadQuizzesAndFolders();
-  }, []);
+  const liveQuizzes = generalQuizzes.filter(q => q.startTime || q.endTime);
+  const practiceQuizzes = generalQuizzes.filter(q => !q.startTime && !q.endTime);
 
   const QuizCard = ({ quiz, isLiveType }: { quiz: Quiz, isLiveType: boolean }) => {
     const now = new Date();
@@ -159,7 +139,7 @@ export default function QuizzesPage() {
                             onClick={() => setSelectedFolderId(null)}
                             className="hover:bg-indigo-100 text-indigo-600 rounded-full"
                         >
-                            <ChevronLeft className="h-6 w-6" />back 
+                            <ChevronLeft className="h-6 w-6" />
                         </Button>
                         <h2 className="text-2xl font-bold font-headline">
                             {folders.find(f => f.id === selectedFolderId)?.name} 

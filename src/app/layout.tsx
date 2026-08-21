@@ -6,6 +6,7 @@ import "./globals.css";
 import { ClientSideLayout } from "@/components/client-side-layout";
 import { ConditionalLayout } from "@/components/conditional-layout";
 import { AudioPlayerProvider } from "@/hooks/use-audio-player";
+import { DataProvider } from "@/hooks/use-data";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { FCMInit } from "@/components/fcm-init";
 import { ScrollRestorer } from "@/components/scroll-restorer";
@@ -70,11 +71,13 @@ export default function RootLayout({
         <ScrollRestorer />
         <AuthProvider>
           <AudioPlayerProvider>
-            <ClientSideLayout>
-                <ConditionalLayout>
-                  {children}
-                </ConditionalLayout>
-            </ClientSideLayout>
+            <DataProvider>
+              <ClientSideLayout>
+                  <ConditionalLayout>
+                    {children}
+                  </ConditionalLayout>
+              </ClientSideLayout>
+            </DataProvider>
           </AudioPlayerProvider>
         </AuthProvider>
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""} />

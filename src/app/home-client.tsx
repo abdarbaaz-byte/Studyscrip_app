@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/course-card";
-import { listenToCourses, getBannerSettings, type BannerSettings, getReviews, type Review, submitReview, listenToAcademics, listenToBatches, type Batch } from "@/lib/data";
+import { useData } from "@/hooks/use-data";
+import { submitReview } from "@/lib/data";
 import { ArrowRight, BookOpen, Loader2, LayoutGrid, FileText, Store, Radio, BrainCircuit, Star, Send, Users, Headphones, Layers, Circle } from "lucide-react";
 import type { Course } from "@/lib/courses";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -27,12 +28,7 @@ const reviewsAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
 const bannerAutoplay = Autoplay({ delay: 5000, stopOnInteraction: true });
 
 export default function HomeClient() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [academicClasses, setAcademicClasses] = useState<AcademicClass[]>([]);
-  const [bannerSettings, setBannerSettings] = useState<BannerSettings | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { courses, batches, academicClasses, bannerSettings, approvedReviews: reviews, loading } = useData();
   const { toast } = useToast();
 
   // State for review form
@@ -81,29 +77,6 @@ export default function HomeClient() {
       setReviewsCurrent(reviewsApi.selectedScrollSnap() + 1)
     })
   }, [reviewsApi])
-
-
-  useEffect(() => {
-    setLoading(true);
-    const unsubCourses = listenToCourses(setCourses);
-    const unsubAcademics = listenToAcademics(setAcademicClasses);
-    const unsubBatches = listenToBatches(setBatches);
-    
-    Promise.all([
-      getBannerSettings(),
-      getReviews('approved'),
-    ]).then(([bannerData, reviewsData]) => {
-      setBannerSettings(bannerData);
-      setReviews(reviewsData);
-      setLoading(false);
-    });
-
-    return () => {
-      unsubCourses();
-      unsubAcademics();
-      unsubBatches();
-    };
-  }, []);
   
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

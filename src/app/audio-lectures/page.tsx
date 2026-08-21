@@ -1,27 +1,16 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Headphones, PlayCircle } from "lucide-react";
-import { getAudioLectures, type AudioLecture } from "@/lib/data";
+import { useData } from "@/hooks/use-data";
+import type { AudioLecture } from "@/lib/data";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { useAudioPlayer } from "@/hooks/use-audio-player";
 
 export default function AudioLecturesPage() {
-  const [lectures, setLectures] = useState<AudioLecture[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { audioLectures: lectures, loading } = useData();
   const { playPlaylist } = useAudioPlayer();
-
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const audioData = await getAudioLectures();
-      setLectures(audioData);
-      setLoading(false);
-    }
-    loadData();
-  }, []);
 
   const handlePlayTopic = (lecture: AudioLecture) => {
     if (lecture.audios && lecture.audios.length > 0) {

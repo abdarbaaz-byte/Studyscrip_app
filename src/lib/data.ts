@@ -183,6 +183,15 @@ export type AudioLecture = {
   audios: AudioTrack[];
 };
 
+export function listenToAudioLectures(callback: (lectures: AudioLecture[]) => void) {
+  const lecturesCol = collection(db, 'audioLectures');
+  const q = query(lecturesCol, orderBy('title'));
+  return onSnapshot(q, (snapshot) => {
+    const lectureList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AudioLecture));
+    callback(lectureList);
+  });
+}
+
 // --- SCHOOLS & TEACHERS ---
 export type SchoolTeacher = {
   uid: string;
@@ -291,6 +300,19 @@ export type Review = {
     status: 'pending' | 'approved';
     submittedAt: Timestamp;
 };
+
+export function listenToReviews(status: 'approved' | 'pending' | 'all', callback: (reviews: Review[]) => void) {
+  const reviewsCol = collection(db, 'reviews');
+  const q = query(reviewsCol, orderBy('submittedAt', 'desc'));
+  
+  return onSnapshot(q, (snapshot) => {
+    let allReviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+    if (status !== 'all') {
+        allReviews = allReviews.filter(review => review.status === status);
+    }
+    callback(allReviews);
+  });
+}
 
 // --- USER PROFILE ---
 export type UserCertificate = {
@@ -896,6 +918,15 @@ export type FreeNote = {
   category: 'online' | 'offline';
 };
 
+export function listenToFreeNotes(callback: (notes: FreeNote[]) => void) {
+  const notesCol = collection(db, 'freeNotes');
+  const q = query(notesCol, orderBy('title'));
+  return onSnapshot(q, (snapshot) => {
+    const noteList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FreeNote));
+    callback(noteList);
+  });
+}
+
 export async function getFreeNotes(): Promise<FreeNote[]> {
   const notesCol = collection(db, 'freeNotes');
   const q = query(notesCol, orderBy('title'));
@@ -927,6 +958,15 @@ export type BookstoreItem = {
     thumbnailUrl: string;
     createdAt?: Timestamp;
 };
+
+export function listenToBookstore(callback: (items: BookstoreItem[]) => void) {
+    const itemsCol = collection(db, 'bookstore');
+    const q = query(itemsCol, orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        const itemList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookstoreItem));
+        callback(itemList);
+    });
+}
 
 export async function getBookstoreItems(): Promise<BookstoreItem[]> {
     const itemsCol = collection(db, 'bookstore');
@@ -1007,6 +1047,19 @@ export async function getQuizzes(): Promise<Quiz[]> {
     });
 }
 
+export function listenToQuizzes(callback: (quizzes: Quiz[]) => void) {
+    const quizzesCol = collection(db, 'quizzes');
+    return onSnapshot(quizzesCol, (snapshot) => {
+        const quizzes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+        const sorted = quizzes.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis() || 0;
+            const timeB = b.createdAt?.toMillis() || 0;
+            return timeB - timeA;
+        });
+        callback(sorted);
+    });
+}
+
 export async function getQuizzesForTarget(targetId: string): Promise<Quiz[]> {
     const quizzesCol = collection(db, 'quizzes');
     const q = query(quizzesCol, where('targetClasses', 'array-contains', targetId));
@@ -1063,6 +1116,15 @@ export async function getQuizFolders(): Promise<QuizFolder[]> {
     const q = query(foldersCol, orderBy('createdAt', 'asc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizFolder));
+}
+
+export function listenToQuizFolders(callback: (folders: QuizFolder[]) => void) {
+    const foldersCol = collection(db, 'quizFolders');
+    const q = query(foldersCol, orderBy('createdAt', 'asc'));
+    return onSnapshot(q, (snapshot) => {
+        const folderList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizFolder));
+        callback(folderList);
+    });
 }
 
 export async function saveQuizFolder(folder: { id?: string, name: string }): Promise<void> {
@@ -1244,6 +1306,21 @@ export async function getBannerSettings(): Promise<BannerSettings> {
         };
     }
     return { banners: [] };
+}
+
+export function listenToBannerSettings(callback: (settings: BannerSettings) => void) {
+    const settingsDocRef = doc(db, 'settings', 'homeBanner');
+    return onSnapshot(settingsDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            callback({ 
+                banners: data.banners || [],
+                referralBanner: data.referralBanner || undefined
+            });
+        } else {
+            callback({ banners: [] });
+        }
+    });
 }
 
 export async function saveBannerSettings(settings: BannerSettings): Promise<void> {
