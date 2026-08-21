@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -100,8 +99,8 @@ export default function FreeNotesClient() {
     <>
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
-          <h1 className="font-headline text-4xl md:text-5xl font-extrabold tracking-tight">Free Notes</h1>
-          <p className="text-lg text-muted-foreground mt-2 font-medium">Access high-quality study materials for various topics.</p>
+          <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">Free Notes</h1>
+          <p className="text-lg text-muted-foreground mt-2 font-normal">Access high-quality study materials for various topics.</p>
         </div>
 
         {loading ? (
@@ -115,13 +114,13 @@ export default function FreeNotesClient() {
                     <TabsList className="grid w-full grid-cols-2 max-w-md h-14 bg-secondary/50 p-1.5 rounded-2xl border shadow-inner">
                         <TabsTrigger 
                           value="online" 
-                          className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline font-semibold transition-all duration-300 hover:bg-emerald-600/10"
+                          className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline font-normal transition-all duration-300 hover:bg-emerald-600/10"
                         >
                           <Globe className="h-5 w-5"/> Online Notes
                         </TabsTrigger>
                         <TabsTrigger 
                           value="offline" 
-                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline font-semibold transition-all duration-300 hover:bg-orange-500/10"
+                          className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline font-normal transition-all duration-300 hover:bg-orange-500/10"
                         >
                           <Smartphone className="h-5 w-5"/> Offline (Download)
                         </TabsTrigger>
@@ -133,11 +132,11 @@ export default function FreeNotesClient() {
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {onlineNotes.map((note) => (
                             <AccordionItem value={note.id} key={note.id} className="border rounded-xl bg-card shadow-sm overflow-hidden border-border/50">
-                                <AccordionTrigger className="p-6 text-xl font-headline font-semibold hover:no-underline hover:bg-secondary/10 transition-all">
+                                <AccordionTrigger className="p-6 text-xl font-headline font-normal hover:no-underline hover:bg-secondary/10 transition-all">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
-                                <p className="text-muted-foreground mb-5 leading-relaxed text-sm">{note.description}</p>
+                                <p className="text-muted-foreground mb-5 leading-relaxed text-sm font-normal">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
                                         <li 
@@ -148,7 +147,7 @@ export default function FreeNotesClient() {
                                           <div className="bg-primary/10 p-2.5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
                                             {getContentIcon(item.type)}
                                           </div>
-                                          <span className="font-medium flex-1 text-base">{item.title}</span>
+                                          <span className="font-normal flex-1 text-base">{item.title}</span>
                                           <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </li>
                                     ))}
@@ -167,11 +166,11 @@ export default function FreeNotesClient() {
                         <Accordion type="single" collapsible className="w-full space-y-4">
                             {offlineNotes.map((note) => (
                             <AccordionItem value={note.id} key={note.id} className="border rounded-xl bg-card shadow-sm overflow-hidden border-border/50">
-                                <AccordionTrigger className="p-6 text-xl font-headline font-semibold hover:no-underline hover:bg-secondary/10 transition-all">
+                                <AccordionTrigger className="p-6 text-xl font-headline font-normal hover:no-underline hover:bg-secondary/10 transition-all">
                                 {note.title}
                                 </AccordionTrigger>
                                 <AccordionContent className="p-6 pt-0">
-                                <p className="text-muted-foreground mb-5 leading-relaxed text-sm">{note.description}</p>
+                                <p className="text-muted-foreground mb-5 leading-relaxed text-sm font-normal">{note.description}</p>
                                 <ul className="space-y-3">
                                     {note.content.map((item, index) => (
                                         <li 
@@ -182,7 +181,7 @@ export default function FreeNotesClient() {
                                           <div className="bg-primary/10 p-2.5 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
                                             {getContentIcon(item.type)}
                                           </div>
-                                          <span className="font-medium flex-1 text-base">{item.title}</span>
+                                          <span className="font-normal flex-1 text-base">{item.title}</span>
                                           <Download className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                                         </li>
                                     ))}
@@ -219,7 +218,7 @@ function EmptyState({ message }: { message: string }) {
     return (
         <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10 border-border">
             <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-20" />
-            <p className="text-muted-foreground font-semibold text-lg">{message}</p>
+            <p className="text-muted-foreground font-normal text-lg">{message}</p>
         </div>
     );
 }
