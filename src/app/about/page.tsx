@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpenCheck, Target, Video, MessageSquareHeart, GraduationCap, UserCircle, Mail } from "lucide-react";
+import { BookOpenCheck, Target, Video, MessageSquareHeart, GraduationCap, UserCircle, Mail, School } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
 
 export default function AboutPage() {
@@ -35,7 +35,7 @@ export default function AboutPage() {
             <div className="grid md:grid-cols-2 gap-8">
 
                 <ScrollAnimation>
-                  <Card>
+                  <Card className="h-full">
                       <CardHeader className="flex flex-row items-center gap-4">
                           <BookOpenCheck className="w-8 h-8 text-primary" />
                           <CardTitle>Structured Academic & Professional Courses</CardTitle>
@@ -47,7 +47,7 @@ export default function AboutPage() {
                 </ScrollAnimation>
                 
                 <ScrollAnimation delay={100}>
-                  <Card>
+                  <Card className="h-full">
                       <CardHeader className="flex flex-row items-center gap-4">
                           <Video className="w-8 h-8 text-primary" />
                           <CardTitle>Rich Multimedia Content</CardTitle>
@@ -59,7 +59,19 @@ export default function AboutPage() {
                 </ScrollAnimation>
 
                 <ScrollAnimation delay={200}>
-                  <Card>
+                  <Card className="h-full">
+                      <CardHeader className="flex flex-row items-center gap-4">
+                          <School className="w-8 h-8 text-primary" />
+                          <CardTitle>Free School & Institute Portal</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          We provide a free online dashboard for schools and coaching institutes, allowing teachers to share class-wise notes, post announcements, and conduct online tests for their students.
+                      </CardContent>
+                  </Card>
+                </ScrollAnimation>
+
+                <ScrollAnimation delay={300}>
+                  <Card className="h-full">
                       <CardHeader className="flex flex-row items-center gap-4">
                           <MessageSquareHeart className="w-8 h-8 text-primary" />
                           <CardTitle>Direct Support Chat</CardTitle>
@@ -70,8 +82,8 @@ export default function AboutPage() {
                   </Card>
                 </ScrollAnimation>
 
-                 <ScrollAnimation delay={300}>
-                    <Card>
+                 <ScrollAnimation delay={400}>
+                    <Card className="h-full">
                       <CardHeader className="flex flex-row items-center gap-4">
                           <Target className="w-8 h-8 text-primary" />
                           <CardTitle>Our Mission</CardTitle>
