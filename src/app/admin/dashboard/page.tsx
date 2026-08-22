@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -34,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -43,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture, getBatches, saveBatch, deleteBatch, type Batch } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture, getBatches, saveBatch, deleteBatch, type Batch, type BookRequest, listenToBookRequests, deleteBookRequest } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -81,6 +82,7 @@ export default function AdminDashboardPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [freeNotes, setFreeNotes] = useState<FreeNote[]>([]);
   const [bookstoreItems, setBookstoreItems] = useState<BookstoreItem[]>([]);
+  const [bookRequests, setBookRequests] = useState<BookRequest[]>([]);
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [audioLectures, setAudioLectures] = useState<AudioLecture[]>([]);
@@ -168,11 +170,13 @@ export default function AdminDashboardPage() {
       const unsubscribeChats = hasPermission('manage_chat') ? listenToAllChats((liveChats) => setChats(liveChats)) : () => {};
       const unsubscribeNotifications = hasPermission('send_notifications') ? listenToNotifications((liveNotifications) => setNotifications(liveNotifications)) : () => {};
       const unsubscribePaymentRequests = hasPermission('manage_payment_requests') ? listenToPaymentRequests((requests) => setPaymentRequests(requests)) : () => {};
+      const unsubscribeBookRequests = hasPermission('manage_bookstore') ? listenToBookRequests((reqs) => setBookRequests(reqs)) : () => {};
       
       return () => {
         unsubscribeChats();
         unsubscribeNotifications();
         unsubscribePaymentRequests();
+        unsubscribeBookRequests();
       };
     }
   }, [authLoading, isAdmin, hasPermission]);
@@ -317,7 +321,7 @@ export default function AdminDashboardPage() {
       toast({ title: "Free Note deleted successfully." });
     } catch (error) {
       console.error("Failed to delete free note:", error);
-      toast({ variant: "destructive", title: "Failed to delete Free Note" });
+      toast({ variant: "destructive", title: "Failed to save Free Note" });
     }
   };
 
@@ -340,6 +344,16 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error("Failed to delete bookstore item:", error);
       toast({ variant: "destructive", title: "Failed to delete Bookstore Item" });
+    }
+  };
+
+  const handleDeleteBookRequest = async (id: string) => {
+    try {
+      await deleteBookRequest(id);
+      toast({ title: "Request deleted." });
+    } catch (error) {
+      console.error("Failed to delete book request:", error);
+      toast({ variant: "destructive", title: "Delete Failed" });
     }
   };
   
@@ -972,7 +986,6 @@ export default function AdminDashboardPage() {
       <CardContent>
         <AdminBatchForm 
           initialBatches={batches}
-          allQuizzes={quizzes}
           onSave={handleSaveBatch}
           onDelete={handleDeleteBatch}
         />
@@ -1081,19 +1094,59 @@ export default function AdminDashboardPage() {
   );
   
   const renderBookstoreManagement = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">Bookstore Management</CardTitle>
-        <CardDescription>Manage PDF books available in the bookstore.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <AdminBookstoreForm
-          initialItems={bookstoreItems}
-          onSave={handleSaveBookstoreItem}
-          onDelete={handleDeleteBookstoreItem}
-        />
-      </CardContent>
-    </Card>
+    <div className="space-y-8">
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl">Bookstore Items</CardTitle>
+                <CardDescription>Manage PDF books available in the bookstore.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AdminBookstoreForm
+                initialItems={bookstoreItems}
+                onSave={handleSaveBookstoreItem}
+                onDelete={handleDeleteBookstoreItem}
+                />
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl flex items-center gap-2"><Inbox className="h-6 w-6"/> Book Requests</CardTitle>
+                <CardDescription>View books requested by students.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>User Name</TableHead>
+                            <TableHead>Requested Book</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {bookRequests.map((req) => (
+                            <TableRow key={req.id}>
+                                <TableCell className="font-medium">{req.userName}</TableCell>
+                                <TableCell>{req.bookName}</TableCell>
+                                <TableCell>{format(req.createdAt.toDate(), "PPP")}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteBookRequest(req.id)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {bookRequests.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">No book requests found.</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    </div>
   );
   
   const renderAudioLectureManagement = () => (
@@ -1144,7 +1197,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="live-class-item">Associated Item</Label>
-                    <Select value={liveClassAssociatedItem} onValueChange={liveClassAssociatedItem} required>
+                    <Select value={liveClassAssociatedItem} onValueChange={setLiveClassAssociatedItem} required>
                         <SelectTrigger id="live-class-item">
                             <SelectValue placeholder="Select an item..." />
                         </SelectTrigger>

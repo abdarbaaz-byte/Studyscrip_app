@@ -5,7 +5,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, FileText, Download, Search } from "lucide-react";
+import { Loader2, FileText, Download, Search, PlusCircle, Send } from "lucide-react";
 import { useData } from "@/hooks/use-data";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
 import { ScrollAnimation } from "@/components/scroll-animation";
@@ -13,10 +13,24 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { saveBookRequest } from "@/lib/data";
 
 export default function BookstoreClient() {
   const { bookstoreItems: items, loading } = useData();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [requestedBookName, setRequestedBookName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -35,6 +49,37 @@ export default function BookstoreClient() {
     window.open(url, "_blank");
   };
 
+  const handleRequestClick = () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Login Required",
+        description: "Please login to request a book.",
+      });
+      router.push(`/login?redirect=/bookstore`);
+      return;
+    }
+    setIsRequestDialogOpen(true);
+  };
+
+  const handleRequestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!requestedBookName.trim() || !user) return;
+
+    setIsSubmitting(true);
+    try {
+        await saveBookRequest(user.uid, user.displayName || user.email || 'Anonymous', requestedBookName);
+        toast({ title: "Request Submitted!", description: "We will try to add your requested book soon." });
+        setRequestedBookName("");
+        setIsRequestDialogOpen(false);
+    } catch (error) {
+        console.error("Failed to submit request:", error);
+        toast({ variant: "destructive", title: "Submission Failed", description: "Could not save your request. Please try again." });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
   const filteredItems = items.filter((item) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -50,8 +95,8 @@ export default function BookstoreClient() {
         </ScrollAnimation>
       </div>
 
-      <div className="max-w-md mx-auto mb-12">
-        <div className="relative">
+      <div className="max-w-md mx-auto mb-12 flex gap-2">
+        <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="search"
@@ -61,6 +106,9 @@ export default function BookstoreClient() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <Button variant="outline" onClick={handleRequestClick}>
+           Request Book
+        </Button>
       </div>
 
       {loading ? (
@@ -103,16 +151,50 @@ export default function BookstoreClient() {
               ))}
             </div>
           ) : (
-             <div className="text-center col-span-full py-16">
-              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+             <div className="text-center col-span-full py-16 flex flex-col items-center">
+              <FileText className="h-16 w-16 text-muted-foreground mb-4 opacity-20" />
               <h3 className="text-xl font-semibold">No Books Found</h3>
-              <p className="text-muted-foreground">
-                {items.length > 0 ? `Your search for "${searchTerm}" did not match any books.` : 'The bookstore is empty right now. Check back later!'}
+              <p className="text-muted-foreground mb-6">
+                Your search for "{searchTerm}" did not match any books.
               </p>
+              <Button onClick={handleRequestClick}>
+                 <PlusCircle className="mr-2 h-4 w-4" /> Request this Book
+              </Button>
             </div>
           )}
         </>
       )}
+
+      {/* Request Book Dialog */}
+      <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Request a Book</DialogTitle>
+                <DialogDescription>
+                    Can't find what you're looking for? Let us know and we'll try to add it.
+                </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleRequestSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                    <Label htmlFor="book-name">Book Name / Topic</Label>
+                    <Input 
+                        id="book-name" 
+                        value={requestedBookName} 
+                        onChange={(e) => setRequestedBookName(e.target.value)} 
+                        placeholder="e.g., 10th Class Physics NCERT"
+                        required
+                    />
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="ghost" onClick={() => setIsRequestDialogOpen(false)}>Cancel</Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4"/>}
+                        Submit Request
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

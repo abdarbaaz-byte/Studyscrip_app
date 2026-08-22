@@ -959,6 +959,14 @@ export type BookstoreItem = {
     createdAt?: Timestamp;
 };
 
+export type BookRequest = {
+    id: string;
+    userId: string;
+    userName: string;
+    bookName: string;
+    createdAt: Timestamp;
+};
+
 export function listenToBookstore(callback: (items: BookstoreItem[]) => void) {
     const itemsCol = collection(db, 'bookstore');
     const q = query(itemsCol, orderBy('createdAt', 'desc'));
@@ -988,6 +996,29 @@ export async function saveBookstoreItem(item: BookstoreItem): Promise<void> {
 export async function deleteBookstoreItem(id: string): Promise<void> {
     await deleteDoc(doc(db, 'bookstore', id));
     triggerRevalidation('/bookstore');
+}
+
+export async function saveBookRequest(userId: string, userName: string, bookName: string): Promise<void> {
+    const requestsCol = collection(db, 'bookRequests');
+    await addDoc(requestsCol, {
+        userId,
+        userName,
+        bookName,
+        createdAt: serverTimestamp(),
+    });
+}
+
+export function listenToBookRequests(callback: (requests: BookRequest[]) => void) {
+    const requestsCol = collection(db, 'bookRequests');
+    const q = query(requestsCol, orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        const requestList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BookRequest));
+        callback(requestList);
+    });
+}
+
+export async function deleteBookRequest(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'bookRequests', id));
 }
 
 // --- AUDIO LECTURES ---
