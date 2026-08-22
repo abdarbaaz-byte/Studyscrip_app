@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Wallet, QrCode, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, Wallet, QrCode, CheckCircle, AlertCircle, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -181,11 +181,19 @@ export function PaymentDialog({
     setIsSubmittingUpi(false);
   }
   
+  const getUpiString = () => {
+    return `upi://pay?pa=${UPI_ID}&pn=StudyScript&am=${itemPrice}&cu=INR`;
+  };
+
   const getQrCodeUrl = () => {
-    if (!UPI_ID) return "";
-    const upiData = `upi://pay?pa=${UPI_ID}&pn=StudyScript&am=${itemPrice}`;
+    const upiData = getUpiString();
     const encodedUpiData = encodeURIComponent(upiData);
     return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodedUpiData}`;
+  };
+
+  const handlePayViaUpiApp = () => {
+    const upiUrl = getUpiString();
+    window.location.href = upiUrl;
   };
 
   const totalProcessing = isProcessing || isPaying || isSubmittingUpi;
@@ -194,7 +202,7 @@ export function PaymentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-headline">Complete Your Purchase</DialogTitle>
+          <DialogTitle className="text-2xl font-headline font-bold">Complete Your Purchase</DialogTitle>
           <DialogDescription>
             You are purchasing access to "{itemName}".
           </DialogDescription>
@@ -207,23 +215,37 @@ export function PaymentDialog({
 
         <Tabs defaultValue="upi" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="upi">Pay with UPI</TabsTrigger>
-                <TabsTrigger value="razorpay">Card / Netbanking</TabsTrigger>
+                <TabsTrigger value="upi" className="font-semibold">Pay with UPI</TabsTrigger>
+                <TabsTrigger value="razorpay" className="font-semibold">Card / Netbanking</TabsTrigger>
             </TabsList>
             <TabsContent value="upi" className="py-4 space-y-4">
-                <div className="text-center p-4 bg-secondary rounded-lg">
-                    <p className="text-sm font-medium">1. Scan QR or use UPI ID</p>
-                    <div className="flex justify-center my-2">
-                        <Image src={getQrCodeUrl()} alt="UPI QR Code" width={150} height={150} />
+                <div className="text-center p-4 bg-secondary/50 rounded-xl border border-dashed border-primary/20">
+                    <p className="text-sm font-bold text-primary mb-3">Option 1: Scan QR or Use UPI App</p>
+                    <div className="flex justify-center mb-4">
+                        <div className="bg-white p-2 rounded-lg shadow-sm">
+                          <Image src={getQrCodeUrl()} alt="UPI QR Code" width={160} height={160} />
+                        </div>
                     </div>
-                      <p className="text-sm font-semibold">
-                        UPI ID: <span className="font-mono p-1 rounded bg-background">{UPI_ID}</span>
+                    
+                    <Button 
+                      variant="default" 
+                      onClick={handlePayViaUpiApp} 
+                      className="w-full mb-3 bg-emerald-600 hover:bg-emerald-700 shadow-md font-bold"
+                      disabled={totalProcessing}
+                    >
+                      <Smartphone className="mr-2 h-5 w-5" />
+                      Pay via UPI App (GPay, PhonePe, etc.)
+                    </Button>
+
+                    <p className="text-xs font-semibold text-muted-foreground">
+                        UPI ID: <span className="font-mono p-1 rounded bg-background select-all">{UPI_ID}</span>
                     </p>
                 </div>
-                  <div className="text-left p-4 bg-secondary rounded-lg">
-                    <p className="text-sm font-medium">2. Submit Reference ID for verification</p>
-                      <form onSubmit={handleUpiSubmit} className="space-y-3 mt-2">
-                        <Label htmlFor="upi-ref">UPI Transaction/Reference ID</Label>
+
+                <div className="text-left p-4 bg-secondary/30 rounded-xl border">
+                    <p className="text-sm font-bold text-foreground mb-3">Option 2: Submit Reference ID</p>
+                      <form onSubmit={handleUpiSubmit} className="space-y-3">
+                        <Label htmlFor="upi-ref" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">UPI Transaction/Reference ID</Label>
                         <Input 
                             id="upi-ref"
                             placeholder="Enter 12-digit ID from your UPI app"
@@ -231,34 +253,35 @@ export function PaymentDialog({
                             onChange={(e) => setUpiRefId(e.target.value)}
                             required
                             disabled={isSubmittingUpi}
+                            className="bg-background border-primary/20 focus:border-primary"
                         />
-                          <Button type="submit" disabled={totalProcessing} className="w-full">
+                        <Button type="submit" disabled={totalProcessing} className="w-full font-bold">
                             {isSubmittingUpi ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
                             {isSubmittingUpi ? 'Submitting...' : 'Submit for Verification'}
                         </Button>
                       </form>
                 </div>
-                  <p className="text-xs text-muted-foreground text-center flex items-center gap-2 justify-center">
-                    <AlertCircle className="h-4 w-4" />
-                    Access will be granted within 24 hours after verification.
+                  <p className="text-[11px] text-muted-foreground text-center flex items-start gap-2 justify-center leading-relaxed">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-orange-500" />
+                    Important: Verification typically takes 24 hours. After that, you will get full access.
                 </p>
             </TabsContent>
             <TabsContent value="razorpay" className="py-4">
-                <p className="text-sm text-muted-foreground text-center mb-4">
-                    You will be redirected to Razorpay to complete your payment securely.
+                <p className="text-sm text-muted-foreground text-center mb-6 px-4">
+                    Instantly unlock content using Card, Netbanking, or Wallets via Razorpay secure gateway.
                 </p>
-                 <Button onClick={makePayment} disabled={totalProcessing} className="w-full">
+                 <Button onClick={makePayment} disabled={totalProcessing} size="lg" className="w-full font-bold shadow-lg h-14">
                     {totalProcessing ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : <Wallet className="mr-2 h-4 w-4" />}
-                    {isPaying ? "Redirecting..." : isProcessing ? "Processing..." : `Pay with Razorpay`}
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : <Wallet className="mr-2 h-5 w-5" />}
+                    {isPaying ? "Redirecting..." : isProcessing ? "Processing..." : `Pay Rs. ${itemPrice} Now`}
                 </Button>
             </TabsContent>
         </Tabs>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={totalProcessing}>
-            Cancel
+        <DialogFooter className="sm:justify-center">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={totalProcessing} className="text-muted-foreground">
+            Cancel & Go Back
           </Button>
         </DialogFooter>
       </DialogContent>
