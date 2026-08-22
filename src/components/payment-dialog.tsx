@@ -11,13 +11,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Wallet, QrCode, CheckCircle, AlertCircle, Smartphone } from "lucide-react";
+import { Loader2, Wallet, QrCode, CheckCircle, AlertCircle, Smartphone, HelpCircle, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createPaymentRequest } from "@/lib/data";
 import { useAuth } from "@/hooks/use-auth";
+import { Separator } from "@/components/ui/separator";
 
 declare global {
   interface Window {
@@ -37,7 +38,7 @@ interface PaymentDialogProps {
 }
 
 // Use a fallback UPI ID for testing in local environment if env var is missing
-const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "studyscript@upi";
+const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "studyscript@axl";
 
 export function PaymentDialog({
   open,
@@ -200,7 +201,7 @@ export function PaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-headline font-bold">Complete Your Purchase</DialogTitle>
           <DialogDescription>
@@ -209,8 +210,8 @@ export function PaymentDialog({
         </DialogHeader>
 
         <div className="flex justify-between items-center bg-secondary p-4 rounded-lg my-4">
-            <span className="font-medium text-lg">{itemName}</span>
-            <span className="font-bold text-xl text-primary">Rs. {itemPrice}</span>
+            <span className="font-medium text-lg truncate pr-4">{itemName}</span>
+            <span className="font-bold text-xl text-primary shrink-0">Rs. {itemPrice}</span>
         </div>
 
         <Tabs defaultValue="upi" className="w-full">
@@ -261,11 +262,60 @@ export function PaymentDialog({
                         </Button>
                       </form>
                 </div>
-                  <p className="text-[11px] text-muted-foreground text-center flex items-start gap-2 justify-center leading-relaxed">
-                    <AlertCircle className="h-4 w-4 shrink-0 text-orange-500" />
-                    Important: Verification typically takes 24 hours. After that, you will get full access.
-                </p>
+
+                {/* Steps Section */}
+                <div className="p-4 border rounded-xl bg-background space-y-4">
+                  <h4 className="font-bold flex items-center gap-2 text-sm text-primary">
+                    <Smartphone className="h-4 w-4" />
+                    How to pay? / पेमेंट कैसे करें?
+                  </h4>
+                  <div className="space-y-4 text-xs">
+                    <div className="flex gap-3">
+                      <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">1</div>
+                      <div className="space-y-0.5">
+                        <p className="font-semibold">Click "Pay via UPI App" or scan QR.</p>
+                        <p className="text-muted-foreground">"Pay via UPI App" बटन पर क्लिक करें या QR स्कैन करें।</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">2</div>
+                      <div className="space-y-0.5">
+                        <p className="font-semibold">Complete payment in your UPI app (GPay, PhonePe, etc.)</p>
+                        <p className="text-muted-foreground">अपने UPI ऐप में जाकर पेमेंट पूरा करें।</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">3</div>
+                      <div className="space-y-0.5">
+                        <p className="font-semibold">Copy the 12-digit Ref. ID from payment history.</p>
+                        <p className="text-muted-foreground">पेमेंट हिस्ट्री से 12-अंकों का Reference ID कॉपी करें।</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">4</div>
+                      <div className="space-y-0.5">
+                        <p className="font-semibold">Paste Ref. ID above and click "Submit".</p>
+                        <p className="text-muted-foreground">ऊपर दिए गए बॉक्स में ID पेस्ट करें और "Submit" करें।</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Help Section */}
+                <div className="p-4 rounded-xl bg-orange-50 border border-orange-100 space-y-2">
+                  <h4 className="font-bold flex items-center gap-2 text-sm text-orange-800">
+                    <HelpCircle className="h-4 w-4" />
+                    Payment Issues? / पेमेंट की समस्या?
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-1 text-[11px] text-orange-900/80 leading-relaxed">
+                    <li>Verification typically takes <strong>24 hours</strong>.</li>
+                    <li>वेरिफिकेशन में आमतौर पर <strong>24 घंटे</strong> लगते हैं।</li>
+                    <li>If access is not granted after 24 hours, contact us via <strong>Global Support Chat</strong>.</li>
+                    <li>यदि 24 घंटे बाद भी एक्सेस न मिले, तो <strong>सपोर्ट चैट</strong> पर मैसेज करें।</li>
+                  </ul>
+                </div>
             </TabsContent>
+            
             <TabsContent value="razorpay" className="py-4">
                 <p className="text-sm text-muted-foreground text-center mb-6 px-4">
                     Instantly unlock content using Card, Netbanking, or Wallets via Razorpay secure gateway.
@@ -279,8 +329,8 @@ export function PaymentDialog({
             </TabsContent>
         </Tabs>
         
-        <DialogFooter className="sm:justify-center">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={totalProcessing} className="text-muted-foreground">
+        <DialogFooter className="sm:justify-center pt-2">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={totalProcessing} className="text-muted-foreground text-xs h-8">
             Cancel & Go Back
           </Button>
         </DialogFooter>
