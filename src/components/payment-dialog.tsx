@@ -38,7 +38,7 @@ interface PaymentDialogProps {
   onConfirm: (razorpayPaymentId: string) => void; 
 }
 
-// Use a fallback UPI ID for testing in local environment if env var is missing
+// Fallback UPI ID for testing
 const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "studyscript@axl";
 
 export function PaymentDialog({
@@ -210,7 +210,7 @@ export function PaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-secondary p-4 rounded-lg my-4 gap-2 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-secondary p-4 rounded-lg my-4 gap-2 w-full overflow-hidden">
             <span className="font-medium text-base sm:text-lg truncate max-w-full">{itemName}</span>
             <span className="font-bold text-lg sm:text-xl text-primary shrink-0">Rs. {itemPrice}</span>
         </div>
@@ -265,8 +265,7 @@ export function PaymentDialog({
                       </form>
                 </div>
 
-                {/* Steps Section */}
-                <div className="p-4 border rounded-xl bg-background space-y-4 w-full">
+                <div className="p-4 border rounded-xl bg-background space-y-4 w-full overflow-hidden">
                   <h4 className="font-bold flex items-center gap-2 text-xs sm:text-sm text-primary">
                     <Smartphone className="h-4 w-4" />
                     How to pay? / पेमेंट कैसे करें?
@@ -303,8 +302,7 @@ export function PaymentDialog({
                   </div>
                 </div>
 
-                {/* Help Section */}
-                <div className="p-4 rounded-xl bg-orange-50 border border-orange-100 space-y-2 w-full">
+                <div className="p-4 rounded-xl bg-orange-50 border border-orange-100 space-y-2 w-full overflow-hidden">
                   <h4 className="font-bold flex items-center gap-2 text-xs sm:text-sm text-orange-800">
                     <HelpCircle className="h-4 w-4" />
                     Payment Issues? / पेमेंट की समस्या?
