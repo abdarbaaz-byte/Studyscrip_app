@@ -1,7 +1,6 @@
-
 "use client";
 
-import Link from "next/link";
+import Link from "link";
 import { useState, useEffect } from "react";
 import { type AcademicClass, type Subject, listenToAcademics } from "@/lib/academics";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -77,7 +76,7 @@ export default function SubjectDetailClientPage() {
     setIsPaymentDialogOpen(true);
   };
 
-  const handlePurchaseConfirm = async (razorpayPaymentId: string) => {
+  const handlePurchaseConfirm = async (razorpayPaymentId: string, creditUsed: number) => {
     if (!subject || !user) return;
     
     setIsBuying(true);
@@ -88,8 +87,9 @@ export default function SubjectDetailClientPage() {
           subject.id,
           subject.name,
           'subject',
-          subject.price,
-          razorpayPaymentId
+          subject.price - creditUsed,
+          razorpayPaymentId,
+          creditUsed
         );
         setIsPurchased(true);
         toast({

@@ -36,7 +36,7 @@ interface PaymentDialogProps {
   isProcessing: boolean;
   itemId: string;
   itemType: 'course' | 'subject' | 'batch';
-  onConfirm: (razorpayPaymentId: string) => void; 
+  onConfirm: (razorpayPaymentId: string, creditUsed: number) => void; 
 }
 
 const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "studyscript@axl";
@@ -118,9 +118,8 @@ export function PaymentDialog({
             description: `Purchase of ${itemName}`,
             order_id: order.id,
             handler: async function (response: any) {
-                // If partial credit was used, we need a secure way to process it.
-                // For MVP, we'll confirm the payment.
-                onConfirm(response.razorpay_payment_id); 
+                // Pass creditToUse to onConfirm so it gets deducted in createPurchase
+                onConfirm(response.razorpay_payment_id, creditToUse); 
             },
             prefill: {
                 name: user?.displayName || "Your Name",
@@ -143,7 +142,7 @@ export function PaymentDialog({
     try {
         await processCreditPurchase(user.uid, user.email || 'Anonymous', itemId, itemName, itemType, itemPrice, creditToUse);
         toast({ title: "Purchase Successful!", description: "Amount covered by StudyScript Credit." });
-        onConfirm(`CREDIT_FULL_${Date.now()}`);
+        onConfirm(`CREDIT_FULL_${Date.now()}`, creditToUse);
         onOpenChange(false);
     } catch (e) {
         toast({ variant: "destructive", title: "Purchase Failed", description: "Could not process credit transaction." });

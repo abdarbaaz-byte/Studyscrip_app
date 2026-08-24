@@ -129,11 +129,20 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     setIsPaymentDialogOpen(true);
   };
 
-  const handlePurchaseConfirm = async (paymentId: string) => {
+  const handlePurchaseConfirm = async (paymentId: string, creditUsed: number) => {
     if (!user) return;
     setIsBuying(true);
     try {
-      await createPurchase(user.uid, user.email || 'Anonymous', batch.id, batch.title, 'batch', batch.price, paymentId);
+      await createPurchase(
+          user.uid, 
+          user.email || 'Anonymous', 
+          batch.id, 
+          batch.title, 
+          'batch', 
+          batch.price - creditUsed, 
+          paymentId,
+          creditUsed
+      );
       setIsPurchased(true);
       toast({ title: "Welcome to the Batch!", description: "Enrollment successful." });
     } catch (error) {

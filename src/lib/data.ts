@@ -467,43 +467,61 @@ export async function createPurchase(
     itemTitle: string,
     itemType: 'course' | 'subject' | 'batch',
     amount: number,
-    razorpayPaymentId: string
+    razorpayPaymentId: string,
+    creditUsed: number = 0
 ): Promise<string> {
+  const now = new Date();
+  const expiry = new Date(new Date().setFullYear(now.getFullYear() + 1));
 
-  const batch = writeBatch(db);
+  return await runTransaction(db, async (transaction) => {
+      const userRef = doc(db, 'users', userId);
+      
+      // 1. Deduct Credit if used
+      if (creditUsed > 0) {
+          transaction.update(userRef, {
+              creditBalance: increment(-creditUsed)
+          });
+          // Add debit history
+          const histRef = doc(collection(db, 'users', userId, 'creditHistory'));
+          transaction.set(histRef, {
+              amount: creditUsed,
+              type: 'debit',
+              reason: `Used for ${itemTitle}`,
+              timestamp: serverTimestamp(),
+          });
+      }
 
-  const purchasesCol = collection(db, 'purchases');
-  const newPurchaseRef = doc(purchasesCol);
-  const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+      // 2. Create Purchase
+      const purchasesCol = collection(db, 'purchases');
+      const newPurchaseRef = doc(purchasesCol);
+      const newPurchase: Omit<Purchase, 'id'> = {
+          userId,
+          itemId,
+          itemType,
+          purchaseDate: Timestamp.fromDate(now),
+          expiryDate: Timestamp.fromDate(expiry),
+          creditUsed,
+      };
+      transaction.set(newPurchaseRef, newPurchase);
+      
+      // 3. Create Payment Record
+      const paymentsCol = collection(db, 'payments');
+      const newPaymentRef = doc(paymentsCol);
+      const newPayment: Omit<Payment, 'id'> = {
+          userId,
+          userName,
+          itemId,
+          itemTitle,
+          itemType,
+          amount,
+          status: 'succeeded',
+          paymentDate: Timestamp.fromDate(now),
+          razorpayPaymentId,
+      };
+      transaction.set(newPaymentRef, newPayment);
 
-
-  const newPurchase: Omit<Purchase, 'id'> = {
-    userId,
-    itemId,
-    itemType,
-    purchaseDate: Timestamp.fromDate(new Date()),
-    expiryDate: Timestamp.fromDate(expiry),
-  };
-  batch.set(newPurchaseRef, newPurchase);
-  
-  const paymentsCol = collection(db, 'payments');
-  const newPaymentRef = doc(paymentsCol);
-  const newPayment: Omit<Payment, 'id'> = {
-    userId,
-    userName,
-    itemId,
-    itemTitle,
-    itemType,
-    amount,
-    status: 'succeeded',
-    paymentDate: Timestamp.fromDate(new Date()),
-    razorpayPaymentId,
-  };
-  batch.set(newPaymentRef, newPayment);
-
-  await batch.commit();
-
-  return newPurchaseRef.id;
+      return newPurchaseRef.id;
+  });
 }
 
 
@@ -790,6 +808,21 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
             
             // Mark buyer as rewarded
             transaction.update(buyerRef, { firstPurchaseRewardGiven: true });
+        }
+
+        // 5. Deduct used credits from Buyer Wallet (Fix for partial credits not deducting)
+        if (request.creditUsed && request.creditUsed > 0) {
+            transaction.update(buyerRef, {
+                creditBalance: increment(-request.creditUsed)
+            });
+            // Add debit history for buyer
+            const buyerHistRef = doc(collection(db, 'users', request.userId, 'creditHistory'));
+            transaction.set(buyerHistRef, {
+                amount: request.creditUsed,
+                type: 'debit',
+                reason: `Used for ${request.itemTitle}`,
+                timestamp: serverTimestamp(),
+            });
         }
     });
 }

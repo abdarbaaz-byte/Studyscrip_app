@@ -65,7 +65,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
   };
 
 
-  const handlePurchaseConfirm = async (razorpayPaymentId: string) => {
+  const handlePurchaseConfirm = async (razorpayPaymentId: string, creditUsed: number) => {
     if (!user || !course.docId) return;
 
     setIsBuying(true);
@@ -76,8 +76,9 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
           course.docId, 
           course.title,
           'course',
-          course.price,
-          razorpayPaymentId
+          course.price - creditUsed,
+          razorpayPaymentId,
+          creditUsed
         );
         setIsPurchased(true);
         toast({
