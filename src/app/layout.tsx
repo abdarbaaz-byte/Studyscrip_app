@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "Free Notes for Class 8-12 | NCERT solutions | StudyScript",
   description: "StudyScript se online padhai karein! Hum Class 8-12 ke liye structured courses, live classes, quizzes, free pdf notes aur books pradan karte hain. NCERT, MP Board syllabus, aur previous year question papers ke saath apni exam ki taiyari ko behtar banayein.",
   applicationName: "StudyScript",
-  keywords: ["online classes", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "NCERT solutions", "MP Board", "previous year question papers", "CBSE notes", "live classes", "online quiz", "free study material", "free pdf notes", "MP board notes", "free pdf books", "Study script", "professional courses", "exam preparation"],
+  keywords: ["online classes", "StudyScript", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12", "NCERT solutions", "MP Board", "previous year question papers", "CBSE notes", "live classes", "online quiz", "free study material", "free pdf notes", "MP board notes", "free pdf books", "Study script", "B.Pharma PCI", "M.Pharm PCI"],
   authors: [{ name: "StudyScript" }],
   robots: "index, follow",
   verification: {
@@ -35,8 +35,7 @@ export const viewport: Viewport = {
   themeColor: "#227447",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  userScalable: true,
 };
 
 export default function RootLayout({

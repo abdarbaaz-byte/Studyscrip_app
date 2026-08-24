@@ -217,7 +217,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                 <Card>
                   <CardHeader>
                     <CardTitle className="font-headline text-2xl">Online Viewing</CardTitle>
-                    <CardDescription>Watch videos and view notes inside the app.</CardDescription>
+                    <CardDescription>View notes inside the app.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Accordion type="single" collapsible className="w-full space-y-3">
@@ -337,7 +337,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                        {course.originalPrice && course.originalPrice > course.price && (
                           <span className="text-sm text-muted-foreground line-through font-medium">Rs. {course.originalPrice}</span>
                        )}
-                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest block mt-1">Lifetime Access</span>
+                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest block mt-1">Get Access</span>
                     </div>
                   </div>
                   

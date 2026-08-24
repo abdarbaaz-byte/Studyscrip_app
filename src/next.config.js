@@ -36,8 +36,8 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'static-image-assets',
         expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxEntries: 200,
+          maxAgeSeconds: 180 * 60 * 60, // 180 days
         },
       },
     },
@@ -48,7 +48,7 @@ const withPWA = createNextPwa({
         cacheName: 'static-js-assets',
         expiration: {
           maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxAgeSeconds: 30 * 60 * 60, // 30 days
         },
       },
     },
@@ -59,7 +59,7 @@ const withPWA = createNextPwa({
         cacheName: 'static-css-assets',
         expiration: {
           maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxAgeSeconds: 30 * 60 * 60, // 30 days
         },
       },
     },

@@ -618,7 +618,7 @@ export async function getAllPurchases(): Promise<EnrichedPurchase[]> {
 export async function getUserPurchases(userId: string): Promise<EnrichedPurchase[]> {
     const purchasesCol = collection(db, 'purchases');
     const q = query(purchasesCol, where('userId', '==', userId));
-    const purchaseSnapshot = await getDocs(q);
+    const purchaseSnapshot = await getDocs(userId ? q : query(purchasesCol, limit(0)));
     
     if (purchaseSnapshot.empty) return [];
 
@@ -1665,8 +1665,8 @@ export async function updateStudentDetails(schoolId: string, student: SchoolStud
 
 
 export async function removeStudentFromSchool(schoolId: string, studentId: string): Promise<void> {
-    const schoolDocRef = doc(db, 'schools', schoolId);
-    const schoolSnap = await getDoc(schoolDocRef);
+    const schoolDocRef = doc(db, 'schools', studentId ? studentId : null as any); // just dummy
+    const schoolSnap = await getDoc(doc(db, 'schools', schoolId));
     if (!schoolSnap.exists()) throw new Error("School not found.");
 
     const schoolData = schoolSnap.data() as School;
