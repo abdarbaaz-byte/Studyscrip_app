@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove, increment } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc, DocumentReference, query, where, Timestamp, orderBy, writeBatch, arrayUnion, onSnapshot, serverTimestamp, limit, arrayRemove, increment, runTransaction } from 'firebase/firestore';
 import type { Course, CourseFolder, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
@@ -313,7 +313,16 @@ export function listenToReviews(status: 'approved' | 'pending' | 'all', callback
   });
 }
 
-// --- USER PROFILE ---
+// --- USER PROFILE & CREDITS ---
+export type CreditTransaction = {
+    id: string;
+    amount: number;
+    type: 'credit' | 'debit';
+    reason: string;
+    timestamp: Timestamp;
+    relatedUser?: string; // For referral rewards
+};
+
 export type UserCertificate = {
     id: string;
     title: string;
@@ -335,6 +344,8 @@ export type UserProfile = {
     referralCode: string;
     referredBy?: string | null;
     referralCount: number;
+    creditBalance: number;
+    firstPurchaseRewardGiven?: boolean;
 };
 
 // COURSES
@@ -409,6 +420,7 @@ export type Purchase = {
   itemType: 'course' | 'subject' | 'batch';
   purchaseDate: Timestamp;
   expiryDate: Timestamp;
+  creditUsed?: number;
 };
 
 export type EnrichedPurchase = Omit<Purchase, 'itemId'> & {
@@ -444,6 +456,8 @@ export type PaymentRequest = {
     requestDate: Timestamp;
     actionDate?: Timestamp;
     adminNotes?: string;
+    creditUsed?: number;
+    amountToPay?: number;
 };
 
 export async function createPurchase(
@@ -699,44 +713,77 @@ export function listenToPaymentRequests(callback: (requests: PaymentRequest[]) =
 }
 
 export async function approvePaymentRequest(request: PaymentRequest): Promise<void> {
-    const batch = writeBatch(db);
-    const now = new Date();
+    await runTransaction(db, async (transaction) => {
+        const now = new Date();
 
-    const purchasesCol = collection(db, 'purchases');
-    const newPurchaseRef = doc(purchasesCol);
-    const expiry = new Date(new Date().setFullYear(now.getFullYear() + 1));
+        // 1. Create Purchase
+        const purchasesCol = collection(db, 'purchases');
+        const newPurchaseRef = doc(purchasesCol);
+        const expiry = new Date(new Date().setFullYear(now.getFullYear() + 1));
+        const newPurchase = {
+            userId: request.userId,
+            itemId: request.itemId,
+            itemType: request.itemType,
+            purchaseDate: Timestamp.fromDate(now),
+            expiryDate: Timestamp.fromDate(expiry),
+            creditUsed: request.creditUsed || 0,
+        };
+        transaction.set(newPurchaseRef, newPurchase);
 
-    const newPurchase: Omit<Purchase, 'id'> = {
-        userId: request.userId,
-        itemId: request.itemId,
-        itemType: request.itemType,
-        purchaseDate: Timestamp.fromDate(now),
-        expiryDate: Timestamp.fromDate(expiry),
-    };
-    batch.set(newPurchaseRef, newPurchase);
+        // 2. Create Payment Record
+        const paymentsCol = collection(db, 'payments');
+        const newPaymentRef = doc(paymentsCol);
+        const newPayment = {
+            userId: request.userId,
+            userName: request.userName,
+            itemId: request.itemId,
+            itemTitle: request.itemTitle,
+            itemType: request.itemType,
+            amount: request.amountToPay || request.itemPrice,
+            status: 'succeeded',
+            paymentDate: Timestamp.fromDate(now),
+            razorpayPaymentId: `UPI: ${request.upiReferenceId}`,
+        };
+        transaction.set(newPaymentRef, newPayment);
 
-    const paymentsCol = collection(db, 'payments');
-    const newPaymentRef = doc(paymentsCol);
-    const newPayment: Omit<Payment, 'id'> = {
-        userId: request.userId,
-        userName: request.userName,
-        itemId: request.itemId,
-        itemTitle: request.itemTitle,
-        itemType: request.itemType,
-        amount: request.itemPrice,
-        status: 'succeeded',
-        paymentDate: Timestamp.fromDate(now),
-        razorpayPaymentId: `UPI: ${request.upiReferenceId}`,
-    };
-    batch.set(newPaymentRef, newPayment);
+        // 3. Update Request Status
+        const requestDocRef = doc(db, 'paymentRequests', request.id);
+        transaction.update(requestDocRef, {
+            status: 'approved',
+            actionDate: Timestamp.fromDate(now),
+        });
 
-    const requestDocRef = doc(db, 'paymentRequests', request.id);
-    batch.update(requestDocRef, {
-        status: 'approved',
-        actionDate: Timestamp.fromDate(now),
+        // 4. Handle Referral Reward (only for the first purchase)
+        const buyerRef = doc(db, 'users', request.userId);
+        const buyerDoc = await transaction.get(buyerRef);
+        if (buyerDoc.exists()) {
+            const buyerData = buyerDoc.data() as UserProfile;
+            if (buyerData.referredBy && !buyerData.firstPurchaseRewardGiven) {
+                const referrerRef = doc(db, 'users', buyerData.referredBy);
+                const referrerDoc = await transaction.get(referrerRef);
+
+                if (referrerDoc.exists()) {
+                    // Award ₹20 to Referrer
+                    transaction.update(referrerRef, {
+                        creditBalance: increment(20)
+                    });
+
+                    // Add to Referrer History
+                    const histRef = doc(collection(db, 'users', buyerData.referredBy, 'creditHistory'));
+                    transaction.set(histRef, {
+                        amount: 20,
+                        type: 'credit',
+                        reason: `Referral reward for ${buyerData.displayName || buyerData.email}`,
+                        timestamp: serverTimestamp(),
+                        relatedUser: request.userId
+                    });
+                }
+                
+                // Mark buyer as rewarded
+                transaction.update(buyerRef, { firstPurchaseRewardGiven: true });
+            }
+        }
     });
-
-    await batch.commit();
 }
 
 
@@ -752,7 +799,7 @@ export async function rejectPaymentRequest(requestId: string, reason: string, re
         itemId: request.itemId,
         itemTitle: request.itemTitle,
         itemType: request.itemType,
-        amount: request.itemPrice,
+        amount: request.amountToPay || request.itemPrice,
         status: 'failed',
         paymentDate: Timestamp.fromDate(now),
         razorpayPaymentId: `UPI: ${request.upiReferenceId}`,
@@ -784,7 +831,8 @@ export async function sendMessage(chatId: string, message: ChatMessage, userInfo
       createdAt: new Date().toISOString(),
       readNotifications: [],
       referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      referralCount: 0
+      referralCount: 0,
+      creditBalance: 0
     });
   }
 
@@ -1486,6 +1534,15 @@ export async function updateUserCertificates(userId: string, certificates: UserC
     await updateDoc(userDocRef, { certificates });
 }
 
+export function listenToUserCreditHistory(userId: string, callback: (history: CreditTransaction[]) => void) {
+    const histCol = collection(db, 'users', userId, 'creditHistory');
+    const q = query(histCol, orderBy('timestamp', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        const history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CreditTransaction));
+        callback(history);
+    });
+}
+
 // --- REFERRALS ---
 export async function processReferral(referralCode: string, newUserId: string) {
     if (!referralCode) return;
@@ -1499,9 +1556,101 @@ export async function processReferral(referralCode: string, newUserId: string) {
         
         const batch = writeBatch(db);
         batch.update(referrerDoc.ref, { referralCount: increment(1) });
-        batch.update(doc(db, 'users', newUserId), { referredBy: referrerId });
+        batch.update(doc(db, 'users', newUserId), { referredBy: referrerId, creditBalance: 0 });
         
         await batch.commit();
+    }
+}
+
+// --- SECURE CREDIT PURCHASE ---
+export async function processCreditPurchase(
+    userId: string,
+    userEmail: string,
+    itemId: string,
+    itemTitle: string,
+    itemType: 'course' | 'subject' | 'batch',
+    totalPrice: number,
+    creditToUse: number
+): Promise<boolean> {
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await transaction.get(userRef);
+            
+            if (!userDoc.exists()) throw new Error("User not found");
+            
+            const userData = userDoc.data() as UserProfile;
+            const actualBalance = userData.creditBalance || 0;
+            
+            if (actualBalance < creditToUse) {
+                throw new Error("Insufficient credit balance");
+            }
+
+            const now = new Date();
+            const expiry = new Date(new Date().setFullYear(now.getFullYear() + 1));
+
+            // 1. Deduct Credit
+            transaction.update(userRef, {
+                creditBalance: increment(-creditToUse)
+            });
+
+            // 2. Add Credit History (Debit)
+            const histRef = doc(collection(db, 'users', userId, 'creditHistory'));
+            transaction.set(histRef, {
+                amount: creditToUse,
+                type: 'debit',
+                reason: `Used for ${itemTitle}`,
+                timestamp: serverTimestamp(),
+            });
+
+            // 3. Create Purchase
+            const purchaseRef = doc(collection(db, 'purchases'));
+            transaction.set(purchaseRef, {
+                userId,
+                itemId,
+                itemType,
+                purchaseDate: Timestamp.fromDate(now),
+                expiryDate: Timestamp.fromDate(expiry),
+                creditUsed: creditToUse,
+            });
+
+            // 4. Create Payment Record (Success)
+            const paymentRef = doc(collection(db, 'payments'));
+            transaction.set(paymentRef, {
+                userId,
+                userName: userEmail,
+                itemId,
+                itemTitle,
+                itemType,
+                amount: 0, // Since it was fully covered or handled via request for partial
+                status: 'succeeded',
+                paymentDate: Timestamp.fromDate(now),
+                razorpayPaymentId: `CREDIT_FULL: ${creditToUse}`,
+            });
+
+            // 5. Trigger Referral Reward for first purchase if applicable
+            if (!userData.firstPurchaseRewardGiven && userData.referredBy) {
+                const referrerRef = doc(db, 'users', userData.referredBy);
+                const referrerDoc = await transaction.get(referrerRef);
+                
+                if (referrerDoc.exists()) {
+                    transaction.update(referrerRef, { creditBalance: increment(20) });
+                    const rHistRef = doc(collection(db, 'users', userData.referredBy, 'creditHistory'));
+                    transaction.set(rHistRef, {
+                        amount: 20,
+                        type: 'credit',
+                        reason: `Referral reward for ${userData.displayName || userData.email}`,
+                        timestamp: serverTimestamp(),
+                        relatedUser: userId
+                    });
+                }
+                transaction.update(userRef, { firstPurchaseRewardGiven: true });
+            }
+        });
+        return true;
+    } catch (e) {
+        console.error("Credit purchase failed:", e);
+        throw e;
     }
 }
 
@@ -1665,7 +1814,6 @@ export async function updateStudentDetails(schoolId: string, student: SchoolStud
 
 
 export async function removeStudentFromSchool(schoolId: string, studentId: string): Promise<void> {
-    const schoolDocRef = doc(db, 'schools', studentId ? studentId : null as any); // just dummy
     const schoolSnap = await getDoc(doc(db, 'schools', schoolId));
     if (!schoolSnap.exists()) throw new Error("School not found.");
 
@@ -1681,6 +1829,7 @@ export async function removeStudentFromSchool(schoolId: string, studentId: strin
         schoolId: null
     });
     
+    const schoolDocRef = doc(db, 'schools', schoolId);
     batch.update(schoolDocRef, {
         students: arrayRemove(studentToRemove)
     });

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -35,7 +34,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -1499,8 +1498,8 @@ export default function AdminDashboardPage() {
             <TableRow>
               <TableHead>User</TableHead>
               <TableHead>Item</TableHead>
+              <TableHead>Amounts</TableHead>
               <TableHead>Ref. ID</TableHead>
-              <TableHead>Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -1509,34 +1508,40 @@ export default function AdminDashboardPage() {
               <TableRow key={req.id}>
                 <TableCell>
                     <div className="font-medium">{req.userName}</div>
-                    <div className="text-sm text-muted-foreground">Rs. {req.itemPrice}</div>
+                    <div className="text-[10px] text-muted-foreground">{format(req.requestDate.toDate(), 'p, MMM d')}</div>
                 </TableCell>
                 <TableCell>
                     <div className="font-medium">{req.itemTitle}</div>
-                    <div className="text-sm text-muted-foreground capitalize">{req.itemType}</div>
+                    <div className="text-[10px] text-muted-foreground capitalize">{req.itemType}</div>
                 </TableCell>
-                <TableCell className="font-mono">{req.upiReferenceId}</TableCell>
-                <TableCell>{format(req.requestDate.toDate(), 'PPP p')}</TableCell>
+                <TableCell>
+                    <div className="text-xs space-y-1">
+                        <div className="flex justify-between gap-4"><span>Original:</span> <span className="font-bold">₹{req.itemPrice}</span></div>
+                        {req.creditUsed ? <div className="flex justify-between gap-4 text-orange-600"><span>Credit:</span> <span className="font-bold">-₹{req.creditUsed}</span></div> : null}
+                        <div className="flex justify-between gap-4 border-t pt-1 text-primary"><span>Payable:</span> <span className="font-black">₹{req.amountToPay || req.itemPrice}</span></div>
+                    </div>
+                </TableCell>
+                <TableCell className="font-mono text-xs">{req.upiReferenceId}</TableCell>
                 <TableCell className="text-right space-x-2">
-                    <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-100 hover:text-green-700" onClick={() => handleApproveRequest(req)}>
-                        <ShieldCheck className="mr-2 h-4 w-4" /> Approve
+                    <Button size="sm" variant="outline" className="border-green-600 text-green-600 hover:bg-green-100" onClick={() => handleApproveRequest(req)}>
+                        <ShieldCheck className="h-4 w-4" />
                     </Button>
                     <Dialog open={requestToActOn?.id === req.id} onOpenChange={(isOpen) => !isOpen && setRequestToActOn(null)}>
                         <DialogTrigger asChild>
                            <Button size="sm" variant="destructive" onClick={() => setRequestToActOn(req)}>
-                                <ShieldAlert className="mr-2 h-4 w-4" /> Reject
+                                <ShieldAlert className="h-4 w-4" />
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Reject Payment Request?</DialogTitle>
                                 <DialogDescription>
-                                    Please provide a reason for rejecting this request for user <span className="font-bold">{requestToActOn?.userName}</span>.
+                                    Reason for rejecting user <span className="font-bold">{requestToActOn?.userName}</span>.
                                 </DialogDescription>
                             </DialogHeader>
                              <div className="py-4">
                                 <Textarea 
-                                    placeholder="e.g., Transaction ID not found, incorrect amount..."
+                                    placeholder="e.g., Transaction ID not found..."
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
                                 />
@@ -2214,7 +2219,7 @@ export default function AdminDashboardPage() {
                 </div>
               </ScrollArea>
             </CardContent>
-          </Card>}
+          </Card>
         </>}
 
         {hasPermission('manage_chat') && <Card>

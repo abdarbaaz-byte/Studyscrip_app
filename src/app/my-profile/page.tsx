@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { getUserProfile, updateUserProfile, getUserPayments, type Payment, type UserCertificate, type UserProfile } from "@/lib/data";
-import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail, BookOpen, Gift, Users, Copy, CheckCircle2 } from "lucide-react";
+import { getUserProfile, updateUserProfile, getUserPayments, listenToUserCreditHistory, type Payment, type UserCertificate, type UserProfile, type CreditTransaction } from "@/lib/data";
+import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail, BookOpen, Gift, Users, Copy, CheckCircle2, History, Coins, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
 
 
 export default function MyProfilePage() {
@@ -33,6 +32,7 @@ export default function MyProfilePage() {
   const [address, setAddress] = useState("");
   
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
+  const [creditHistory, setCreditHistory] = useState<CreditTransaction[]>([]);
   const [certificates, setCertificates] = useState<UserCertificate[]>([]);
   const [fullProfile, setFullProfile] = useState<Partial<UserProfile> | null>(null);
   
@@ -73,6 +73,12 @@ export default function MyProfilePage() {
       return;
     }
     loadProfile();
+
+    const unsubHistory = listenToUserCreditHistory(user.uid, (data) => {
+        setCreditHistory(data);
+    });
+    return () => unsubHistory();
+
   }, [user, authLoading, router, loadProfile]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -256,15 +262,66 @@ export default function MyProfilePage() {
             </div>
         </Card>
 
-        {/* Total Referrals card - Full Width */}
-        <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-6">
-            <div className="bg-blue-100 p-4 rounded-2xl text-blue-600">
-                <Users className="h-8 w-8 md:h-10 md:w-10" />
-            </div>
-            <div>
-                <p className="text-3xl md:text-4xl font-black text-blue-900">{fullProfile?.referralCount || 0}</p>
-                <p className="text-sm md:text-base font-bold text-muted-foreground uppercase tracking-wider">Total Referrals</p>
-            </div>
+        {/* Wallet & Referrals Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-6">
+                <div className="bg-orange-100 p-4 rounded-2xl text-orange-600">
+                    <Coins className="h-8 w-8 md:h-10 md:w-10" />
+                </div>
+                <div>
+                    <p className="text-3xl md:text-4xl font-black text-orange-900">₹{fullProfile?.creditBalance || 0}</p>
+                    <p className="text-sm md:text-base font-bold text-muted-foreground uppercase tracking-wider">StudyScript Credit</p>
+                </div>
+            </Card>
+
+            <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-6">
+                <div className="bg-blue-100 p-4 rounded-2xl text-blue-600">
+                    <Users className="h-8 w-8 md:h-10 md:w-10" />
+                </div>
+                <div>
+                    <p className="text-3xl md:text-4xl font-black text-blue-900">{fullProfile?.referralCount || 0}</p>
+                    <p className="text-sm md:text-base font-bold text-muted-foreground uppercase tracking-wider">Total Referrals</p>
+                </div>
+            </Card>
+        </div>
+
+        {/* Credit History Section */}
+        <Card className="shadow-xl rounded-3xl border-none">
+            <CardHeader className="px-8 pt-8">
+                <CardTitle className="font-headline text-2xl flex items-center gap-3">
+                    <div className="bg-orange-100 p-2 rounded-xl text-orange-600"><History className="h-6 w-6" /></div>
+                    Credit History
+                </CardTitle>
+                <CardDescription>Records of your referral rewards and credits used.</CardDescription>
+            </CardHeader>
+            <CardContent className="px-8 pb-8">
+                {creditHistory.length === 0 ? (
+                    <div className="text-center py-10 bg-secondary/10 rounded-2xl border-2 border-dashed">
+                        <p className="text-muted-foreground">No credit transactions yet.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {creditHistory.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl border bg-background hover:bg-secondary/10 transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <div className={cn("p-2 rounded-lg", item.type === 'credit' ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600")}>
+                                        {item.type === 'credit' ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-sm md:text-base">{item.reason}</p>
+                                        <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
+                                            <Clock className="h-3 w-3" /> {format(item.timestamp.toDate(), "PPP p")}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className={cn("text-lg font-black", item.type === 'credit' ? "text-green-600" : "text-red-600")}>
+                                    {item.type === 'credit' ? "+" : "-"} ₹{item.amount}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
         </Card>
 
         <Card className="shadow-xl rounded-3xl border-none">
