@@ -716,6 +716,24 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
     await runTransaction(db, async (transaction) => {
         const now = new Date();
 
+        // ALL READS MUST HAPPEN FIRST IN A TRANSACTION
+        const buyerRef = doc(db, 'users', request.userId);
+        const buyerDoc = await transaction.get(buyerRef);
+        
+        let referrerDoc = null;
+        let referrerRef = null;
+        let buyerData = null;
+
+        if (buyerDoc.exists()) {
+            buyerData = buyerDoc.data() as UserProfile;
+            if (buyerData.referredBy && !buyerData.firstPurchaseRewardGiven) {
+                referrerRef = doc(db, 'users', buyerData.referredBy);
+                referrerDoc = await transaction.get(referrerRef);
+            }
+        }
+
+        // WRITES START HERE
+
         // 1. Create Purchase
         const purchasesCol = collection(db, 'purchases');
         const newPurchaseRef = doc(purchasesCol);
@@ -739,7 +757,7 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
             itemId: request.itemId,
             itemTitle: request.itemTitle,
             itemType: request.itemType,
-            amount: request.amountToPay || request.itemPrice,
+            amount: request.amountToPay ?? request.itemPrice,
             status: 'succeeded',
             paymentDate: Timestamp.fromDate(now),
             razorpayPaymentId: `UPI: ${request.upiReferenceId}`,
@@ -754,34 +772,24 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
         });
 
         // 4. Handle Referral Reward (only for the first purchase)
-        const buyerRef = doc(db, 'users', request.userId);
-        const buyerDoc = await transaction.get(buyerRef);
-        if (buyerDoc.exists()) {
-            const buyerData = buyerDoc.data() as UserProfile;
-            if (buyerData.referredBy && !buyerData.firstPurchaseRewardGiven) {
-                const referrerRef = doc(db, 'users', buyerData.referredBy);
-                const referrerDoc = await transaction.get(referrerRef);
+        if (referrerDoc && referrerDoc.exists() && referrerRef && buyerData) {
+            // Award ₹20 to Referrer
+            transaction.update(referrerRef, {
+                creditBalance: increment(20)
+            });
 
-                if (referrerDoc.exists()) {
-                    // Award ₹20 to Referrer
-                    transaction.update(referrerRef, {
-                        creditBalance: increment(20)
-                    });
-
-                    // Add to Referrer History
-                    const histRef = doc(collection(db, 'users', buyerData.referredBy, 'creditHistory'));
-                    transaction.set(histRef, {
-                        amount: 20,
-                        type: 'credit',
-                        reason: `Referral reward for ${buyerData.displayName || buyerData.email}`,
-                        timestamp: serverTimestamp(),
-                        relatedUser: request.userId
-                    });
-                }
-                
-                // Mark buyer as rewarded
-                transaction.update(buyerRef, { firstPurchaseRewardGiven: true });
-            }
+            // Add to Referrer History
+            const histRef = doc(collection(db, 'users', buyerData.referredBy!, 'creditHistory'));
+            transaction.set(histRef, {
+                amount: 20,
+                type: 'credit',
+                reason: `Referral reward for ${buyerData.displayName || buyerData.email}`,
+                timestamp: serverTimestamp(),
+                relatedUser: request.userId
+            });
+            
+            // Mark buyer as rewarded
+            transaction.update(buyerRef, { firstPurchaseRewardGiven: true });
         }
     });
 }
@@ -799,7 +807,7 @@ export async function rejectPaymentRequest(requestId: string, reason: string, re
         itemId: request.itemId,
         itemTitle: request.itemTitle,
         itemType: request.itemType,
-        amount: request.amountToPay || request.itemPrice,
+        amount: request.amountToPay ?? request.itemPrice,
         status: 'failed',
         paymentDate: Timestamp.fromDate(now),
         razorpayPaymentId: `UPI: ${request.upiReferenceId}`,
@@ -1622,7 +1630,7 @@ export async function processCreditPurchase(
                 itemId,
                 itemTitle,
                 itemType,
-                amount: 0, // Since it was fully covered or handled via request for partial
+                amount: 0, // Fully covered
                 status: 'succeeded',
                 paymentDate: Timestamp.fromDate(now),
                 razorpayPaymentId: `CREDIT_FULL: ${creditToUse}`,
@@ -1814,7 +1822,8 @@ export async function updateStudentDetails(schoolId: string, student: SchoolStud
 
 
 export async function removeStudentFromSchool(schoolId: string, studentId: string): Promise<void> {
-    const schoolSnap = await getDoc(doc(db, 'schools', schoolId));
+    const schoolDocRef = doc(db, 'schools', schoolId);
+    const schoolSnap = await getDoc(schoolDocRef);
     if (!schoolSnap.exists()) throw new Error("School not found.");
 
     const schoolData = schoolSnap.data() as School;
@@ -1829,7 +1838,6 @@ export async function removeStudentFromSchool(schoolId: string, studentId: strin
         schoolId: null
     });
     
-    const schoolDocRef = doc(db, 'schools', schoolId);
     batch.update(schoolDocRef, {
         students: arrayRemove(studentToRemove)
     });
