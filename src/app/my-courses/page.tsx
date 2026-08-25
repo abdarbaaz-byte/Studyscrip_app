@@ -4,12 +4,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { getUserPurchases, EnrichedPurchase } from "@/lib/data";
+import { getUserPurchases, type EnrichedPurchase } from "@/lib/data";
 import { CourseCard } from "@/components/course-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Book, User, ShoppingCart, ArrowRight } from "lucide-react";
+import { Loader2, Book, User, ShoppingCart, ArrowRight, Layers } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { getGoogleDriveImageUrl } from "@/lib/utils";
 
 export default function MyCoursesPage() {
   const { user, loading: authLoading } = useAuth();
@@ -40,6 +42,7 @@ export default function MyCoursesPage() {
 
   const purchasedCourses = purchases.filter(p => p.itemType === 'course');
   const purchasedSubjects = purchases.filter(p => p.itemType === 'subject');
+  const purchasedBatches = purchases.filter(p => p.itemType === 'batch');
 
   if (loading || authLoading) {
     return (
@@ -54,7 +57,7 @@ export default function MyCoursesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
         <div>
             <h1 className="font-headline text-4xl md:text-5xl font-bold">My Learning</h1>
-            <p className="text-lg text-muted-foreground mt-2">All your purchased courses and subjects in one place.</p>
+            <p className="text-lg text-muted-foreground mt-2">All your purchased courses, batches and subjects in one place.</p>
         </div>
         {user && (
             <div className="flex items-center gap-2 mt-4 sm:mt-0 p-3 rounded-lg bg-secondary">
@@ -75,17 +78,49 @@ export default function MyCoursesPage() {
         </div>
       ) : (
         <div className="space-y-12">
+            {purchasedBatches.length > 0 && (
+                <section>
+                    <h2 className="font-headline text-3xl font-bold mb-6 flex items-center gap-2"><Layers className="text-primary"/> Batches</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                       {purchasedBatches.map((purchase) => (
+                         <Card key={purchase.id} className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg group">
+                            <div className="aspect-video relative overflow-hidden">
+                                <Image 
+                                    src={getGoogleDriveImageUrl(purchase.item.thumbnail)} 
+                                    alt={purchase.item.title} 
+                                    fill 
+                                    className="object-cover transition-transform group-hover:scale-105"
+                                />
+                            </div>
+                            <CardHeader className="flex-grow p-5">
+                                <CardTitle className="font-headline text-xl leading-tight line-clamp-1">{purchase.item.title}</CardTitle>
+                                <CardDescription className="line-clamp-2 text-sm mt-1">{purchase.item.description}</CardDescription>
+                            </CardHeader>
+                            <CardFooter className="px-5 pb-5 pt-0">
+                                <Button asChild className="w-full">
+                                    <Link href={`/batches/${purchase.itemId}`}>
+                                        View Batch <ArrowRight className="ml-2 h-4 w-4"/>
+                                    </Link>
+                                </Button>
+                            </CardFooter>
+                         </Card>
+                       ))}
+                    </div>
+                </section>
+            )}
+
             {purchasedCourses.length > 0 && (
                 <section>
                     <h2 className="font-headline text-3xl font-bold mb-6">Courses</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                        {purchasedCourses.map((purchase) => (
                          <CourseCard key={purchase.id} course={{
-                            docId: purchase.item.id,
+                            docId: purchase.itemId,
                             title: purchase.item.title,
                             description: purchase.item.description,
                             price: purchase.item.price,
                             thumbnail: purchase.item.thumbnail,
+                            originalPrice: purchase.item.originalPrice
                          } as any} />
                        ))}
                     </div>
@@ -97,10 +132,10 @@ export default function MyCoursesPage() {
                     <h2 className="font-headline text-3xl font-bold mb-6">Subjects</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {purchasedSubjects.map((purchase) => (
-                             <Card key={purchase.id} className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group">
+                             <Card key={purchase.id} className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg group">
                                 <CardHeader className="flex-grow">
                                     <Book className="h-8 w-8 text-primary mb-4" />
-                                    <CardTitle className="font-headline text-xl">{purchase.item.name}</CardTitle>
+                                    <CardTitle className="font-headline text-xl leading-tight">{purchase.item.name}</CardTitle>
                                     <CardDescription>{purchase.item.className}</CardDescription>
                                 </CardHeader>
                                 <CardFooter>
