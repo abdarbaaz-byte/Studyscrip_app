@@ -810,7 +810,7 @@ export async function approvePaymentRequest(request: PaymentRequest): Promise<vo
             transaction.update(buyerRef, { firstPurchaseRewardGiven: true });
         }
 
-        // 5. Deduct used credits from Buyer Wallet (Fix for partial credits not deducting)
+        // 5. Deduct used credits from Buyer Wallet
         if (request.creditUsed && request.creditUsed > 0) {
             transaction.update(buyerRef, {
                 creditBalance: increment(-request.creditUsed)

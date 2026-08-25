@@ -340,7 +340,9 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                                             </div>
                                             <div className={cn("max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm", msg.senderId === user?.uid ? "bg-primary text-white rounded-tr-none" : "bg-white text-foreground rounded-tl-none")}>
                                                 <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-                                                <p className={cn("text-[9px] mt-1 text-right", msg.senderId === user?.uid ? "text-white/70" : "text-muted-foreground")}>{format(msg.timestamp.toDate(), "p")}</p>
+                                                <p className={cn("text-[9px] mt-1 text-right", msg.senderId === user?.uid ? "text-white/70" : "text-muted-foreground")}>
+                                                    {msg.timestamp ? format(msg.timestamp.toDate(), "p") : format(new Date(), "p")}
+                                                </p>
                                             </div>
                                         </div>
                                     ))}
