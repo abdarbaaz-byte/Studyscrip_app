@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -169,6 +170,19 @@ export function PaymentDialog({
             creditUsed: creditToUse,
             amountToPay: amountToPay,
         });
+        
+        // Automated Admin Alert Push
+        fetch('/api/push-notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                targetRole: 'admin',
+                title: "New Payment Verification Request",
+                body: `${user.email} has submitted a UPI reference for ${itemName}.`,
+                link: '/admin/dashboard'
+            })
+        });
+
         toast({
             title: "Request Submitted!",
             description: "Your payment is being verified. Access within 24 hours.",

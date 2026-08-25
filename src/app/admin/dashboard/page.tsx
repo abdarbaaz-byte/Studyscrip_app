@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -34,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,7 @@ import { AdminAudioLecturesForm } from "@/components/admin-audio-lectures-form";
 import { AdminBatchForm } from "@/components/admin-batch-form";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 
 type FormattedPayment = Omit<Payment, 'paymentDate'> & { paymentDate: string };
@@ -112,6 +114,12 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const { user, isAdmin, loading: authLoading, hasPermission, userRole } = useAuth();
   const router = useRouter();
+
+  // State for Targeted Notifications
+  const [notifTarget, setNotifTarget] = useState<'everyone' | 'user'>('everyone');
+  const [notifUserEmail, setNotifUserEmail] = useState("");
+  const [notifUserUid, setNotifUserUid] = useState<string | null>(null);
+  const [isSearchingNotifUser, setIsSearchingNotifUser] = useState(false);
 
   // State for Manual Access Grant
   const [accessEmail, setAccessEmail] = useState("");
@@ -592,38 +600,70 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleSearchNotifUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notifUserEmail.trim()) return;
+    setIsSearchingNotifUser(true);
+    try {
+        const user = await findUserByEmail(notifUserEmail);
+        if (user) {
+            setNotifUserUid(user.uid);
+            toast({ title: "User Selected", description: `Target: ${user.email}` });
+        } else {
+            toast({ variant: "destructive", title: "User not found." });
+            setNotifUserUid(null);
+        }
+    } catch (e) {
+        toast({ variant: "destructive", title: "Search failed." });
+    }
+    setIsSearchingNotifUser(false);
+  }
+
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!notificationTitle || !notificationMessage) return;
+    if (notifTarget === 'user' && !notifUserUid) {
+        toast({ variant: "destructive", title: "Please select a valid user first." });
+        return;
+    }
 
     setIsSendingNotification(true);
     try {
-        // 1. Save to Firestore for In-App list
-        await sendNotification(notificationTitle, notificationMessage, notificationLink);
-        
-        // 2. Trigger Push Notification via API Route (Next.js server-side)
-        // This works on Spark plan because it's a direct API call from client to your own server.
-        const response = await fetch('/api/push-notifications', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        // 1. Send via Targeted API
+        const payload: any = {
             title: notificationTitle,
             body: notificationMessage,
             link: notificationLink,
-          }),
-        });
+        };
 
-        if (!response.ok) {
-          throw new Error('API failed to send push notifications');
+        if (notifTarget === 'everyone') {
+            payload.broadcast = true;
+            // Broadcasts also save to Firestore for the In-App global list
+            await sendNotification(notificationTitle, notificationMessage, notificationLink);
+        } else {
+            payload.targetUid = notifUserUid;
+            // Targeted/Private notifications are NOT saved to the global 'notifications' collection
         }
 
-        toast({
-            title: "Notification Sent!",
-            description: "Your notification has been sent to all users.",
+        const response = await fetch('/api/push-notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
+
+        if (!response.ok) throw new Error('API failed to send push notification');
+
+        toast({
+            title: notifTarget === 'everyone' ? "Broadcast Sent!" : "Private Message Sent!",
+            description: "Notification delivered via FCM.",
+        });
+        
         setNotificationTitle("");
         setNotificationMessage("");
         setNotificationLink("");
+        setNotifUserEmail("");
+        setNotifUserUid(null);
+
     } catch (error) {
         console.error("Failed to send notification:", error);
         toast({ variant: "destructive", title: "Failed to send notification." });
@@ -695,6 +735,19 @@ export default function AdminDashboardPage() {
       try {
           await approvePaymentRequest(request);
           toast({ title: "Request Approved", description: `Access granted to ${request.userName}.`, className: "bg-green-100 border-green-500"});
+          
+          // Automated Notification to Student
+          fetch('/api/push-notifications', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  targetUid: request.userId,
+                  title: "Congratulations! 🎉",
+                  body: `${request.itemTitle} has been unlocked for you. Happy learning!`,
+                  link: request.itemType === 'batch' ? `/batches/${request.itemId}` : request.itemType === 'course' ? `/courses/${request.itemId}` : '/my-courses'
+              })
+          });
+
           loadAdminData(); // Refresh purchases and payments
       } catch (error) {
           console.error("Failed to approve request:", error);
@@ -2133,10 +2186,42 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="font-headline text-2xl">Send Notification</CardTitle>
-              <CardDescription>Broadcast a message to all users.</CardDescription>
+              <CardDescription>Broadcast or targeted push notification.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSendNotification} className="space-y-4">
+                <RadioGroup 
+                    value={notifTarget} 
+                    onValueChange={(val: any) => setNotifTarget(val)}
+                    className="flex gap-4 p-3 bg-secondary/50 rounded-lg mb-4"
+                >
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="everyone" id="target-everyone" />
+                        <Label htmlFor="target-everyone" className="cursor-pointer">Everyone</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="user" id="target-user" />
+                        <Label htmlFor="target-user" className="cursor-pointer">Specific User</Label>
+                    </div>
+                </RadioGroup>
+
+                {notifTarget === 'user' && (
+                    <div className="space-y-2 p-3 border rounded-lg bg-primary/5 animate-in fade-in duration-300">
+                        <Label className="text-xs font-bold uppercase">Find Target User</Label>
+                        <div className="flex gap-2">
+                            <Input 
+                                placeholder="user@gmail.com" 
+                                value={notifUserEmail}
+                                onChange={(e) => setNotifUserEmail(e.target.value)}
+                            />
+                            <Button type="button" size="icon" onClick={handleSearchNotifUser} disabled={isSearchingNotifUser}>
+                                {isSearchingNotifUser ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
+                            </Button>
+                        </div>
+                        {notifUserUid && <p className="text-[10px] text-green-600 font-bold">✓ User matched</p>}
+                    </div>
+                )}
+
                 <div className="space-y-2">
                   <Input 
                     placeholder="Notification Title" 
@@ -2164,7 +2249,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <Button type="submit" className="w-full" disabled={isSendingNotification}>
                   {isSendingNotification ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                  Send Notification
+                  Send {notifTarget === 'everyone' ? 'Broadcast' : 'Private'} Alert
                 </Button>
               </form>
             </CardContent>
@@ -2173,9 +2258,9 @@ export default function AdminDashboardPage() {
            <Card>
             <CardHeader>
               <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                  <BellRing /> Notification Management
+                  <BellRing /> Global Broadcast Feed
               </CardTitle>
-              <CardDescription>View and delete sent notifications.</CardDescription>
+              <CardDescription>View/Delete global in-app notifications.</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[300px]">
@@ -2214,7 +2299,7 @@ export default function AdminDashboardPage() {
                     </div>
                   ))}
                   {notifications.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">No notifications sent yet.</p>
+                    <p className="text-center text-muted-foreground py-8">No broadcasts sent yet.</p>
                   )}
                 </div>
               </ScrollArea>
