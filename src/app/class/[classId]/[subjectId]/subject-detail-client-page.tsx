@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "link";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { type AcademicClass, type Subject, listenToAcademics } from "@/lib/academics";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
