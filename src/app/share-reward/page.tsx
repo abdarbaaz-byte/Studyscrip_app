@@ -7,7 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Share2, Gift, Users, Trophy, Loader2, Copy, CheckCircle2, MessageCircle, ArrowRightCircle } from "lucide-react";
+import { Share2, Gift, Users, Trophy, Loader2, Copy, CheckCircle2, MessageCircle, ArrowRightCircle, Coins } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
 import { useToast } from "@/hooks/use-toast";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
@@ -43,7 +43,6 @@ export default function ShareRewardPage() {
   const shareText = `Hey! Join me on StudyScript for amazing courses. Click my link to join and get exclusive benefits! 🚀\n\nJoin here: ${shareUrl}`;
 
   const handleShare = async () => {
-    // Native Share Intent (Web Share API)
     if (navigator.share) {
       try {
         await navigator.share({
@@ -53,10 +52,8 @@ export default function ShareRewardPage() {
         });
       } catch (error) {
         console.error('Error sharing:', error);
-        // Fallback to copy if user cancels or error occurs
       }
     } else {
-      // Fallback for browsers that don't support native share
       handleCopy();
     }
   };
@@ -81,12 +78,12 @@ export default function ShareRewardPage() {
           <Card className="border-none shadow-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-center p-8">
             <div className="flex justify-center mb-6">
               <div className="bg-white/20 p-4 rounded-full backdrop-blur-md">
-                <Gift className="h-12 w-12" />
+                <Coins className="h-12 w-12" />
               </div>
             </div>
-            <CardTitle className="text-3xl md:text-4xl font-black font-headline mb-2">Refer & Earn Rewards!</CardTitle>
+            <CardTitle className="text-3xl md:text-4xl font-black font-headline mb-2">Refer & Earn Credits!</CardTitle>
             <CardDescription className="text-white/80 text-lg">
-              Invite your friends to StudyScript and unlock exclusive benefits together.
+              Earn ₹20 StudyScript Credits for every friend who joins and makes their first purchase.
             </CardDescription>
           </Card>
         </ScrollAnimation>
@@ -126,21 +123,21 @@ export default function ShareRewardPage() {
                 <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">1</div>
                 <div>
                   <p className="font-bold">Link Share Karein</p>
-                  <p className="text-sm text-muted-foreground">"Share with Friends" button par click karein aur apne dosto ko Android share sheet ke zariye link bhejein.</p>
+                  <p className="text-sm text-muted-foreground">Upar diye gaye button se apna referral link WhatsApp ya anya social media par apne dosto ko bhejein.</p>
                 </div>
               </div>
               <div className="flex gap-4 items-start">
                 <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">2</div>
                 <div>
                   <p className="font-bold">Dost Join Karein</p>
-                  <p className="text-sm text-muted-foreground">Aapka dost uss link par click karke signup karega toh aapka code auto-fill ho jayega.</p>
+                  <p className="text-sm text-muted-foreground">Aapka dost link par click karke signup karega toh aapka referral code automatically apply ho jayega.</p>
                 </div>
               </div>
               <div className="flex gap-4 items-start">
                 <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">3</div>
                 <div>
-                  <p className="font-bold">Referral Count Badhayein</p>
-                  <p className="text-sm text-muted-foreground">Jaise hi wo signup karenge, aapka referral count badh jayega. Aapne abhi tak <span className="font-bold text-primary">{profile?.referralCount || 0}</span> referral kiye hain.</p>
+                  <p className="font-bold">₹20 Credits Payein</p>
+                  <p className="text-sm text-muted-foreground">Jaise hi aapka dost koi **Course ya Batch** pehli baar khareedega, aapke wallet mein ₹20 credits turant add ho jayenge.</p>
                 </div>
               </div>
             </CardContent>
@@ -155,9 +152,12 @@ export default function ShareRewardPage() {
                 <MessageCircle className="h-5 w-5" /> Important Note
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <p className="text-sm text-orange-900 leading-relaxed">
-                Referral points se **Free Access** ya rewards paane ke liye, kripya StudyScript ke **Chat Support** mein message karein. Hamari team aapke referrals verify karke aapko reward pradan karegi.
+                StudyScript Credits ka upyog aap kisi bhi course ya batch ko khareedte waqt **Discount** paane ke liye kar sakte hain. 
+              </p>
+              <p className="text-sm text-orange-900 leading-relaxed font-semibold">
+                Yadi aapke paas adhik referrals hain aur aap **Free Access** ya anya rewards chahte hain, toh kripya **Chat Support** mein hamari team ko message karein.
               </p>
             </CardContent>
           </Card>
