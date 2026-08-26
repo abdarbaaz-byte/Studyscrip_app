@@ -78,10 +78,10 @@ export default function ShareRewardPage() {
           <Card className="border-none shadow-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-center p-8">
             <div className="flex justify-center mb-6">
               <div className="bg-white/20 p-4 rounded-full backdrop-blur-md">
-                <Coins className="h-12 w-12" />
+                <Gift className="h-12 w-12" />
               </div>
             </div>
-            <CardTitle className="text-3xl md:text-4xl font-black font-headline mb-2">Refer & Earn Credits!</CardTitle>
+            <CardTitle className="text-3xl md:text-4xl font-black font-headline mb-2">Refer & Earn ₹20 Credits!</CardTitle>
             <CardDescription className="text-white/80 text-lg">
               Earn ₹20 StudyScript Credits for every friend who joins and makes their first purchase.
             </CardDescription>
@@ -154,7 +154,7 @@ export default function ShareRewardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-orange-900 leading-relaxed">
-                StudyScript Credits ka upyog aap kisi bhi course ya batch ko khareedte waqt **Discount** paane ke liye kar sakte hain. 
+                StudyScript Credits ka upyog aap kisi bhi course ya batch ko khareedne mein kar sakte hain. iske liye payment karte waqt StudyScript Credits par tick karein.
               </p>
               <p className="text-sm text-orange-900 leading-relaxed font-semibold">
                 Yadi aapke paas adhik referrals hain aur aap **Free Access** ya anya rewards chahte hain, toh kripya **Chat Support** mein hamari team ko message karein.

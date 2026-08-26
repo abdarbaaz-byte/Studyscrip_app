@@ -96,7 +96,7 @@ export function PaymentDialog({
     }
 
     if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
-      toast({ variant: "destructive", title: "Configuration Error", description: "Razorpay Key ID is not configured." });
+      toast({ variant: "destructive", title: "Configuration Error", description: "This payment method is not available." });
       return;
     }
     
