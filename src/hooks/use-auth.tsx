@@ -58,7 +58,7 @@ interface AuthContextType {
   permissions: UserPermission[];
   loading: boolean;
   hasPermission: (permission: UserPermission) => boolean;
-  signUp: (name: string, email: string, password: string, referralCode?: string) => Promise<boolean>;
+  signUp: (name: string, email: string, password: string, userClass: string, referralCode?: string) => Promise<boolean>;
   logIn: (email: string, password: string, force?: boolean) => Promise<LoginStatus>;
   logOut: () => void;
   resetPassword: (email: string) => Promise<boolean>;
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [user, router, toast]);
 
-  const signUp = async (name: string, email: string, password: string, referralCode?: string) => {
+  const signUp = async (name: string, email: string, password: string, userClass: string, referralCode?: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: null,
           permissions: [],
           school: "",
-          userClass: "",
+          userClass: userClass,
           mobileNumber: "",
           certificates: [],
           activeSessionToken: sessionToken,
@@ -197,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           referralCode: myReferralCode,
           referralCount: 0,
           referredBy: null,
+          creditBalance: 0,
       });
 
       // Handle the optional referral from someone else
@@ -259,6 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             certificates: [],
             referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
             referralCount: 0,
+            creditBalance: 0,
             ...userData
          });
       } else {

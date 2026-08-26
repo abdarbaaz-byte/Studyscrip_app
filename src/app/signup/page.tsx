@@ -9,19 +9,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, Gift } from "lucide-react";
+import { Loader2, Eye, EyeOff, Gift, NotebookText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const CLASS_OPTIONS = [
+  "Class 8th",
+  "Class 9th",
+  "Class 10th",
+  "Class 11th",
+  "Class 12th",
+  "ITI",
+  "DCA",
+  "B.Sc.",
+  "M.Sc.",
+  "B.A.",
+  "LLB",
+  "B.Pharma",
+  "M.Pharm",
+  "D.Pharma",
+  "B.Sc. Nursing",
+  "Other"
+];
 
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signUp } = useAuth();
   const { toast } = useToast();
+  
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [referralCodeInput, setReferralCodeInput] = useState("");
+  const [selectedClass, setSelectedClass] = useState("");
+  const [customClass, setCustomClass] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -44,8 +74,19 @@ function SignupForm() {
       toast({ variant: "destructive", title: "Passwords do not match." });
       return;
     }
+    if (!selectedClass) {
+      toast({ variant: "destructive", title: "Please select your Class/Profession." });
+      return;
+    }
+
+    const finalClass = selectedClass === "Other" ? customClass : selectedClass;
+    if (selectedClass === "Other" && !customClass.trim()) {
+      toast({ variant: "destructive", title: "Please specify your Class/Profession." });
+      return;
+    }
+
     setLoading(true);
-    const success = await signUp(name, email, password, referralCodeInput);
+    const success = await signUp(name, email, password, finalClass, referralCodeInput);
     if (success) {
       // The user will be redirected from the auth hook after successful login
     }
@@ -69,6 +110,36 @@ function SignupForm() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="your@gmail.com" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="class">Class/Profession</Label>
+              <Select onValueChange={setSelectedClass} required>
+                <SelectTrigger id="class">
+                  <SelectValue placeholder="Select Class/Profession" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CLASS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedClass === "Other" && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label htmlFor="customClass">Specify Class/Profession</Label>
+                <Input 
+                  id="customClass" 
+                  placeholder="e.g., M.B.B.S" 
+                  required 
+                  value={customClass} 
+                  onChange={(e) => setCustomClass(e.target.value)} 
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="password">Create Password</Label>
                <div className="relative">
