@@ -35,7 +35,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins, Users } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins, Users, History, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture, getBatches, saveBatch, deleteBatch, type Batch, type BookRequest, listenToBookRequests, deleteBookRequest } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture, getBatches, saveBatch, deleteBatch, type Batch, type BookRequest, listenToBookRequests, deleteBookRequest, getUserCreditHistory, type CreditTransaction, awardManualCredits } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -163,6 +163,16 @@ export default function AdminDashboardPage() {
   const [schoolToDelete, setSchoolToDelete] = useState<School | null>(null);
 
   const [isSendingNotification, setIsSendingNotification] = useState(false);
+
+  // State for User Credits Management
+  const [creditSearchEmail, setCreditSearchEmail] = useState("");
+  const [isSearchingCreditUser, setIsSearchingCreditUser] = useState(false);
+  const [creditSearchedUser, setCreditSearchedUser] = useState<UserProfile | null>(null);
+  const [creditUserHistory, setCreditUserHistory] = useState<CreditTransaction[]>([]);
+  const [rewardEmail, setRewardEmail] = useState("");
+  const [rewardAmount, setRewardAmount] = useState("");
+  const [rewardReason, setRewardReason] = useState("");
+  const [isGivingReward, setIsGivingReward] = useState(false);
 
 
   useEffect(() => {
@@ -780,7 +790,7 @@ export default function AdminDashboardPage() {
       toast({ title: "Employee Updated", description: "Permissions have been saved." });
       loadAdminData();
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Update Failed", description: error.message });
+      toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
     }
   };
 
@@ -985,6 +995,80 @@ export default function AdminDashboardPage() {
         toast({ variant: "destructive", title: "Error Deleting School", description: error.message });
     } finally {
         setSchoolToDelete(null);
+    }
+  };
+
+  // Credit Management Handlers
+  const handleSearchCreditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!creditSearchEmail.trim()) return;
+    setIsSearchingCreditUser(true);
+    setCreditSearchedUser(null);
+    setCreditUserHistory([]);
+    try {
+        const foundUser = await findUserByEmail(creditSearchEmail);
+        if (foundUser) {
+            setCreditSearchedUser(foundUser);
+            const history = await getUserCreditHistory(foundUser.uid);
+            setCreditUserHistory(history);
+            setRewardEmail(foundUser.email);
+        } else {
+            toast({ variant: "destructive", title: "User not found." });
+        }
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Search failed.", description: error.message });
+    } finally {
+        setIsSearchingCreditUser(false);
+    }
+  };
+
+  const handleGiveReward = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rewardEmail || !rewardAmount || !rewardReason.trim()) {
+        toast({ variant: "destructive", title: "All reward fields are required." });
+        return;
+    }
+    const amountNum = parseFloat(rewardAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+        toast({ variant: "destructive", title: "Amount must be a positive number." });
+        return;
+    }
+
+    setIsGivingReward(true);
+    try {
+        const targetUser = await findUserByEmail(rewardEmail);
+        if (!targetUser) throw new Error("Target user not found.");
+        
+        await awardManualCredits(targetUser.uid, amountNum, rewardReason);
+        
+        toast({ title: "Credits Awarded!", description: `₹${amountNum} credited to ${rewardEmail}.` });
+        
+        // Push Notification to student
+        fetch('/api/push-notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetUid: targetUser.uid,
+            title: "Credits Received! 🥳",
+            body: `₹${amountNum} StudyScript Credit has been added: ${rewardReason}`,
+            link: '/my-profile'
+          })
+        });
+
+        // Reset and Refresh if this is the user currently being viewed
+        if (creditSearchedUser?.uid === targetUser.uid) {
+            const updatedProfile = await getUserProfile(targetUser.uid);
+            setCreditSearchedUser(updatedProfile as any);
+            const history = await getUserCreditHistory(targetUser.uid);
+            setCreditUserHistory(history);
+        }
+        setRewardAmount("");
+        setRewardReason("");
+    } catch (error: any) {
+        console.error("Reward failed:", error);
+        toast({ variant: "destructive", title: "Reward Failed", description: error.message });
+    } finally {
+        setIsGivingReward(false);
     }
   };
 
@@ -1928,6 +2012,141 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
+  const renderCreditsManagement = () => (
+    <div className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline text-2xl flex items-center gap-2">
+              <Search className="h-6 w-6"/> Search User by Email
+            </CardTitle>
+            <CardDescription>View a user's credit balance and transaction history.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSearchCreditUser} className="flex gap-2">
+                <Input 
+                    type="email" 
+                    placeholder="Enter user email..." 
+                    value={creditSearchEmail} 
+                    onChange={e => setCreditSearchEmail(e.target.value)}
+                    required
+                />
+                <Button type="submit" disabled={isSearchingCreditUser}>
+                    {isSearchingCreditUser ? <Loader2 className="animate-spin h-4 w-4"/> : <Search className="h-4 w-4"/>}
+                    Search
+                </Button>
+            </form>
+
+            {creditSearchedUser && (
+                <div className="mt-8 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                         <div className="p-4 rounded-xl border bg-background">
+                            <p className="text-xs font-bold text-muted-foreground uppercase">Name</p>
+                            <p className="text-lg font-bold">{creditSearchedUser.displayName || 'Anonymous'}</p>
+                        </div>
+                        <div className="p-4 rounded-xl border bg-background">
+                            <p className="text-xs font-bold text-muted-foreground uppercase">Total Referrals</p>
+                            <p className="text-lg font-bold text-blue-600">{creditSearchedUser.referralCount || 0}</p>
+                        </div>
+                         <div className="p-4 rounded-xl border bg-background">
+                            <p className="text-xs font-bold text-muted-foreground uppercase">Credit Balance</p>
+                            <p className="text-lg font-bold text-primary">₹{creditSearchedUser.creditBalance || 0}</p>
+                        </div>
+                        <div className="p-4 rounded-xl border bg-background">
+                            <p className="text-xs font-bold text-muted-foreground uppercase">Total Credits Earned</p>
+                            <p className="text-lg font-bold text-green-600">₹{creditUserHistory.reduce((acc, item) => item.type === 'credit' ? acc + item.amount : acc, 0)}</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h4 className="font-bold flex items-center gap-2"><History className="h-4 w-4"/> User Credit History</h4>
+                        <div className="border rounded-lg overflow-hidden">
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Reason</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                        <TableHead className="text-right">Date</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {creditUserHistory.map(item => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>
+                                                <div className={cn("inline-flex p-1.5 rounded-lg", item.type === 'credit' ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600")}>
+                                                    {item.type === 'credit' ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="font-medium text-sm">{item.reason}</TableCell>
+                                            <TableCell className={cn("font-bold", item.type === 'credit' ? "text-green-600" : "text-red-600")}>
+                                                {item.type === 'credit' ? '+' : '-'} ₹{item.amount}
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs text-muted-foreground">{format(item.timestamp.toDate(), "PP p")}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {creditUserHistory.length === 0 && (
+                                        <TableRow><TableCell colSpan={4} className="text-center py-10 text-muted-foreground">No history found.</TableCell></TableRow>
+                                    )}
+                                </TableBody>
+                             </Table>
+                        </div>
+                    </div>
+                </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline text-2xl flex items-center gap-2">
+              <Coins className="h-6 w-6"/> Give Credit Reward
+            </CardTitle>
+            <CardDescription>Manually add credits to a user's wallet.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleGiveReward} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>User Email</Label>
+                        <Input 
+                            type="email" 
+                            placeholder="user@example.com" 
+                            value={rewardEmail} 
+                            onChange={e => setRewardEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Credit Amount (₹)</Label>
+                        <Input 
+                            type="number" 
+                            placeholder="e.g. 50" 
+                            value={rewardAmount} 
+                            onChange={e => setRewardAmount(e.target.value)}
+                            required
+                            min="1"
+                        />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label>Reason</Label>
+                    <Input 
+                        placeholder="e.g. Special bonus / Support resolution" 
+                        value={rewardReason} 
+                        onChange={e => setRewardReason(e.target.value)}
+                        required
+                    />
+                </div>
+                <Button type="submit" disabled={isGivingReward} className="w-full">
+                    {isGivingReward ? <Loader2 className="animate-spin h-4 w-4 mr-2"/> : <Gift className="h-4 w-4 mr-2"/>}
+                    Give Credits
+                </Button>
+            </form>
+          </CardContent>
+        </Card>
+    </div>
+  );
+
   const renderSiteSettings = () => (
     <Card>
       <CardHeader>
@@ -2075,6 +2294,9 @@ export default function AdminDashboardPage() {
              {hasPermission('manage_schools') && <Button variant={activeTab === 'schools' ? 'default' : 'outline'} onClick={() => setActiveTab('schools')}>
                 <SchoolIcon className="mr-2 h-4 w-4" /> Schools
             </Button>}
+            {isAdmin && <Button variant={activeTab === 'credits' ? 'default' : 'outline'} onClick={() => setActiveTab('credits')}>
+                <Coins className="mr-2 h-4 w-4" /> User Credits
+            </Button>}
             {hasPermission('view_quiz_attempts') && <Button variant={activeTab === 'quiz-attempts' ? 'default' : 'outline'} onClick={() => setActiveTab('quiz-attempts')}>
                 <BarChart3 className="mr-2 h-4 w-4" /> Quiz Attempts
             </Button>}
@@ -2116,6 +2338,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'live-classes' && hasPermission('manage_live_classes') && renderLiveClassManagement()}
         {activeTab === 'certificates' && hasPermission('manage_certificates') && renderCertificateManagement()}
         {activeTab === 'schools' && hasPermission('manage_schools') && renderSchoolManagement()}
+        {activeTab === 'credits' && isAdmin && renderCreditsManagement()}
         {activeTab === 'quiz-attempts' && hasPermission('view_quiz_attempts') && renderQuizAttempts()}
         {activeTab === 'live-surveys' && hasPermission('view_live_class_surveys') && renderLiveSurveys()}
         {activeTab === 'reviews' && hasPermission('manage_reviews') && renderReviewManagement()}

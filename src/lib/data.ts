@@ -320,7 +320,7 @@ export type CreditTransaction = {
     type: 'credit' | 'debit';
     reason: string;
     timestamp: Timestamp;
-    relatedUser?: string; // For referral rewards
+    relatedUser?: string | null; // For referral rewards
 };
 
 export type UserCertificate = {
@@ -1575,6 +1575,13 @@ export async function updateUserCertificates(userId: string, certificates: UserC
     await updateDoc(userDocRef, { certificates });
 }
 
+export async function getUserCreditHistory(userId: string): Promise<CreditTransaction[]> {
+    const histCol = collection(db, 'users', userId, 'creditHistory');
+    const q = query(histCol, orderBy('timestamp', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CreditTransaction));
+}
+
 export function listenToUserCreditHistory(userId: string, callback: (history: CreditTransaction[]) => void) {
     const histCol = collection(db, 'users', userId, 'creditHistory');
     const q = query(histCol, orderBy('timestamp', 'desc'));
@@ -1693,6 +1700,35 @@ export async function processCreditPurchase(
         console.error("Credit purchase failed:", e);
         throw e;
     }
+}
+
+// --- MANUAL CREDIT AWARD ---
+export async function awardManualCredits(userId: string, amount: number, reason: string): Promise<void> {
+    if (amount <= 0) throw new Error("Amount must be positive");
+    if (!reason.trim()) throw new Error("Reason is required");
+
+    await runTransaction(db, async (transaction) => {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await transaction.get(userRef);
+        
+        if (!userDoc.exists()) throw new Error("User not found");
+
+        // 1. Update user balance
+        transaction.update(userRef, {
+            creditBalance: increment(amount)
+        });
+
+        // 2. Add History entry
+        const histCol = collection(db, 'users', userId, 'creditHistory');
+        const histRef = doc(histCol);
+        transaction.set(histRef, {
+            amount: amount,
+            reason: reason,
+            relatedUser: null,
+            timestamp: serverTimestamp(),
+            type: 'credit'
+        });
+    });
 }
 
 // --- SCHOOLS / INSTITUTES ---
