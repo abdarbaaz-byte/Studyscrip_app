@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserProfile, updateUserProfile, getUserPayments, listenToUserCreditHistory, type Payment, type UserCertificate, type UserProfile, type CreditTransaction } from "@/lib/data";
-import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail, BookOpen, Gift, Users, Copy, CheckCircle2, History, Coins, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
+import { Loader2, User, Save, Edit, X, Wallet, Award, Download, Share2, MapPin, Hash, GraduationCap, Phone, Mail, BookOpen, Gift, Users, Copy, CheckCircle2, History, Coins, ArrowUpRight, ArrowDownRight, Clock, ListOrdered } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getGoogleDriveImageUrl } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 export default function MyProfilePage() {
@@ -237,7 +238,7 @@ export default function MyProfilePage() {
     <div className="container mx-auto px-4 py-8 md:py-12 bg-secondary/10">
       <div className="max-w-4xl mx-auto space-y-8">
         
-        {/* Profile Header Card */}
+        {/* 1. Profile Header Card */}
         <Card className="border-none shadow-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-indigo-900 text-white">
             <div className="p-8 md:p-10 flex flex-col items-center text-center">
                 <div className="relative group mb-4">
@@ -262,7 +263,7 @@ export default function MyProfilePage() {
             </div>
         </Card>
 
-        {/* Wallet & Referrals Section */}
+        {/* 2. Wallet & Referrals Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-6">
                 <div className="bg-orange-100 p-4 rounded-2xl text-orange-600">
@@ -272,7 +273,7 @@ export default function MyProfilePage() {
                     <p className="text-3xl md:text-4xl font-black text-orange-900">₹{fullProfile?.creditBalance || 0}</p>
                     <p className="text-sm md:text-base font-bold text-muted-foreground uppercase tracking-wider">StudyScript Credit</p>
                 </div>
-            </Card>
+             </Card>
 
             <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-6">
                 <div className="bg-blue-100 p-4 rounded-2xl text-blue-600">
@@ -285,46 +286,8 @@ export default function MyProfilePage() {
             </Card>
         </div>
 
-        {/* Credit History Section */}
-        <Card className="shadow-xl rounded-3xl border-none">
-            <CardHeader className="px-8 pt-8">
-                <CardTitle className="font-headline text-2xl flex items-center gap-3">
-                    <div className="bg-orange-100 p-2 rounded-xl text-orange-600"><History className="h-6 w-6" /></div>
-                    Credit History
-                </CardTitle>
-                <CardDescription>Records of your referral rewards and credits used.</CardDescription>
-            </CardHeader>
-            <CardContent className="px-8 pb-8">
-                {creditHistory.length === 0 ? (
-                    <div className="text-center py-10 bg-secondary/10 rounded-2xl border-2 border-dashed">
-                        <p className="text-muted-foreground">No credit transactions yet.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {creditHistory.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl border bg-background hover:bg-secondary/10 transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <div className={cn("p-2 rounded-lg", item.type === 'credit' ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600")}>
-                                        {item.type === 'credit' ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm md:text-base">{item.reason}</p>
-                                        <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
-                                            <Clock className="h-3 w-3" /> {format(item.timestamp.toDate(), "PPP p")}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className={cn("text-lg font-black", item.type === 'credit' ? "text-green-600" : "text-red-600")}>
-                                    {item.type === 'credit' ? "+" : "-"} ₹{item.amount}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-
-        <Card className="shadow-xl rounded-3xl border-none">
+        {/* 3. Personal & Academic Details (Edit/View Mode) */}
+        <Card className="shadow-xl rounded-3xl border-none overflow-hidden">
           <CardContent className="p-6 md:p-10">
             {totalLoading ? (
               <div className="flex justify-center items-center h-64">
@@ -336,25 +299,71 @@ export default function MyProfilePage() {
           </CardContent>
         </Card>
 
+        {/* 4. History Tabs (Credit History & Payment History) */}
         {!totalLoading && (
-           <>
-            <Card className="shadow-xl rounded-3xl border-none">
-                <CardHeader className="px-8 pt-8">
-                    <CardTitle className="font-headline text-2xl flex items-center gap-3">
-                        <div className="bg-primary/10 p-2 rounded-xl text-primary"><Wallet className="h-6 w-6" /></div>
-                        Payment History
-                    </CardTitle>
-                    <CardDescription>A complete record of your transactions.</CardDescription>
-                </CardHeader>
-                <CardContent className="px-0 sm:px-8 pb-8">
+          <Card className="shadow-xl rounded-3xl border-none overflow-hidden">
+             <CardHeader className="px-8 pt-8 border-b bg-secondary/5">
+                <CardTitle className="font-headline text-2xl flex items-center gap-3">
+                    <div className="bg-primary/10 p-2 rounded-xl text-primary"><ListOrdered className="h-6 w-6" /></div>
+                    Your Activity History
+                </CardTitle>
+                <CardDescription>Keep track of your wallet transactions and course purchases.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+               <Tabs defaultValue="credits" className="w-full">
+                  <TabsList className="w-full flex justify-start h-auto p-0 bg-secondary/10 rounded-none border-b">
+                    <TabsTrigger 
+                        value="credits" 
+                        className="flex-1 md:flex-none px-8 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent font-bold text-base"
+                    >
+                        <History className="h-4 w-4 mr-2" /> Credit History
+                    </TabsTrigger>
+                    <TabsTrigger 
+                        value="payments" 
+                        className="flex-1 md:flex-none px-8 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent font-bold text-base"
+                    >
+                        <Wallet className="h-4 w-4 mr-2" /> Payment History
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="credits" className="px-6 py-6 mt-0">
+                    {creditHistory.length === 0 ? (
+                        <div className="text-center py-10 bg-secondary/5 rounded-2xl border-2 border-dashed">
+                            <p className="text-muted-foreground">No credit transactions yet.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {creditHistory.map((item) => (
+                                <div key={item.id} className="flex items-center justify-between p-4 rounded-2xl border bg-background hover:bg-secondary/10 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn("p-2 rounded-lg", item.type === 'credit' ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600")}>
+                                            {item.type === 'credit' ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm md:text-base">{item.reason}</p>
+                                            <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">
+                                                <Clock className="h-3 w-3" /> {format(item.timestamp.toDate(), "PPP p")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className={cn("text-lg font-black", item.type === 'credit' ? "text-green-600" : "text-red-600")}>
+                                        {item.type === 'credit' ? "+" : "-"} ₹{item.amount}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="payments" className="p-0 mt-0">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow className="border-none hover:bg-transparent">
-                                    <TableHead className="font-bold">Item Name</TableHead>
+                                <TableRow className="border-none hover:bg-transparent bg-secondary/5">
+                                    <TableHead className="font-bold pl-8">Item Name</TableHead>
                                     <TableHead className="font-bold">Amount</TableHead>
                                     <TableHead className="font-bold">Date</TableHead>
-                                    <TableHead className="text-right font-bold">Status</TableHead>
+                                    <TableHead className="text-right font-bold pr-8">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -366,11 +375,11 @@ export default function MyProfilePage() {
                                     </TableRow>
                                 ) : (
                                     paymentHistory.map((payment) => (
-                                        <TableRow key={payment.id} className="hover:bg-secondary/20 transition-colors">
-                                            <TableCell className="font-semibold py-4">{payment.itemTitle}</TableCell>
+                                        <TableRow key={payment.id} className="hover:bg-secondary/20 transition-colors border-b">
+                                            <TableCell className="font-semibold py-5 pl-8">{payment.itemTitle}</TableCell>
                                             <TableCell className="font-bold text-primary">Rs. {payment.amount}</TableCell>
                                             <TableCell className="text-muted-foreground">{format(payment.paymentDate.toDate(), "PPP")}</TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right pr-8">
                                                 <Badge
                                                     variant={payment.status === 'succeeded' ? 'default' : payment.status === 'pending' ? 'secondary' : 'destructive'}
                                                     className={cn(
@@ -388,10 +397,15 @@ export default function MyProfilePage() {
                             </TableBody>
                         </Table>
                     </div>
-                </CardContent>
-            </Card>
+                  </TabsContent>
+               </Tabs>
+            </CardContent>
+          </Card>
+        )}
 
-            <Card className="shadow-xl rounded-3xl border-none">
+        {/* 5. Certificates Section (Bottom) */}
+        {!totalLoading && (
+            <Card className="shadow-xl rounded-3xl border-none overflow-hidden">
                  <CardHeader className="px-8 pt-8">
                     <CardTitle className="font-headline text-2xl flex items-center gap-3">
                         <div className="bg-primary/10 p-2 rounded-xl text-primary"><Award className="h-6 w-6" /></div>
@@ -435,7 +449,6 @@ export default function MyProfilePage() {
                     )}
                 </CardContent>
             </Card>
-           </>
         )}
       </div>
     </div>
