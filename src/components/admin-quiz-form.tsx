@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -78,12 +77,12 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
     setIsSaving(true);
     try {
       await onSave(quizData);
-      toast({ title: "Quiz saved successfully!" });
+      toast({ title: "Test saved successfully!" });
       setIsDialogOpen(false);
       setEditingQuiz(null);
     } catch (error) {
-      console.error("Failed to save quiz:", error);
-      toast({ variant: "destructive", title: "Failed to save quiz" });
+      console.error("Failed to save test:", error);
+      toast({ variant: "destructive", title: "Failed to save test" });
     } finally {
       setIsSaving(false);
     }
@@ -132,8 +131,8 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Manage Quiz Folders</DialogTitle>
-              <DialogDescription>Folders help organize practice quizzes.</DialogDescription>
+              <DialogTitle>Manage Test Folders</DialogTitle>
+              <DialogDescription>Folders help organize practice tests.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
                <div className="flex gap-2">
@@ -156,14 +155,14 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
         <Dialog open={isDialogOpen} onOpenChange={(isOpen) => { if(!isOpen) setEditingQuiz(null); setIsDialogOpen(isOpen); }}>
           <DialogTrigger asChild>
             <Button onClick={handleAddNew}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Quiz
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Test
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
-              <DialogTitle>{editingQuiz?.id ? "Edit Quiz" : "Add New Quiz"}</DialogTitle>
+              <DialogTitle>{editingQuiz?.id ? "Edit Test" : "Add New Test"}</DialogTitle>
               <DialogDescription>
-                Fill in the details for the quiz and its questions.
+                Fill in the details for the test and its questions.
               </DialogDescription>
             </DialogHeader>
             <QuizForm
@@ -198,7 +197,7 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete "{quiz.title}"?</AlertDialogTitle>
-                            <AlertDialogDescription>This will permanently delete the quiz and all its questions.</AlertDialogDescription>
+                            <AlertDialogDescription>This will permanently delete the test and all its questions.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -235,13 +234,13 @@ export function AdminQuizForm({ initialQuizzes, onSave, onDelete }: AdminQuizFor
                         </span>
                     )}
                 </div>
-                {quiz.questions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No questions yet. Edit the quiz to add some.</p>}
+                {quiz.questions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No questions yet. Edit the test to add some.</p>}
               </div>
             </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
-      {initialQuizzes.length === 0 && <p className="text-muted-foreground text-center py-8">No quizzes found. Add one to get started.</p>}
+      {initialQuizzes.length === 0 && <p className="text-muted-foreground text-center py-8">No tests found. Add one to get started.</p>}
     </div>
   );
 }
@@ -415,7 +414,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
     <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Quiz Title</Label>
+            <Label htmlFor="title">Test Title</Label>
             <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
           </div>
           <div className="space-y-2">
@@ -477,7 +476,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
 
           {isLiveQuiz && (
             <div className="space-y-2 col-span-full bg-primary/5 p-4 rounded-lg border border-primary/20">
-                <Label htmlFor="resultAnnounceTime" className="text-primary font-bold">Result Announce Time (Required for Live Quiz)</Label>
+                <Label htmlFor="resultAnnounceTime" className="text-primary font-bold">Result Announce Time (Required for Live Test)</Label>
                 <p className="text-[10px] text-muted-foreground mb-2">When should the Top 3 Rank and Detailed Analysis be visible to students?</p>
                 <div className="flex gap-2">
                     <Popover>
@@ -507,7 +506,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
           )}
 
           <div className="space-y-2 col-span-full">
-            <Label htmlFor="folderId">Folder (Optional - For Practice Quizzes Library)</Label>
+            <Label htmlFor="folderId">Folder (Optional - For Practice Tests Library)</Label>
             <Select value={formData.folderId || "none"} onValueChange={(val) => setFormData(prev => ({ ...prev, folderId: val === "none" ? "" : val }))}>
                 <SelectTrigger id="folderId">
                     <SelectValue placeholder="Select folder..." />
@@ -523,11 +522,11 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
 
           <div className="space-y-2 col-span-full">
             <Label className="text-lg font-bold">Assign to Classes & Batches</Label>
-            <p className="text-xs text-muted-foreground mb-2">Select one or more targets. If none selected, the quiz will not be visible to users.</p>
+            <p className="text-xs text-muted-foreground mb-2">Select one or more targets. If none selected, the test will not be visible to users.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-secondary/20">
                 <div>
-                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Academic Classes (Visible in Quizzes library)</h4>
+                    <h4 className="font-semibold text-sm mb-3 border-b pb-1">Academic Classes (Visible in Tests library)</h4>
                     <div className="grid grid-cols-2 gap-2">
                         {CLASS_OPTIONS.map(opt => (
                             <div key={opt} className="flex items-center space-x-2">
@@ -728,7 +727,7 @@ function QuizForm({ quiz, onSave, onCancel, isSaving, folders }: { quiz: Quiz | 
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
         <Button type="submit" disabled={isSaving}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Save Quiz
+          Save Test
         </Button>
       </div>
     </form>

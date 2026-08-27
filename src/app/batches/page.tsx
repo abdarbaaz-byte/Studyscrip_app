@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -95,7 +94,7 @@ export default function BatchesPage() {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" /> {batch.notes?.length || 0} Topics</div>
                       <div className="flex items-center gap-1"><Download className="h-3.5 w-3.5" /> {(batch.downloadContent || []).length} Files</div>
-                      <div className="flex items-center gap-1"><BrainCircuit className="h-3.5 w-3.5" /> {quizCount} Quizzes</div>
+                      <div className="flex items-center gap-1"><BrainCircuit className="h-3.5 w-3.5" /> {quizCount} Tests</div>
                     </div>
 
                     <Button asChild className="w-full h-11 font-bold">

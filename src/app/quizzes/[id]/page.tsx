@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect, Suspense, useCallback } from "react";
@@ -45,7 +43,7 @@ function QuizStartPageContent() {
         if (savedDataString) {
           const savedData = JSON.parse(savedDataString);
           toast({
-            title: "Quiz Already Attempted",
+            title: "Test Already Attempted",
             description: "Redirecting to your results...",
           });
           const queryParams = new URLSearchParams({
@@ -99,7 +97,7 @@ function QuizStartPageContent() {
       }
 
     } else {
-      toast({ variant: 'destructive', title: 'Quiz not found' });
+      toast({ variant: 'destructive', title: 'Test not found' });
       router.push('/quizzes');
     }
     setLoading(false);
@@ -112,13 +110,13 @@ function QuizStartPageContent() {
   const handleStartQuiz = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-        toast({ variant: 'destructive', title: 'Please Log In', description: 'You must be logged in to start a quiz.' });
+        toast({ variant: 'destructive', title: 'Please Log In', description: 'You must be logged in to start a test.' });
         router.push(`/login?redirect=/quizzes/${quizId}?type=${quizType}${schoolId ? `&schoolId=${schoolId}`:''}`);
         return;
     }
     
     if (quizType === 'live' && !schoolId && (!userName || !userClass || !userSchool)) {
-        toast({ variant: 'destructive', title: 'Please fill all your details for the quiz.' });
+        toast({ variant: 'destructive', title: 'Please fill all your details for the test.' });
         return;
     }
     
@@ -145,7 +143,7 @@ function QuizStartPageContent() {
   }
 
   if (!quiz) {
-    return <div className="text-center py-16">Quiz not found or could not be loaded.</div>;
+    return <div className="text-center py-16">Test not found or could not be loaded.</div>;
   }
 
   const renderQuizStatusMessage = () => {
@@ -153,8 +151,8 @@ function QuizStartPageContent() {
         return (
             <Card className="text-center p-8 bg-destructive/10 border-destructive">
                 <Clock className="h-12 w-12 mx-auto text-destructive mb-4" />
-                <CardTitle className="text-2xl font-bold text-destructive">Quiz Expired</CardTitle>
-                <CardDescription className="text-destructive/80">This quiz is no longer available for attempts.</CardDescription>
+                <CardTitle className="text-2xl font-bold text-destructive">Test Expired</CardTitle>
+                <CardDescription className="text-destructive/80">This test is no longer available for attempts.</CardDescription>
             </Card>
         )
     }
@@ -162,8 +160,8 @@ function QuizStartPageContent() {
         return (
             <Card className="text-center p-8 bg-secondary">
                 <Clock className="h-12 w-12 mx-auto text-primary mb-4" />
-                <CardTitle className="text-2xl font-bold">Quiz Upcoming</CardTitle>
-                <CardDescription>This quiz will be available from:</CardDescription>
+                <CardTitle className="text-2xl font-bold">Test Upcoming</CardTitle>
+                <CardDescription>This test will be available from:</CardDescription>
                 <p className="font-bold text-lg mt-2">{format(quiz.startTime.toDate(), "PPP p")}</p>
             </Card>
         )
@@ -188,43 +186,43 @@ function QuizStartPageContent() {
                             <li className="flex items-start gap-3">
                                 <ListChecks className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                 <div>
-                                    <span>This quiz contains <strong>{quiz.questions.length} questions</strong>.</span>
-                                    <p className="text-xs">इस क्विज़ में <strong>{quiz.questions.length} प्रश्न</strong> हैं।</p>
+                                    <span>This test contains <strong>{quiz.questions.length} questions</strong>.</span>
+                                    <p className="text-xs">इस टेस्ट में <strong>{quiz.questions.length} प्रश्न</strong> हैं।</p>
                                 </div>
                             </li>
                             <li className="flex items-start gap-3">
                                 <Timer className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                  <div>
-                                    <span>You will have <strong>{quiz.duration || 'unlimited'} minutes</strong> to complete the quiz.</span>
-                                    <p className="text-xs">आपको क्विज़ पूरा करने के लिए <strong>{quiz.duration || 'अनलिमिटेड'} मिनट</strong> मिलेंगे।</p>
+                                    <span>You will have <strong>{quiz.duration || 'unlimited'} minutes</strong> to complete the test.</span>
+                                    <p className="text-xs">आपको टेस्ट पूरा करने के लिए <strong>{quiz.duration || 'अनलिमिटेड'} मिनट</strong> मिलेंगे।</p>
                                 </div>
                             </li>
                              <li className="flex items-start gap-3">
                                 <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <span className={cn(quizType === 'practice' && "font-semibold text-green-600")}>
-                                        {quizType === 'practice' ? 'You can attempt this quiz multiple times.' : 'Each question has only one correct answer.'}
+                                        {quizType === 'practice' ? 'You can attempt this test multiple times.' : 'Each question has only one correct answer.'}
                                     </span>
                                      <p className="text-xs">
-                                        {quizType === 'practice' ? 'आप इस क्विज़ को कई बार हल कर सकते हैं।' : 'हर प्रश्न का केवल एक ही सही उत्तर है।'}
+                                        {quizType === 'practice' ? 'आप इस टेस्ट को कई बार हल कर सकते हैं।' : 'हर प्रश्न का केवल एक ही सही उत्तर है।'}
                                     </p>
                                 </div>
                             </li>
                              <li className="flex items-start gap-3">
                                 <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
                                 <div>
-                                    <span className="font-semibold">Do not switch tabs or minimize the app, or your quiz will be submitted automatically.</span>
-                                    <p className="text-xs font-semibold">ऐप का टैब न बदलें और न ही ऐप को मिनिमाइज़ करें, वरना आपका क्विज़ अपने आप सबमिट हो जाएगा।</p>
+                                    <span className="font-semibold">Do not switch tabs or minimize the app, or your test will be submitted automatically.</span>
+                                    <p className="text-xs font-semibold">ऐप का टैब न बदलें और न ही ऐप को मिनिमाइज़ करें, वरना आपका टेस्ट अपने आप सबmit हो जाएगा।</p>
                                 </div>
                             </li>
                              <li className="flex items-start gap-3">
                                 <NotebookText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                                 <div>
                                     <span className={cn(quizType === 'live' && "font-semibold")}>
-                                      {quizType === 'live' ? 'Results will be available after the quiz period ends.' : 'Results are shown immediately after submission.'}
+                                      {quizType === 'live' ? 'Results will be available after the test period ends.' : 'Results are shown immediately after submission.'}
                                     </span>
                                     <p className="text-xs">
-                                        {quizType === 'live' ? 'परिणाम क्विज़ अवधि समाप्त होने के बाद उपलब्ध होंगे।' : 'परिणाम सबमिट करने के तुरंत बाद दिखाए जाते हैं।'}
+                                        {quizType === 'live' ? 'परिणाम टेस्ट अवधि समाप्त होने के बाद उपलब्ध होंगे।' : 'परिणाम सबमिट करने के तुरंत बाद दिखाए जाते हैं।'}
                                     </p>
                                 </div>
                             </li>
@@ -238,7 +236,7 @@ function QuizStartPageContent() {
                      <Card>
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">Enter Your Details</CardTitle>
-                            <CardDescription>Please fill in your details to start the live quiz.</CardDescription>
+                            <CardDescription>Please fill in your details to start the live test.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleStartQuiz} className="space-y-4">
@@ -254,7 +252,7 @@ function QuizStartPageContent() {
                                     <Label htmlFor="school" className="flex items-center gap-2"><School className="h-4 w-4"/> School/Institute Name</Label> 
                                     <Input id="school" value={userSchool} onChange={(e) => setUserSchool(e.target.value)} placeholder="e.g., Delhi Public School" required />
                                 </div>
-                                <Button type="submit" className="w-full" size="lg">Start Live Quiz</Button>
+                                <Button type="submit" className="w-full" size="lg">Start Live Test</Button>
                             </form>
                         </CardContent>
                     </Card>
@@ -262,7 +260,7 @@ function QuizStartPageContent() {
                          <Card>
                             <CardHeader>
                                 <CardTitle className="font-headline text-2xl">Ready to Start?</CardTitle>
-                                <CardDescription>Click below to begin the {quizType}.</CardDescription>
+                                <CardDescription>Click below to begin the {quizType === 'live' ? 'Test' : 'Practice'}.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleStartQuiz}>

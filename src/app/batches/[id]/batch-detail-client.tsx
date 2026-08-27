@@ -231,7 +231,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
           <Tabs defaultValue="notes" value={activeTab} onValueChange={handleTabChange} className={cn("w-full flex flex-col", isChatting ? "h-full" : "h-auto")}>
             <TabsList className="grid w-full grid-cols-5 h-12 bg-secondary/50 shrink-0 mb-4 overflow-x-auto">
               <TabsTrigger value="notes" className="gap-2 text-[10px] md:text-sm"><FileText className="h-3.5 w-3.5 md:h-4 md:w-4"/> Notes</TabsTrigger>
-              <TabsTrigger value="quizzes" className="gap-2 text-[10px] md:text-sm"><BrainCircuit className="h-3.5 w-3.5 md:h-4 md:w-4"/> Quiz</TabsTrigger>
+              <TabsTrigger value="quizzes" className="gap-2 text-[10px] md:text-sm"><BrainCircuit className="h-3.5 w-3.5 md:h-4 md:w-4"/> Test</TabsTrigger>
               <TabsTrigger value="downloads" className="gap-2 text-[10px] md:text-sm"><Download className="h-3.5 w-3.5 md:h-4 md:w-4"/> Files</TabsTrigger>
               <TabsTrigger value="chats" className="gap-2 text-[10px] md:text-sm"><MessageSquare className="h-3.5 w-3.5 md:h-4 md:w-4"/> Chat</TabsTrigger>
               <TabsTrigger value="information" className="gap-2 text-[10px] md:text-sm relative">
@@ -271,11 +271,11 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                             </CardHeader>
                             <CardFooter className="mt-auto">
                                 {!hasAccess ? (
-                                    <Button onClick={handleBuyClick} className="w-full"><Lock className="h-4 w-4 mr-2" /> Unlock Quiz</Button>
+                                    <Button onClick={handleBuyClick} className="w-full"><Lock className="h-4 w-4 mr-2" /> Unlock Test</Button>
                                 ) : hasAttempted ? (
                                     <Button asChild className="w-full"><Link href={`/quizzes/${quiz.id}/results?type=live&answers=${encodeURIComponent(userAttemptAnswers || '')}`}>View Analysis <Trophy className="ml-2 h-4 w-4"/></Link></Button>
                                 ) : (
-                                    <Button asChild className="w-full"><Link href={`/quizzes/${quiz.id}?type=live`}>Start Quiz <ArrowRight className="ml-2 h-4 w-4"/></Link></Button>
+                                    <Button asChild className="w-full"><Link href={`/quizzes/${quiz.id}?type=live`}>Start Test <ArrowRight className="ml-2 h-4 w-4"/></Link></Button>
                                 )}
                             </CardFooter>
                         </Card>
@@ -284,7 +284,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                     {quizzes.length === 0 && (
                         <div className="text-center col-span-full py-16 border-2 border-dashed rounded-xl bg-secondary/10 w-full">
                             <BrainCircuit className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-30" />
-                            <p className="text-muted-foreground font-medium">Is batch ke liye koi quiz available nahi hai.</p>
+                            <p className="text-muted-foreground font-medium">Is batch ke liye koi test available nahi hai.</p>
                         </div>
                     )}
                     </div>

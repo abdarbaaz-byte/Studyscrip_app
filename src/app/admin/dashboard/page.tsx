@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -400,10 +399,10 @@ export default function AdminDashboardPage() {
     try {
       await saveQuiz(quiz);
       await loadAdminData();
-      toast({ title: "Quiz saved successfully!" });
+      toast({ title: "Test saved successfully!" });
     } catch (error) {
-      console.error("Failed to save quiz:", error);
-      toast({ variant: "destructive", title: "Failed to save Quiz" });
+      console.error("Failed to save test:", error);
+      toast({ variant: "destructive", title: "Failed to save Test" });
     }
   };
 
@@ -411,10 +410,10 @@ export default function AdminDashboardPage() {
     try {
       await deleteQuiz(quizId);
       await loadAdminData();
-      toast({ title: "Quiz deleted successfully." });
+      toast({ title: "Test deleted successfully." });
     } catch (error) {
-      console.error("Failed to delete quiz:", error);
-      toast({ variant: "destructive", title: "Failed to delete Quiz" });
+      console.error("Failed to delete test:", error);
+      toast({ variant: "destructive", title: "Failed to delete Test" });
     }
   };
 
@@ -853,10 +852,10 @@ export default function AdminDashboardPage() {
         try {
             await deleteQuizAttempt(attemptToDelete.id);
             setQuizAttempts(quizAttempts.filter((a) => a.id !== attemptToDelete.id));
-            toast({ title: "Quiz attempt deleted successfully." });
+            toast({ title: "Test attempt deleted successfully." });
         } catch (error) {
-            console.error("Failed to delete quiz attempt:", error);
-            toast({ variant: "destructive", title: "Failed to delete quiz attempt." });
+            console.error("Failed to delete test attempt:", error);
+            toast({ variant: "destructive", title: "Failed to delete test attempt." });
         }
       setAttemptToDelete(null);
     }
@@ -1117,7 +1116,7 @@ export default function AdminDashboardPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Batch Management</CardTitle>
-        <CardDescription>Create and manage learning batches (Notes, Quizzes, Info).</CardDescription>
+        <CardDescription>Create and manage learning batches (Notes, Tests, Info).</CardDescription>
       </CardHeader>
       <CardContent>
         <AdminBatchForm 
@@ -1304,8 +1303,8 @@ export default function AdminDashboardPage() {
   const renderQuizManagement = () => (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Quiz Management</CardTitle>
-        <CardDescription>Manage quizzes and their questions.</CardDescription>
+        <CardTitle className="font-headline text-2xl">Test Management</CardTitle>
+        <CardDescription>Manage tests and their questions.</CardDescription>
       </CardHeader>
       <CardContent>
         <AdminQuizForm
@@ -1448,15 +1447,15 @@ export default function AdminDashboardPage() {
   const renderQuizAttempts = () => (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Quiz Attempts</CardTitle>
-        <CardDescription>View all submitted quiz results and user details.</CardDescription>
+        <CardTitle className="font-headline text-2xl">Test Attempts</CardTitle>
+        <CardDescription>View all submitted test results and user details.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Student</TableHead>
-              <TableHead>Quiz</TableHead>
+              <TableHead>Test</TableHead>
               <TableHead>Score</TableHead>
               <TableHead>Submitted At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -1487,9 +1486,9 @@ export default function AdminDashboardPage() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Quiz Attempt?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete Test Attempt?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the attempt by "{attemptToDelete?.userName}" for the quiz "{attemptToDelete?.quizTitle}".
+                          This action cannot be undone. This will permanently delete the attempt by "{attemptToDelete?.userName}" for the test "{attemptToDelete?.quizTitle}".
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -1504,7 +1503,7 @@ export default function AdminDashboardPage() {
             {quizAttempts.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No quiz attempts have been submitted yet.
+                        No test attempts have been submitted yet.
                     </TableCell>
                 </TableRow>
             )}
@@ -2283,7 +2282,7 @@ export default function AdminDashboardPage() {
                 <Headphones className="mr-2 h-4 w-4" /> Audio Lectures
             </Button>}
             {hasPermission('manage_quizzes') && <Button variant={activeTab === 'quizzes' ? 'default' : 'outline'} onClick={() => setActiveTab('quizzes')}>
-                <BrainCircuit className="mr-2 h-4 w-4" /> Quizzes
+                <BrainCircuit className="mr-2 h-4 w-4" /> Tests
             </Button>}
             {hasPermission('manage_live_classes') && <Button variant={activeTab === 'live-classes' ? 'default' : 'outline'} onClick={() => setActiveTab('live-classes')}>
                 <Radio className="mr-2 h-4 w-4" /> Live Classes
@@ -2298,7 +2297,7 @@ export default function AdminDashboardPage() {
                 <Coins className="mr-2 h-4 w-4" /> User Credits
             </Button>}
             {hasPermission('view_quiz_attempts') && <Button variant={activeTab === 'quiz-attempts' ? 'default' : 'outline'} onClick={() => setActiveTab('quiz-attempts')}>
-                <BarChart3 className="mr-2 h-4 w-4" /> Quiz Attempts
+                <BarChart3 className="mr-2 h-4 w-4" /> Test Attempts
             </Button>}
             {hasPermission('view_live_class_surveys') && <Button variant={activeTab === 'live-surveys' ? 'default' : 'outline'} onClick={() => setActiveTab('live-surveys')}>
                 <Radio className="mr-2 h-4 w-4" /> Live Surveys

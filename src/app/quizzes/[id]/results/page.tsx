@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -65,8 +64,8 @@ function QuizResultsContent() {
         const now = new Date();
         const announceTime = loadedQuiz.resultAnnounceTime?.toDate();
         
-        // For practice quizzes, always show analysis. 
-        // For live quizzes, only show if announceTime has passed.
+        // For practice tests, hamesha analysis dikhao. 
+        // For live tests, sirf announceTime ke baad hi dikhao.
         const resultsLiveNow = quizType === 'practice' || !announceTime || now >= announceTime;
         setIsResultAnnounced(resultsLiveNow);
 
@@ -121,7 +120,7 @@ function QuizResultsContent() {
         setCanShowRank(resultsLiveNow && quizType === 'live');
         
       } else {
-        toast({ variant: 'destructive', title: 'Quiz not found.' });
+        toast({ variant: 'destructive', title: 'Test not found.' });
       }
       setLoading(false);
     }
@@ -135,7 +134,7 @@ function QuizResultsContent() {
   }
 
   if (!quiz) {
-    return <div className="text-center py-16">Quiz results not found or invalid.</div>;
+    return <div className="text-center py-16">Test results not found or invalid.</div>;
   }
 
   const scorePercentage = maxMarks > 0 ? (score / maxMarks) * 100 : 0;
@@ -160,7 +159,7 @@ function QuizResultsContent() {
                 {Object.keys(answers).length > 0 ? `Results: ${quiz.title}` : `Leaderboard: ${quiz.title}`}
             </CardTitle>
             <CardDescription className="text-center">
-                {Object.keys(answers).length > 0 ? `Well done, ${name}! Here's how you did.` : `Check out the top performers for this quiz!`}
+                {Object.keys(answers).length > 0 ? `Well done, ${name}! Here's how you did.` : `Check out the top performers for this test!`}
             </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
@@ -205,7 +204,7 @@ function QuizResultsContent() {
                     </Button>
                 )}
                 <Button variant="outline" onClick={() => router.push('/quizzes')}>
-                    {isPractice ? 'More Quizzes' : 'Back to Quizzes'}
+                    {isPractice ? 'More Tests' : 'Back to Tests'}
                 </Button>
             </div>
         </CardContent>
@@ -256,7 +255,7 @@ function QuizResultsContent() {
                             if(question.type === 'mcq' || question.type === 'true_false') {
                                 isCorrect = parseInt(userAnswer?.toString() || '-1') === question.correctAnswer;
                             } else if (question.type === 'fill_in_blank') {
-                                isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === question.answerText.trim().toLowerCase();
+                                isCorrect = typeof userAnswer === 'string' && userAnswer.trim().toLowerCase() === q.answerText.trim().toLowerCase();
                             } else if (question.type === 'match') {
                                 if (typeof userAnswer === 'object' && userAnswer !== null) {
                                     isCorrect = question.matchOptions.every(opt => (userAnswer as any)[opt.id] === opt.answer);

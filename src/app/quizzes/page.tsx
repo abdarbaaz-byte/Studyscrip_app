@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -82,7 +81,7 @@ export default function QuizzesPage() {
         <CardFooter>
           <Button asChild className="w-full font-bold h-11" variant={isExpired ? "outline" : isUpcoming ? "secondary" : "default"} disabled={isUpcoming}>
             <Link href={isUpcoming ? "#" : `/quizzes/${quiz.id}?type=${isLiveType ? 'live' : 'practice'}`}>
-              {isCurrentlyLive ? 'Take Live Quiz' : isExpired ? 'View Analysis' : isUpcoming ? 'Locked Until Start' : 'Start Quiz'} 
+              {isCurrentlyLive ? 'Take Live Test' : isExpired ? 'View Analysis' : isUpcoming ? 'Locked Until Start' : 'Start Test'} 
               {!isUpcoming && <ArrowRight className="ml-2 h-4 w-4" />}
             </Link>
           </Button>
@@ -99,10 +98,10 @@ export default function QuizzesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
         <ScrollAnimation as="h1" className="font-headline text-4xl md:text-5xl font-bold">
-          Quizzes
+          Tests
         </ScrollAnimation>
         <ScrollAnimation as="p" delay={100} className="text-lg text-muted-foreground mt-2">
-          Test your knowledge with our live and practice quizzes.
+          Test your knowledge with our live and practice tests.
         </ScrollAnimation>
       </div>
 
@@ -124,7 +123,7 @@ export default function QuizzesPage() {
                 value="live" 
                 className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl gap-2 font-headline transition-all duration-300 hover:bg-orange-500/10"
               >
-                <Orbit className="h-5 w-5" /> Live Quizzes
+                <Orbit className="h-5 w-5" /> Live Tests
               </TabsTrigger>
             </TabsList>
           </div>
@@ -148,7 +147,7 @@ export default function QuizzesPage() {
                     {filteredPracticeQuizzes.length === 0 ? (
                         <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
                             <ShieldCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
-                            <h3 className="text-xl font-bold text-muted-foreground">No quizzes in this folder</h3>
+                            <h3 className="text-xl font-bold text-muted-foreground">No tests in this folder</h3>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -183,7 +182,7 @@ export default function QuizzesPage() {
                     {filteredPracticeQuizzes.length > 0 && (
                         <div className="space-y-6">
                             <h3 className="text-xl font-bold font-headline flex items-center gap-2">
-                                <BrainCircuit className="h-5 w-5 text-indigo-600" /> Other Quizzes
+                                <BrainCircuit className="h-5 w-5 text-indigo-600" /> Other Tests
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {filteredPracticeQuizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} isLiveType={false} />)}
@@ -194,7 +193,7 @@ export default function QuizzesPage() {
                     {folders.length === 0 && practiceQuizzes.length === 0 && (
                         <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
                             <ShieldCheck className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
-                            <h3 className="text-xl font-bold text-muted-foreground">No practice quizzes found</h3>
+                            <h3 className="text-xl font-bold text-muted-foreground">No practice tests found</h3>
                             <p className="text-sm text-muted-foreground mt-1">Check back later for new academic practice material.</p>
                         </div>
                     )}
@@ -206,7 +205,7 @@ export default function QuizzesPage() {
             {liveQuizzes.length === 0 ? (
                  <div className="text-center py-20 border-2 border-dashed rounded-3xl bg-secondary/10">
                     <Orbit className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
-                    <h3 className="text-xl font-bold text-muted-foreground">No live quizzes scheduled</h3>
+                    <h3 className="text-xl font-bold text-muted-foreground">No live tests scheduled</h3>
                     <p className="text-sm text-muted-foreground mt-1">Stay tuned! Live tests will appear here when scheduled.</p>
                 </div>
             ) : (

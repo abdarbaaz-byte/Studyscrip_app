@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
@@ -268,7 +267,7 @@ function QuizAttemptContent() {
             const dataToSave = { answers: encodedAnswers, name, class: userClass, school: userSchool };
             localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify(dataToSave));
         } catch(error) {
-            console.error("Failed to save quiz attempt:", error);
+            console.error("Failed to save test attempt:", error);
             toast({ variant: "destructive", title: "Error saving results. Please try again."})
             hasSubmittedRef.current = false;
             return;
@@ -306,7 +305,7 @@ function QuizAttemptContent() {
           setTimeLeft(loadedQuiz.duration * 60);
         }
       } else {
-        toast({ variant: 'destructive', title: 'Quiz not found' });
+        toast({ variant: 'destructive', title: 'Test not found' });
         router.push('/quizzes');
       }
       setLoading(false);
@@ -319,7 +318,7 @@ function QuizAttemptContent() {
     if (timeLeft === null || timeLeft <= 0) {
       if (timerRef.current) clearInterval(timerRef.current);
       if (timeLeft === 0 && !hasSubmittedRef.current) {
-        toast({ title: "Time's Up!", description: "Your quiz has been automatically submitted." });
+        toast({ title: "Time's Up!", description: "Your test has been automatically submitted." });
         triggerSubmit();
       }
       return;
@@ -337,8 +336,8 @@ function QuizAttemptContent() {
         if (document.visibilityState === 'hidden' && !hasSubmittedRef.current) {
             toast({
                 variant: 'destructive',
-                title: 'Quiz Submitted',
-                description: 'You moved to another tab. Your quiz has been submitted to prevent cheating.',
+                title: 'Test Submitted',
+                description: 'You moved to another tab. Your test has been submitted to prevent cheating.',
             });
             triggerSubmit();
         }
@@ -371,7 +370,7 @@ function QuizAttemptContent() {
   }
 
   if (!quiz) {
-    return <div className="text-center py-16">Quiz not found.</div>;
+    return <div className="text-center py-16">Test not found.</div>;
   }
   
   const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -441,7 +440,7 @@ function QuizAttemptContent() {
             
             {isLastQuestion ? (
               <Button onClick={() => setShowSubmitConfirm(true)} className="bg-green-600 hover:bg-green-700">
-                Submit Quiz
+                Submit Test
               </Button>
             ) : (
               <Button onClick={handleNext}>

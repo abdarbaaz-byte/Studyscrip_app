@@ -20,7 +20,7 @@ export function BottomNavigation() {
     { href: "/", label: "Home", icon: Home },
     { href: "/my-courses", label: "Courses", icon: LayoutGrid },
     { href: "/batches", label: "Batches", icon: Users },
-    { href: "/quizzes", label: "Quizzes", icon: BrainCircuit },
+    { href: "/quizzes", label: "Tests", icon: BrainCircuit },
     { href: "/my-profile", label: "Profile", icon: User },
   ];
   
