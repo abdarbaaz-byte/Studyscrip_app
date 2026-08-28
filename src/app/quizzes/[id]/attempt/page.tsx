@@ -75,6 +75,14 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
         onAnswerChange(question.id, newAnswerObject);
     };
 
+    const handleToggleOption = (val: number) => {
+        if (answer === val) {
+            onAnswerChange(question.id, null);
+        } else {
+            onAnswerChange(question.id, val);
+        }
+    };
+
     switch (question.type) {
         case 'match':
             return (
@@ -114,16 +122,21 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
             return (
                  <RadioGroup 
                     value={answer?.toString()} 
-                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
                     className="space-y-4"
                 >
-                    <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                    <div 
+                        className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors cursor-pointer"
+                        onClick={() => handleToggleOption(0)}
+                    >
                         <RadioGroupItem value="0" id={`q-opt-true`} />
-                        <Label htmlFor={`q-opt-true`} className="text-base font-normal flex-1 cursor-pointer">True</Label>
+                        <Label htmlFor={`q-opt-true`} className="text-base font-normal flex-1 cursor-pointer" onClick={(e) => e.preventDefault()}>True</Label>
                     </div>
-                    <div className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                    <div 
+                        className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors cursor-pointer"
+                        onClick={() => handleToggleOption(1)}
+                    >
                         <RadioGroupItem value="1" id={`q-opt-false`} />
-                        <Label htmlFor={`q-opt-false`} className="text-base font-normal flex-1 cursor-pointer">False</Label>
+                        <Label htmlFor={`q-opt-false`} className="text-base font-normal flex-1 cursor-pointer" onClick={(e) => e.preventDefault()}>False</Label>
                     </div>
                 </RadioGroup>
             );
@@ -142,13 +155,16 @@ const QuizQuestion = ({ question, answer, onAnswerChange }: { question: Question
             return (
                  <RadioGroup 
                     value={answer?.toString()} 
-                    onValueChange={(value) => onAnswerChange(question.id, parseInt(value))}
                     className="space-y-4"
                 >
                     {question.options.map((option, index) => (
-                        <div key={index} className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
-                        <RadioGroupItem value={index.toString()} id={`q-opt-${index}`} />
-                        <Label htmlFor={`q-opt-${index}`} className="text-base font-normal flex-1 cursor-pointer">{option}</Label>
+                        <div 
+                            key={index} 
+                            className="flex items-center space-x-3 border rounded-lg p-4 has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors cursor-pointer"
+                            onClick={() => handleToggleOption(index)}
+                        >
+                            <RadioGroupItem value={index.toString()} id={`q-opt-${index}`} />
+                            <Label htmlFor={`q-opt-${index}`} className="text-base font-normal flex-1 cursor-pointer" onClick={(e) => e.preventDefault()}>{option}</Label>
                         </div>
                     ))}
                 </RadioGroup>
