@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt, type Question, type MatchOption } from "@/lib/data";
+import { getQuiz, type Quiz, saveQuizAttempt, type QuizAttempt, type Question, type MatchOption, getUserProfile } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { getGoogleDriveImageUrl, cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/use-auth";
 
 type AnswersState = { [questionId: string]: number | string | { [matchId: string]: string } };
 type QuestionStates = { [questionId: string]: { visited: boolean; marked: boolean } };
@@ -177,6 +178,7 @@ function QuizAttemptContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const quizId = params.id as string;
+  const { user } = useAuth();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -192,11 +194,25 @@ function QuizAttemptContent() {
 
   const quizType = searchParams.get('type') || 'practice';
   const schoolId = searchParams.get('schoolId');
-  const name = searchParams.get('name') || 'Anonymous';
-  const userClass = searchParams.get('class') || 'N/A';
+  const initialName = searchParams.get('name') || 'Anonymous';
+  const initialClass = searchParams.get('class') || 'N/A';
   const userSchool = searchParams.get('school') || '';
-  const userId = searchParams.get('userId');
-  const userEmail = searchParams.get('userEmail');
+  const userId = searchParams.get('userId') || user?.uid || null;
+  const userEmail = searchParams.get('userEmail') || user?.email || null;
+
+  const [displayName, setDisplayName] = useState(initialName);
+  const [displayClass, setDisplayClass] = useState(initialClass);
+
+  useEffect(() => {
+    if (user) {
+        getUserProfile(user.uid).then(profile => {
+            if (profile) {
+                if (profile.displayName) setDisplayName(profile.displayName);
+                if (profile.userClass) setDisplayClass(profile.userClass);
+            }
+        });
+    }
+  }, [user]);
 
   const handleSubmit = useCallback(async (currentAnswers: AnswersState) => {
     if (!quiz || hasSubmittedRef.current) return;
@@ -233,14 +249,14 @@ function QuizAttemptContent() {
 
     if (quizType === 'live') {
         const attemptData: Omit<QuizAttempt, 'id' | 'submittedAt'> = {
-          quizId, quizTitle: quiz.title, userId, userEmail, userName: name, userClass, userSchool,
+          quizId, quizTitle: quiz.title, userId, userEmail, userName: displayName, userClass: displayClass, userSchool,
           answers: currentAnswers, score: finalScore, maxMarks: maxPossibleMarks, totalQuestions: quiz.questions.length,
           percentage: (finalScore / maxPossibleMarks) * 100, schoolId: schoolId || null,
         };
         try {
             await saveQuizAttempt(attemptData);
             localStorage.setItem(`quiz-attempted-${quiz.id}`, 'true');
-            localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({ answers: encodedAnswers, name, class: userClass, school: userSchool }));
+            localStorage.setItem(`quiz-data-${quiz.id}`, JSON.stringify({ answers: encodedAnswers, name: displayName, class: displayClass, school: userSchool }));
         } catch(error) {
             console.error("Failed to save test attempt:", error);
             toast({ variant: "destructive", title: "Error saving results. Please try again."});
@@ -248,8 +264,8 @@ function QuizAttemptContent() {
             return;
         }
     }
-    router.replace(`/quizzes/${quizId}/results?type=${quizType}&answers=${encodedAnswers}&name=${name}&class=${userClass}${schoolId ? `&schoolId=${schoolId}` : ''}`);
-  }, [quiz, quizId, quizType, name, userClass, userSchool, userId, userEmail, schoolId, router, toast]);
+    router.replace(`/quizzes/${quizId}/results?type=${quizType}&answers=${encodedAnswers}&name=${displayName}&class=${displayClass}${schoolId ? `&schoolId=${schoolId}` : ''}`);
+  }, [quiz, quizId, quizType, displayName, displayClass, userSchool, userId, userEmail, schoolId, router, toast]);
 
   const triggerSubmit = useCallback(() => {
     handleSubmit(answers);
@@ -376,21 +392,25 @@ function QuizAttemptContent() {
   return (
     <div className="min-h-screen bg-secondary/10 pb-20">
       <div className="sticky top-0 z-20 bg-background border-b shadow-sm">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-              <div className="flex flex-col">
-                  <h1 className="font-headline text-lg md:text-xl font-bold truncate max-w-[200px] md:max-w-md">{quiz.title}</h1>
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{name} | Class {userClass}</span>
+          <div className="container mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+              <div className="flex flex-col min-w-0 flex-1">
+                  <h1 className="font-headline text-sm md:text-lg font-bold truncate leading-tight">{quiz.title}</h1>
+                  <span className="text-[9px] md:text-[10px] uppercase font-bold text-muted-foreground tracking-wider truncate">
+                    {(displayName === 'null' || !displayName) ? 'Anonymous' : displayName} | Class {(displayClass === 'N/A' || !displayClass) ? 'Other' : displayClass}
+                  </span>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4 shrink-0">
                   {timeLeft !== null && (
-                    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full font-mono font-bold border", timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-secondary text-foreground")}>
-                      <Timer className="h-4 w-4"/>
+                    <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-xs md:text-sm font-bold border", timeLeft < 60 ? "bg-red-50 text-red-600 border-red-200 animate-pulse" : "bg-secondary text-foreground")}>
+                      <Timer className="h-3.5 w-3.5"/>
                       <span>{formatTime(timeLeft)}</span>
                     </div>
                   )}
                   <Sheet open={isPaletteOpen} onOpenChange={setIsPaletteOpen}>
                       <SheetTrigger asChild>
-                          <Button variant="outline" size="sm" className="rounded-full shadow-sm"><LayoutGrid className="mr-2 h-4 w-4"/> Questions</Button>
+                          <Button variant="outline" size="sm" className="rounded-full shadow-sm h-8 px-3 text-[10px] md:text-xs">
+                            <LayoutGrid className="mr-1.5 h-3.5 w-3.5"/> Questions
+                          </Button>
                       </SheetTrigger>
                       <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 flex flex-col">
                           <SheetHeader className="p-6 border-b">
@@ -437,11 +457,11 @@ function QuizAttemptContent() {
               </div>
           </div>
           <div className="bg-secondary/30 border-t">
-              <div className="container mx-auto px-4 py-2 flex justify-between gap-1 overflow-x-auto no-scrollbar">
-                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-green-600"></div> <span className="text-[10px] font-bold uppercase text-muted-foreground">Ans: {statusCounts.answered}</span></div>
-                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-indigo-600"></div> <span className="text-[10px] font-bold uppercase text-muted-foreground">Mark: {statusCounts.marked}</span></div>
-                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-red-500"></div> <span className="text-[10px] font-bold uppercase text-muted-foreground">N-Ans: {statusCounts.notAnswered}</span></div>
-                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-gray-300"></div> <span className="text-[10px] font-bold uppercase text-muted-foreground">N-Vis: {statusCounts.notVisited}</span></div>
+              <div className="container mx-auto px-4 py-1.5 flex justify-between gap-1 overflow-x-auto no-scrollbar">
+                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-green-600"></div> <span className="text-[9px] font-bold uppercase text-muted-foreground">Ans: {statusCounts.answered}</span></div>
+                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-indigo-600"></div> <span className="text-[9px] font-bold uppercase text-muted-foreground">Mark: {statusCounts.marked}</span></div>
+                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-red-500"></div> <span className="text-[9px] font-bold uppercase text-muted-foreground">N-Ans: {statusCounts.notAnswered}</span></div>
+                  <div className="flex items-center gap-1.5 shrink-0"><div className="h-2 w-2 rounded-full bg-gray-300"></div> <span className="text-[9px] font-bold uppercase text-muted-foreground">N-Vis: {statusCounts.notVisited}</span></div>
               </div>
           </div>
       </div>
