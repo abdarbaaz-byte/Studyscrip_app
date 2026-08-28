@@ -41,7 +41,7 @@ const CLASS_OPTIONS = [
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signUp } = useAuth();
+  const { user, loading: authLoading, signUp } = useAuth();
   const { toast } = useToast();
   
   const [name, setName] = useState("");
@@ -56,6 +56,13 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/");
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -92,6 +99,15 @@ function SignupForm() {
     }
     setLoading(false);
   };
+
+  // Prevent UI flash while checking auth
+  if (authLoading || user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">

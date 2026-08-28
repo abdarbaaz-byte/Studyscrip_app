@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,20 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { logIn } = useAuth();
+  const { user, loading: authLoading, logIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/");
+    }
+  }, [user, authLoading, router]);
 
   const handleLogin = async (e?: React.FormEvent, force: boolean = false) => {
     if (e) e.preventDefault();
@@ -46,6 +53,15 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  // Prevent UI flash while checking auth
+  if (authLoading || user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
