@@ -38,17 +38,27 @@ export const sendPushNotifications = functions.firestore
       // This ensures the Service Worker has full control and avoids duplicate browser alerts.
       const messages = tokens.map(token => ({
         token: token,
+        android: {
+          priority: 'high' as const, // CRITICAL: Triggers Heads-Up notification on Android
+        },
+        webpush: {
+          headers: {
+            Urgency: 'high',
+          },
+        },
         data: {
           title: notificationData.title || "StudyScript Update",
           body: notificationData.description || "You have a new message",
           link: notificationData.link || "/",
           icon: "/icons/icon-192x192.png",
           click_action: notificationData.link || "/", // Fallback for some clients
+          vibrate: "200,100,200", // Signal pattern for Service Worker
+          priority: "high",
         }
       }));
 
       const response = await messaging.sendEach(messages);
-      console.log(`Sent ${response.successCount} data-push messages.`);
+      console.log(`Sent ${response.successCount} high-priority data-push messages.`);
       
       // Cleanup stale tokens
       if (response.failureCount > 0) {
@@ -86,11 +96,21 @@ export const sendManualPush = functions.https.onCall(async (data, context) => {
 
   const message = {
     token: targetToken,
+    android: {
+      priority: 'high' as const,
+    },
+    webpush: {
+      headers: {
+        Urgency: 'high',
+      },
+    },
     data: {
       title: title || "StudyScript",
       body: body || "",
       link: link || "/",
       icon: "/icons/icon-192x192.png",
+      vibrate: "200,100,200",
+      priority: "high",
     }
   };
 

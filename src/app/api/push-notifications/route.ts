@@ -41,19 +41,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'No active tokens found for this target' });
     }
 
-    // 2. Prepare Direct Push Messages
+    // 2. Prepare Direct Push Messages with High Priority
     const messages = tokens.map(token => ({
       token: token,
+      android: {
+        priority: 'high' as const, // Promotion for Android popups
+      },
+      webpush: {
+        headers: {
+          Urgency: 'high',
+        },
+      },
       data: {
         title: title,
         body: body,
         link: link || '/',
+        vibrate: "200,100,200", // Vibration instruction
+        priority: "high",
       }
     }));
 
     // 3. Send notifications via Admin SDK
     const response = await adminMessaging.sendEach(messages);
-    console.log(`FCM: Sent ${response.successCount} messages to ${targetUid || targetRole || 'broadcast'}.`);
+    console.log(`FCM: Sent ${response.successCount} high-priority messages to ${targetUid || targetRole || 'broadcast'}.`);
 
     // 4. Cleanup stale tokens if any failed
     if (response.failureCount > 0) {
