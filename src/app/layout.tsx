@@ -9,7 +9,6 @@ import { AudioPlayerProvider } from "@/hooks/use-audio-player";
 import { DataProvider } from "@/hooks/use-data";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { FCMInit } from "@/components/fcm-init";
-import { ScrollRestorer } from "@/components/scroll-restorer";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://studyscript.netlify.app"),
@@ -68,7 +67,6 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen font-body antialiased">
         <FCMInit />
-        <ScrollRestorer />
         <AuthProvider>
           <AudioPlayerProvider>
             <DataProvider>

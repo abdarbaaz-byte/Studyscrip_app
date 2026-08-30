@@ -29,12 +29,13 @@ export default function LoginPage() {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect only if already logged in and NOT currently attempting a new login
+  // This ensures the Session Conflict modal has time to show up.
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !loading && !showConflictModal) {
       router.replace("/");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, loading, showConflictModal]);
 
   const handleLogin = async (e?: React.FormEvent, force: boolean = false) => {
     if (e) e.preventDefault();
@@ -55,7 +56,8 @@ export default function LoginPage() {
   };
 
   // Prevent UI flash while checking auth
-  if (authLoading || user) {
+  // But allow showing the page if we are in a conflict state or actively loading a login
+  if (authLoading || (user && !loading && !showConflictModal)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

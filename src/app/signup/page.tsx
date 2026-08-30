@@ -57,12 +57,12 @@ function SignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in, unless we are currently signing up
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !loading) {
       router.replace("/");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, loading]);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -101,7 +101,7 @@ function SignupForm() {
   };
 
   // Prevent UI flash while checking auth
-  if (authLoading || user) {
+  if (authLoading || (user && !loading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
