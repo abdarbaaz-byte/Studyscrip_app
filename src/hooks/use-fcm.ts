@@ -1,15 +1,17 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { getToken } from 'firebase/messaging';
 import { messaging, db, auth } from '../lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
+/**
+ * Custom Hook to manage FCM Token registration.
+ * Uses a persistent Device ID to prevent duplicate token entries in Firestore.
+ */
 const useFcmToken = () => {
-  const [token, setToken] = useState<string | null>(null);
-
   useEffect(() => {
     const initializeFCM = async () => {
       if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !messaging) {
@@ -17,58 +19,60 @@ const useFcmToken = () => {
       }
 
       try {
+        // 1. Request Permission
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-          console.warn("FCM: Notifications not allowed by user.");
+          console.warn("FCM: Notifications not allowed.");
           return;
         }
 
+        // 2. Register/Get Service Worker
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
           scope: '/',
         });
 
-        // Wait for service worker to be ready
-        let sw = registration.active || registration.waiting || registration.installing;
-        if (sw?.state !== 'activated') {
+        // Ensure Service Worker is active
+        if (registration.installing) {
             await new Promise((resolve) => {
-                const checkState = (target: any) => {
-                    if (target.state === 'activated') resolve(null);
-                };
-                if (registration.installing) registration.installing.addEventListener('statechange', (e: any) => checkState(e.target));
-                if (registration.waiting) registration.waiting.addEventListener('statechange', (e: any) => checkState(e.target));
-                if (registration.active) registration.active.addEventListener('statechange', (e: any) => checkState(e.target));
-                setTimeout(resolve, 5000);
+                registration.installing?.addEventListener('statechange', (e: any) => {
+                    if (e.target.state === 'activated') resolve(null);
+                });
             });
         }
 
-        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-        if (!vapidKey) {
-          console.error('FCM: NEXT_PUBLIC_FIREBASE_VAPID_KEY is missing.');
-          return;
+        // 3. Generate or Retrieve a persistent Device ID for this browser/PWA instance
+        let deviceId = localStorage.getItem('studyscript_fcm_device_id');
+        if (!deviceId) {
+          deviceId = crypto.randomUUID();
+          localStorage.setItem('studyscript_fcm_device_id', deviceId);
         }
 
+        // 4. Get FCM Token
+        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
         const currentToken = await getToken(messaging, {
           vapidKey: vapidKey,
           serviceWorkerRegistration: registration,
         });
 
         if (currentToken) {
-          setToken(currentToken);
-          
-          // Initial registration with UID tracking
-          // This listener ensures the token is ALWAYS mapped to the current UID (or null if guest)
+          const tokenDocRef = doc(db, 'fcmTokens', deviceId);
+
+          // 5. Sync with Auth State
+          // We use the deviceId as the Document ID to ensure 1-to-1 mapping per browser instance.
           onAuthStateChanged(auth, async (user) => {
-            const tokenDocRef = doc(db, 'fcmTokens', currentToken);
-            await setDoc(tokenDocRef, {
-              token: currentToken,
-              uid: user ? user.uid : null,
-              lastUpdated: serverTimestamp(),
-              platform: 'web',
-              createdAt: serverTimestamp(),
-            }, { merge: true });
+            try {
+                await setDoc(tokenDocRef, {
+                  token: currentToken,
+                  uid: user ? user.uid : null,
+                  lastUpdated: serverTimestamp(),
+                  platform: window.matchMedia('(display-mode: standalone)').matches ? 'pwa' : 'web',
+                  browser: navigator.userAgent.includes('Chrome') ? 'chrome' : 'other',
+                }, { merge: true });
+                console.log(`FCM: Device ${deviceId} synced with UID: ${user?.uid || 'guest'}`);
+            } catch (err) {
+                console.error("FCM: Sync failed", err);
+            }
           });
-          
-          console.log("FCM: Token registered with UID tracking.");
         }
       } catch (error) {
         console.error("FCM ERROR:", error);
@@ -78,7 +82,7 @@ const useFcmToken = () => {
     initializeFCM();
   }, []);
 
-  return { token };
+  return null;
 };
 
 export default useFcmToken;

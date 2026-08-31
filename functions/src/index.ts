@@ -30,16 +30,19 @@ export const sendPushNotifications = functions.firestore
       }
 
       const tokens: string[] = [];
+      const tokenDocIds: string[] = [];
       tokensSnapshot.forEach((doc) => {
-        tokens.push(doc.id);
+        const data = doc.data();
+        if (data.token) {
+          tokens.push(data.token);
+          tokenDocIds.push(doc.id);
+        }
       });
 
-      // Data-only payload (No 'notification' key at the top level)
-      // This ensures the Service Worker has full control and avoids duplicate browser alerts.
       const messages = tokens.map(token => ({
         token: token,
         android: {
-          priority: 'high' as const, // CRITICAL: Triggers Heads-Up notification on Android
+          priority: 'high' as const,
         },
         webpush: {
           headers: {
@@ -51,29 +54,30 @@ export const sendPushNotifications = functions.firestore
           body: notificationData.description || "You have a new message",
           link: notificationData.link || "/",
           icon: "/icons/icon-192x192.png",
-          click_action: notificationData.link || "/", // Fallback for some clients
-          vibrate: "200,100,200", // Signal pattern for Service Worker
+          vibrate: "200,100,200",
           priority: "high",
         }
       }));
 
       const response = await messaging.sendEach(messages);
-      console.log(`Sent ${response.successCount} high-priority data-push messages.`);
+      console.log(`Sent ${response.successCount} high-priority messages.`);
       
       // Cleanup stale tokens
       if (response.failureCount > 0) {
-        const tokensToRemove: Promise<any>[] = [];
+        const batch = db.batch();
         response.responses.forEach((resp, index) => {
           if (!resp.success && resp.error) {
+            const code = resp.error.code;
             if (
-              resp.error.code === 'messaging/registration-token-not-registered' ||
-              resp.error.code === 'messaging/invalid-registration-token'
+              code === 'messaging/registration-token-not-registered' ||
+              code === 'messaging/invalid-registration-token'
             ) {
-              tokensToRemove.push(db.collection("fcmTokens").doc(tokens[index]).delete());
+              // Delete by Document ID (which is the deviceId)
+              batch.delete(db.collection("fcmTokens").doc(tokenDocIds[index]));
             }
           }
         });
-        await Promise.all(tokensToRemove);
+        await batch.commit();
       }
     } catch (error) {
       console.error("Error in sendPushNotifications:", error);
@@ -117,8 +121,13 @@ export const sendManualPush = functions.https.onCall(async (data, context) => {
   try {
     await messaging.send(message);
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Manual push failed:", error);
+    if (error.code === 'messaging/registration-token-not-registered') {
+        // Find and delete the stale token
+        const q = await db.collection("fcmTokens").where("token", "==", targetToken).get();
+        q.forEach(doc => doc.ref.delete());
+    }
     throw new functions.https.HttpsError('internal', 'Failed to send notification');
   }
 });
