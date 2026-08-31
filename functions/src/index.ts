@@ -10,6 +10,7 @@ const messaging = admin.messaging();
 /**
  * Triggered when a new notification is created in the 'notifications' collection.
  * Sends a DATA-ONLY payload to FCM so the Service Worker can handle display.
+ * Includes fallback logic: if PWA token fails, switch to browser token if available.
  */
 export const sendPushNotifications = functions.firestore
   .document("notifications/{notificationId}")
@@ -31,11 +32,14 @@ export const sendPushNotifications = functions.firestore
 
       const tokens: string[] = [];
       const tokenDocIds: string[] = [];
+      const tokenDataList: any[] = []; // Store data for fallback checks
+
       tokensSnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.token) {
           tokens.push(data.token);
           tokenDocIds.push(doc.id);
+          tokenDataList.push(data);
         }
       });
 
@@ -62,7 +66,7 @@ export const sendPushNotifications = functions.firestore
       const response = await messaging.sendEach(messages);
       console.log(`Sent ${response.successCount} high-priority messages.`);
       
-      // Cleanup stale tokens
+      // Smart Cleanup with Fallback
       if (response.failureCount > 0) {
         const batch = db.batch();
         response.responses.forEach((resp, index) => {
@@ -72,8 +76,22 @@ export const sendPushNotifications = functions.firestore
               code === 'messaging/registration-token-not-registered' ||
               code === 'messaging/invalid-registration-token'
             ) {
-              // Delete by Document ID (which is the deviceId)
-              batch.delete(db.collection("fcmTokens").doc(tokenDocIds[index]));
+              const docId = tokenDocIds[index];
+              const data = tokenDataList[index];
+              const failedToken = tokens[index];
+
+              // FALLBACK LOGIC: If PWA token failed, check if we have a browser token
+              if (data.browserToken && data.browserToken !== failedToken) {
+                  console.log(`FCM: Token failed for ${docId}, falling back to browser token.`);
+                  batch.update(db.collection("fcmTokens").doc(docId), {
+                      token: data.browserToken,
+                      pwaToken: admin.firestore.FieldValue.delete(), // Remove invalid PWA token
+                      platform: 'web'
+                  });
+              } else {
+                  // No fallback or both failed, delete device record
+                  batch.delete(db.collection("fcmTokens").doc(docId));
+              }
             }
           }
         });
@@ -124,9 +142,21 @@ export const sendManualPush = functions.https.onCall(async (data, context) => {
   } catch (error: any) {
     console.error("Manual push failed:", error);
     if (error.code === 'messaging/registration-token-not-registered') {
-        // Find and delete the stale token
+        // Find and handle stale token with fallback
         const q = await db.collection("fcmTokens").where("token", "==", targetToken).get();
-        q.forEach(doc => doc.ref.delete());
+        if (!q.empty) {
+            const doc = q.docs[0];
+            const tokenData = doc.data();
+            if (tokenData.browserToken && tokenData.browserToken !== targetToken) {
+                await doc.ref.update({
+                    token: tokenData.browserToken,
+                    pwaToken: admin.firestore.FieldValue.delete(),
+                    platform: 'web'
+                });
+            } else {
+                await doc.ref.delete();
+            }
+        }
     }
     throw new functions.https.HttpsError('internal', 'Failed to send notification');
   }

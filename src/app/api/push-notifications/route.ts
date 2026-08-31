@@ -1,10 +1,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { adminMessaging, adminDb } from '@/lib/firebase-admin';
+import * as admin from 'firebase-admin';
 
 /**
  * API Route to send Targeted FCM Push Notifications.
  * Supports: broadcast (all), targeted UID, or targeted ROLE.
+ * Includes smart fallback for uninstalled PWAs.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -68,9 +70,16 @@ export async function POST(request: NextRequest) {
     // 3. Send
     const response = await adminMessaging.sendEach(messages);
 
-    // 4. Cleanup stale documents using the docId (deviceId)
+    // 4. Smart Cleanup with Fallback for uninstalled PWAs
     if (response.failureCount > 0) {
       const batch = adminDb.batch();
+      
+      // Build a map for quick access to document data during cleanup
+      const docsMap = new Map();
+      if (snapshot && !snapshot.empty) {
+          snapshot.docs.forEach(doc => docsMap.set(doc.data().token, doc));
+      }
+
       response.responses.forEach((resp, index) => {
         if (!resp.success && resp.error) {
           const code = resp.error.code;
@@ -78,7 +87,23 @@ export async function POST(request: NextRequest) {
             code === 'messaging/registration-token-not-registered' ||
             code === 'messaging/invalid-registration-token'
           ) {
-            batch.delete(adminDb.collection('fcmTokens').doc(docIds[index]));
+            const failedToken = tokens[index];
+            const failedDoc = docsMap.get(failedToken);
+            
+            if (failedDoc) {
+                const data = failedDoc.data();
+                // If the failed token was a PWA token and we have a browser fallback
+                if (data.browserToken && data.browserToken !== failedToken) {
+                    batch.update(failedDoc.ref, {
+                        token: data.browserToken,
+                        pwaToken: admin.firestore.FieldValue.delete(),
+                        platform: 'web'
+                    });
+                } else {
+                    // No fallback, delete doc
+                    batch.delete(failedDoc.ref);
+                }
+            }
           }
         }
       });

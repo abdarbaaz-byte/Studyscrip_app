@@ -10,6 +10,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 /**
  * Custom Hook to manage FCM Token registration.
  * Uses a persistent Device ID to prevent duplicate token entries in Firestore.
+ * Supports PWA vs Browser token preservation for smart fallback.
  */
 const useFcmToken = () => {
   useEffect(() => {
@@ -56,19 +57,28 @@ const useFcmToken = () => {
 
         if (currentToken) {
           const tokenDocRef = doc(db, 'fcmTokens', deviceId);
+          const isPwa = window.matchMedia('(display-mode: standalone)').matches;
 
-          // 5. Sync with Auth State
-          // We use the deviceId as the Document ID to ensure 1-to-1 mapping per browser instance.
+          // 5. Sync with Auth State and Store Tokens based on Platform
           onAuthStateChanged(auth, async (user) => {
             try {
-                await setDoc(tokenDocRef, {
+                const updateData: any = {
                   token: currentToken,
                   uid: user ? user.uid : null,
                   lastUpdated: serverTimestamp(),
-                  platform: window.matchMedia('(display-mode: standalone)').matches ? 'pwa' : 'web',
+                  platform: isPwa ? 'pwa' : 'web',
                   browser: navigator.userAgent.includes('Chrome') ? 'chrome' : 'other',
-                }, { merge: true });
-                console.log(`FCM: Device ${deviceId} synced with UID: ${user?.uid || 'guest'}`);
+                };
+
+                // Preserve Browser token if in PWA mode, and vice versa
+                if (isPwa) {
+                  updateData.pwaToken = currentToken;
+                } else {
+                  updateData.browserToken = currentToken;
+                }
+
+                await setDoc(tokenDocRef, updateData, { merge: true });
+                console.log(`FCM: Device ${deviceId} synced as ${isPwa ? 'PWA' : 'Browser'}`);
             } catch (err) {
                 console.error("FCM: Sync failed", err);
             }
