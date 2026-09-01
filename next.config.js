@@ -17,6 +17,47 @@ const withPWA = createNextPwa({
     /middleware-manifest\.json$/,
   ],
   runtimeCaching: [
+    // 1. Next.js Static Chunks (NEW)
+    {
+      urlPattern: /\/_next\/static\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'static-chunks',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+      },
+    },
+    // 2. Next.js Data/RSC (NEW)
+    {
+      urlPattern: /\/_next\/data\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'next-data',
+        networkTimeoutSeconds: 3,
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+      },
+    },
+    // 3. HTML Documents (UPDATED to NetworkFirst with timeout)
+    {
+      urlPattern: ({ request }) => request.destination === 'document',
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pages',
+        networkTimeoutSeconds: 3,
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
     {
       urlPattern: ({ url }) => url.pathname === '/',
       handler: 'StaleWhileRevalidate',
@@ -25,20 +66,6 @@ const withPWA = createNextPwa({
         expiration: {
           maxEntries: 10,
           maxAgeSeconds: 30 * 24 * 60 * 60,
-        },
-      },
-    },
-    {
-      urlPattern: ({ request }) => request.destination === 'document',
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'pages',
-        expiration: {
-          maxEntries: 20,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
         },
       },
     },
@@ -77,7 +104,7 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'static-font-assets',
         expiration: {
-          maxEntries: 4,
+          maxEntries: 10,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
