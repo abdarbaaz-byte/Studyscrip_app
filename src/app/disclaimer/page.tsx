@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Info, Scale, CreditCard, BookOpen, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Info, Scale, CreditCard, BookOpen, ShieldAlert, Smartphone, Users } from "lucide-react";
 import { ScrollAnimation } from "@/components/scroll-animation";
 
 export default function DisclaimerPage() {
@@ -33,7 +33,7 @@ export default function DisclaimerPage() {
                                 <h3 className="text-2xl font-bold font-headline">Educational Purpose</h3>
                             </div>
                             <p className="text-muted-foreground leading-relaxed">
-                                All materials on <strong>StudyScript</strong>, including videos and PDFs, are for general educational purposes. These are self-developed resources and should be used as a supplement to official textbooks, not as a replacement.
+                                All materials on <strong>StudyScript</strong>, including video lectures, PDF notes, and Tests, are for general educational purposes. These are self-developed resources intended to supplement official textbooks. We do not guarantee specific academic or exam results.
                             </p>
                         </div>
 
@@ -43,10 +43,10 @@ export default function DisclaimerPage() {
                                 <div className="p-2 bg-primary/10 rounded-lg">
                                     <CreditCard className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-2xl font-bold font-headline">UPI Payments</h3>
+                                <h3 className="text-2xl font-bold font-headline">Payments & Access</h3>
                             </div>
                             <p className="text-muted-foreground leading-relaxed">
-                                UPI payments are manually verified. Access is typically granted within <strong>24 hours</strong>. Users must provide the exact Transaction ID to ensure smooth verification. Delays may occur during holidays.
+                                UPI payments are manually verified by our team. Access is typically granted within <strong>24 hours</strong>. Users must provide the correct Transaction ID. Razorpay payments provide instant access. All digital purchases are non-refundable.
                             </p>
                         </div>
 
@@ -54,12 +54,12 @@ export default function DisclaimerPage() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 text-primary">
                                 <div className="p-2 bg-primary/10 rounded-lg">
-                                    <ShieldAlert className="h-6 w-6" />
+                                    <Users className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-2xl font-bold font-headline">Referral Verification</h3>
+                                <h3 className="text-2xl font-bold font-headline">Referral & Credits</h3>
                             </div>
                             <p className="text-muted-foreground leading-relaxed">
-                                Referral points and rewards are subject to strict manual audit. Use of fake accounts or bots for manipulating referral counts is strictly prohibited and will lead to permanent account suspension.
+                                StudyScript Credits earned via the referral program are subject to manual audit. Manipulation using fake accounts, bots, or multiple registrations on the same device will lead to credit forfeiture and permanent account suspension.
                             </p>
                         </div>
 
@@ -67,12 +67,12 @@ export default function DisclaimerPage() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 text-primary">
                                 <div className="p-2 bg-primary/10 rounded-lg">
-                                    <Scale className="h-6 w-6" />
+                                    <ShieldAlert className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-2xl font-bold font-headline">Content Ownership</h3>
+                                <h3 className="text-2xl font-bold font-headline">One-Device Policy</h3>
                             </div>
                             <p className="text-muted-foreground leading-relaxed">
-                                StudyScript owns all proprietary content on this platform. Unauthorized redistribution, copying, or re-selling of our premium notes and videos is a violation of copyright laws.
+                                For security and content protection, an account can only be active on one device at a time. Simultaneous logins will trigger an automatic logout of the previous session to prevent unauthorized account sharing.
                             </p>
                         </div>
                     </div>
@@ -80,26 +80,26 @@ export default function DisclaimerPage() {
                     <div className="space-y-8">
                         <div className="bg-orange-50 border border-orange-100 p-8 rounded-[2.5rem]">
                              <h4 className="text-xl font-bold mb-4 flex items-center gap-3 text-orange-800 font-headline">
-                                <Info className="h-6 w-6"/> Technical Reliability
+                                <Smartphone className="h-6 w-6"/> Technical Reliability
                              </h4>
                              <p className="text-orange-900/80 leading-relaxed">
-                                Live Classes and Quiz schedules are estimates and may change due to unforeseen circumstances. We are not liable for any service interruptions caused by your ISP, device issues, or third-party server downtime.
+                                Live Classes and Test schedules are estimates and may change. While our PWA uses high-priority notifications, delivery depends on your device settings and internet connectivity. StudyScript is not liable for data loss or service interruptions beyond our control.
                              </p>
                         </div>
 
                         <div className="bg-indigo-50 border border-indigo-100 p-8 rounded-[2.5rem]">
                              <h4 className="text-xl font-bold mb-4 flex items-center gap-3 text-indigo-800 font-headline">
-                                <BookOpen className="h-6 w-6"/> Bookstore Policy
+                                <BookOpen className="h-6 w-6"/> Bookstore & Free Content
                              </h4>
                              <p className="text-indigo-900/80 leading-relaxed">
-                                Free downloads from the Bookstore require a mandatory user login. This policy is in place to ensure fair usage, maintain server performance, and protect our intellectual property from automated bots.
+                                Free downloads from the Bookstore require mandatory user login to prevent automated bot scraping and ensure fair distribution. Unauthorized commercial redistribution of any StudyScript content is strictly prohibited.
                              </p>
                         </div>
                     </div>
 
                     <div className="text-center pt-10 border-t">
                          <p className="text-sm text-muted-foreground italic font-medium">
-                            By continuing to use StudyScript, you acknowledge that you have read and understood this disclaimer. 
+                            By continuing to use StudyScript, you acknowledge that you have read and understood this legal disclaimer. 
                             <br />Last updated: {new Date().getFullYear()}
                          </p>
                     </div>
