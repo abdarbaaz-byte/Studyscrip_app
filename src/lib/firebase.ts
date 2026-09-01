@@ -5,7 +5,7 @@ import {
   getFirestore, 
   initializeFirestore, 
   persistentLocalCache, 
-  indexedDbLocalCache 
+  persistentMultipleTabManager 
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getMessaging } from "firebase/messaging";
@@ -30,12 +30,11 @@ function createFirebaseApp(config: object): FirebaseApp {
 const app: FirebaseApp = createFirebaseApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Modern Firestore initialization with persistent cache configuration
-// This replaces the deprecated enableIndexedDbPersistence()
+// Modern Firestore initialization with persistent cache configuration for v11+
 const db = typeof window !== 'undefined' 
   ? initializeFirestore(app, {
-      cache: persistentLocalCache({
-        tabManager: indexedDbLocalCache()
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
       })
     })
   : getFirestore(app);
@@ -46,9 +45,8 @@ let messaging: any;
 if (typeof window !== 'undefined') {
   try {
     // Messaging initialization
-    // We only initialize messaging object here, registration is handled in use-fcm.ts
     messaging = getMessaging(app);
-    console.log("Firestore persistent cache enabled.");
+    console.log("Firestore persistent cache enabled with multi-tab support.");
   } catch (error) {
     console.error("Error initializing Firebase services:", error);
   }
