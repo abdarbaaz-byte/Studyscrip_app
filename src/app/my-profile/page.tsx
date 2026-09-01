@@ -322,7 +322,7 @@ export default function MyProfilePage() {
                         value="payments" 
                         className="flex-1 md:flex-none px-8 py-4 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent font-bold text-base"
                     >
-                        <Wallet className="h-4 w-4 mr-2" /> Payment History
+                        <Wallet className="h-4 w-4 mr-2" /> Payment
                     </TabsTrigger>
                   </TabsList>
 

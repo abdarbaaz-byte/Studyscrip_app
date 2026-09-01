@@ -131,7 +131,7 @@ export default function SubjectDetailClientPage() {
             <ChevronRight className="h-4 w-4 transform rotate-180 mr-1" />
             Back to {academicClass.name} Subjects
         </Link>
-        <h1 className="font-headline text-4xl md:text-5xl font-bold mt-2">{subject.name}</h1>
+        <h1 className="font-headline text-2xl md:text-5xl font-bold mt-2">{subject.name}</h1>
         <p className="text-lg text-muted-foreground">Browse chapters for {subject.name}.</p>
       </div>
 
@@ -233,8 +233,7 @@ export default function SubjectDetailClientPage() {
                 <Button 
                     size="lg" 
                     onClick={handleBuyClick} 
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl transition-all active:scale-95 h-12 shadow-md"
-                >
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-4 rounded-xl transition-all active:scale-95 h-12 shadow-md">
                     Unlock All <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
             </div>

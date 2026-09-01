@@ -443,7 +443,7 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
                 <Button 
                     size="lg" 
                     onClick={handleBuyClick} 
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl transition-all active:scale-95 h-12 shadow-md"
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-4 rounded-xl transition-all active:scale-95 h-12 shadow-md"
                 >
                     Enroll Now <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>

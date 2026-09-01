@@ -204,7 +204,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
         <div className="grid md:grid-cols-3 gap-8 md:gap-12">
           <div className="md:col-span-2 space-y-6">
             <div>
-              <h1 className="font-headline text-3xl md:text-5xl font-bold mb-4">{course.title}</h1>
+              <h1 className="font-headline text-2xl md:text-5xl font-bold mb-4">{course.title}</h1>
               <p className="text-lg text-muted-foreground">{course.longDescription}</p>
             </div>
             
@@ -385,11 +385,11 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
             <div className="container mx-auto flex items-center justify-between gap-4">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-primary">Rs. {course.price}</span>
+                        <span className="text-2xl font-bold text-primary">₹ {course.price}</span>
                     </div>
                     {course.originalPrice && course.originalPrice > course.price && (
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground line-through">Rs. {course.originalPrice}</span>
+                            <span className="text-sm text-muted-foreground line-through">₹ {course.originalPrice}</span>
                             {discountPercentage && <span className="text-[10px] font-bold text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded ml-1">{discountPercentage}% OFF</span>}
                         </div>
                     )}
@@ -397,8 +397,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                 <Button 
                     size="lg" 
                     onClick={handleBuyClick} 
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 rounded-xl transition-all active:scale-95 h-12 shadow-md"
-                >
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-3 rounded-xl transition-all active:scale-95 h-12 shadow-md">
                     Enroll Now <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
             </div>
