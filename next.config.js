@@ -10,6 +10,8 @@ const withPWA = createNextPwa({
   skipWaiting: true,
   cacheStartUrl: false,
   dynamicStartUrl: false,
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
   sw: 'sw.js',
   // CRITICAL FIX: Exclude problematic manifest files that cause 404s on Netlify
   buildExcludes: [
@@ -20,6 +22,35 @@ const withPWA = createNextPwa({
     document: '/offline',
   },
   runtimeCaching: [
+    {
+      urlPattern: ({ url }) =>
+      [
+       '/free-notes',
+       '/quizzes',
+       '/my-profile',
+       '/class',
+       '/batches',
+       '/courses',
+       '/bookstore',
+       '/my-courses',
+       '/share-reward',
+       '/teacher',
+       '/contact',
+       '/my-school',
+       '/about',
+      ].includes(url.pathname),
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'important-pages',
+        expiration: {
+          maxEntries: 20,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
     // 1. Next.js Static Chunks (NEW)
     {
       urlPattern: /\/_next\/static\/.*/i,
@@ -41,7 +72,7 @@ const withPWA = createNextPwa({
         networkTimeoutSeconds: 3,
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
       },
     },
@@ -68,7 +99,7 @@ const withPWA = createNextPwa({
         cacheName: 'home-page-cache',
         expiration: {
           maxEntries: 10,
-          maxAgeSeconds: 30 * 24 * 60 * 60,
+          maxAgeSeconds: 180 * 24 * 60 * 60,
         },
       },
     },
