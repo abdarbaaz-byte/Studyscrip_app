@@ -11,7 +11,6 @@ const withPWA = createNextPwa({
   cacheStartUrl: false,
   dynamicStartUrl: false,
   cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
   sw: 'sw.js',
   // CRITICAL FIX: Exclude problematic manifest files that cause 404s on Netlify
   buildExcludes: [
