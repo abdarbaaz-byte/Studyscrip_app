@@ -16,6 +16,9 @@ const withPWA = createNextPwa({
     /app-build-manifest\.json$/,
     /middleware-manifest\.json$/,
   ],
+  fallbacks: {
+    document: '/offline',
+  },
   runtimeCaching: [
     // 1. Next.js Static Chunks (NEW)
     {
@@ -74,7 +77,7 @@ const withPWA = createNextPwa({
       handler: 'NetworkFirst',
       options: {
         cacheName: 'api-cache',
-        networkTimeoutSeconds: 10,
+        networkTimeoutSeconds: 5,
         expiration: {
           maxEntries: 50,
           maxAgeSeconds: 24 * 60 * 60, // 24 hours
