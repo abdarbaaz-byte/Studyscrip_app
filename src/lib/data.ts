@@ -1409,9 +1409,18 @@ export type BannerItem = {
   isActive: boolean;
 };
 
+export type PopupBannerSettings = {
+    id: string;
+    imageUrl: string;
+    actionUrl: string;
+    expiresAt: Timestamp;
+    isActive: boolean;
+};
+
 export type BannerSettings = {
   banners: BannerItem[];
   referralBanner?: BannerItem;
+  popupBanner?: PopupBannerSettings;
 };
 
 export async function getBannerSettings(): Promise<BannerSettings> {
@@ -1421,7 +1430,8 @@ export async function getBannerSettings(): Promise<BannerSettings> {
         const data = docSnap.data();
         return { 
             banners: data.banners || [],
-            referralBanner: data.referralBanner || undefined
+            referralBanner: data.referralBanner || undefined,
+            popupBanner: data.popupBanner || undefined
         };
     }
     return { banners: [] };
@@ -1434,7 +1444,8 @@ export function listenToBannerSettings(callback: (settings: BannerSettings) => v
             const data = docSnap.data();
             callback({ 
                 banners: data.banners || [],
-                referralBanner: data.referralBanner || undefined
+                referralBanner: data.referralBanner || undefined,
+                popupBanner: data.popupBanner || undefined
             });
         } else {
             callback({ banners: [] });

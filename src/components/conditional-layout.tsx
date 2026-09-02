@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -9,6 +8,7 @@ import { AudioPlayer } from "@/components/audio-player";
 import { Toaster } from "@/components/ui/toaster";
 import { ChatWidget } from "@/components/chat-widget";
 import { InstallPwaButton } from "@/components/install-pwa-button";
+import { PopupBanner } from "@/components/popup-banner";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,6 +30,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
       <SiteFooter />
       {showPlayerAndWidgets && (
         <>
+          <PopupBanner />
           <ChatWidget />
           <AudioPlayer />
           <InstallPwaButton />

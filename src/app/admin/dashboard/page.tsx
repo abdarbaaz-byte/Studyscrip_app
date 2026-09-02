@@ -34,7 +34,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins, Users, History, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins, Users, History, ArrowUpRight, ArrowDownRight, Clock, MonitorPlay } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getAcademicData, saveAcademicData, deleteAcademicClass, type AcademicClass, type Subject } from "@/lib/academics";
-import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture, getBatches, saveBatch, deleteBatch, type Batch, type BookRequest, listenToBookRequests, deleteBookRequest, getUserCreditHistory, type CreditTransaction, awardManualCredits } from "@/lib/data";
+import { getCourses, saveCourse, deleteCourse, getPayments, type Payment, listenToAllChats, sendMessage, sendNotification, listenToNotifications, deleteNotification, grantManualAccess, getAllPurchases, revokePurchase, type EnrichedPurchase, listenToPaymentRequests, type PaymentRequest, approvePaymentRequest, rejectPaymentRequest, getFreeNotes, saveFreeNotes, deleteFreeNote, getBookstoreItems, saveBookstoreItem, deleteBookstoreItem, type FreeNote, type BookstoreItem, getEmployees, updateEmployeePermissions, type EmployeeData, getQuizzes, saveQuiz, deleteQuiz, type Quiz, getQuizAttempts, type QuizAttempt, getBannerSettings, saveBannerSettings, type BannerSettings, deleteQuizAttempt, getLiveClassSurveys, type LiveClassSurvey, getReviews, type Review, approveReview, deleteReview, getLiveClasses, saveLiveClass, deleteLiveClass, type LiveClass, BannerItem, findUserByEmail, listenToChat, deleteChat, getUserProfile, updateUserCertificates, type UserCertificate, UserProfile, getSchools, type School, saveSchool, addTeacherToSchool, removeTeacherFromSchool, deleteSchool, getAudioLectures, saveAudioLecture, deleteAudioLecture, type AudioLecture, getBatches, saveBatch, deleteBatch, type Batch, type BookRequest, listenToBookRequests, deleteBookRequest, getUserCreditHistory, type CreditTransaction, awardManualCredits, type PopupBannerSettings } from "@/lib/data";
 import type { Notification } from "@/lib/notifications";
 import { AdminAcademicsForm } from "@/components/admin-academics-form";
 import { AdminEmployeesForm } from "@/components/admin-employees-form";
@@ -61,6 +61,7 @@ import { AdminBatchForm } from "@/components/admin-batch-form";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Timestamp } from "firebase/firestore";
 
 
 type FormattedPayment = Omit<Payment, 'paymentDate'> & { paymentDate: string };
@@ -417,7 +418,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleLiveClassTimeChange = (date: Date | undefined, timeString: string, setter: (d: Date | undefined) => void) => {
+  const handleTimeChange = (date: Date | undefined, timeString: string, setter: (d: Date | undefined) => void) => {
     if (!timeString) { // If time is cleared, just update the date part
       setter(date);
       return;
@@ -798,9 +799,9 @@ export default function AdminDashboardPage() {
     setIsSavingBanner(true);
     try {
       await saveBannerSettings(bannerSettings);
-      toast({ title: "Banner Settings Saved!" });
+      toast({ title: "Site Settings Saved!" });
     } catch (error) {
-      console.error("Failed to save banner settings:", error);
+      console.error("Failed to save site settings:", error);
       toast({ variant: "destructive", title: "Failed to save settings" });
     }
     setIsSavingBanner(false);
@@ -842,6 +843,40 @@ export default function AdminDashboardPage() {
         }
     }));
   };
+
+  const handleUpdatePopupBanner = (field: keyof Omit<PopupBannerSettings, 'id' | 'expiresAt'>, value: string | boolean) => {
+    setBannerSettings(prev => ({
+        ...prev,
+        popupBanner: {
+            id: prev.popupBanner?.id || `popup-${Date.now()}`, // Keep ID unless resetting
+            imageUrl: prev.popupBanner?.imageUrl || '',
+            actionUrl: prev.popupBanner?.actionUrl || '',
+            expiresAt: prev.popupBanner?.expiresAt || Timestamp.now(),
+            isActive: prev.popupBanner?.isActive ?? false,
+            [field]: value,
+            // If any critical field changes, generate new ID to reset dismissal for all users
+            ...(field !== 'isActive' ? { id: `popup-${Date.now()}` } : {})
+        }
+    }));
+  };
+
+  const handlePopupExpiryChange = (date: Date | undefined, timeString: string) => {
+    if (!date) return;
+    const newDate = new Date(date);
+    if (timeString) {
+        const [h, m] = timeString.split(':').map(Number);
+        newDate.setHours(h, m, 0, 0);
+    }
+    setBannerSettings(prev => ({
+        ...prev,
+        popupBanner: {
+            ...prev.popupBanner!,
+            id: `popup-${Date.now()}`, // Force reset for everyone on update
+            expiresAt: Timestamp.fromDate(newDate)
+        }
+    }));
+  };
+
 
   const handleDeleteAttemptClick = (attempt: QuizAttempt) => {
     setAttemptToDelete(attempt);
@@ -1360,7 +1395,7 @@ export default function AdminDashboardPage() {
                         <Input 
                             type="time" 
                             value={liveClassStartTime ? format(liveClassStartTime, "HH:mm") : ""}
-                            onChange={(e) => handleLiveClassTimeChange(liveClassStartTime, e.target.value, setLiveClassStartTime)}
+                            onChange={(e) => handleTimeChange(liveClassStartTime, e.target.value, setLiveClassStartTime)}
                             className="w-[120px]"
                         />
                     </div>
@@ -1380,7 +1415,7 @@ export default function AdminDashboardPage() {
                         <Input 
                             type="time" 
                             value={liveClassEndTime ? format(liveClassEndTime, "HH:mm") : ""}
-                            onChange={(e) => handleLiveClassTimeChange(liveClassEndTime, e.target.value, setLiveClassEndTime)}
+                            onChange={(e) => handleTimeChange(liveClassEndTime, e.target.value, setLiveClassEndTime)}
                             className="w-[120px]"
                         />
                     </div>
@@ -2039,19 +2074,19 @@ export default function AdminDashboardPage() {
                 <div className="mt-8 space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                          <div className="p-4 rounded-xl border bg-background">
-                            <p className="text-xs font-bold text-muted-foreground uppercase">Name</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Name</p>
                             <p className="text-lg font-bold">{creditSearchedUser.displayName || 'Anonymous'}</p>
                         </div>
                         <div className="p-4 rounded-xl border bg-background">
-                            <p className="text-xs font-bold text-muted-foreground uppercase">Total Referrals</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Referrals</p>
                             <p className="text-lg font-bold text-blue-600">{creditSearchedUser.referralCount || 0}</p>
                         </div>
                          <div className="p-4 rounded-xl border bg-background">
-                            <p className="text-xs font-bold text-muted-foreground uppercase">Credit Balance</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Credit Balance</p>
                             <p className="text-lg font-bold text-primary">₹{creditSearchedUser.creditBalance || 0}</p>
                         </div>
                         <div className="p-4 rounded-xl border bg-background">
-                            <p className="text-xs font-bold text-muted-foreground uppercase">Total Credits Earned</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Credits Earned</p>
                             <p className="text-lg font-bold text-green-600">₹{creditUserHistory.reduce((acc, item) => item.type === 'credit' ? acc + item.amount : acc, 0)}</p>
                         </div>
                     </div>
@@ -2150,10 +2185,10 @@ export default function AdminDashboardPage() {
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Site Settings</CardTitle>
-        <CardDescription>Manage global site settings like banners for home and referral pages.</CardDescription>
+        <CardDescription>Manage global site settings like banners for home, referral pages, and in-app popups.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSaveBanner} className="space-y-10">
+        <form onSubmit={handleSaveBanner} className="space-y-12">
           {/* Homepage Banners Section */}
           <div className="space-y-6">
             <div className="flex justify-between items-center border-b pb-2">
@@ -2207,6 +2242,74 @@ export default function AdminDashboardPage() {
                 ))}
                 {bannerSettings.banners.length === 0 && (
                     <p className="text-center text-muted-foreground py-4">No homepage banners configured.</p>
+                )}
+            </div>
+          </div>
+
+          {/* Popup Banner Section */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 border-b pb-2">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-primary"><MonitorPlay className="h-5 w-5"/> In-App Popup Banner</h3>
+                <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-none font-black text-[10px]">NEW</Badge>
+            </div>
+            
+            <div className="p-6 border rounded-2xl bg-indigo-50/30 relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="popup-img">Banner Image View Link</Label>
+                        <Input 
+                            id="popup-img"
+                            placeholder="Direct image URL or Google Drive view link..."
+                            value={bannerSettings.popupBanner?.imageUrl || ''}
+                            onChange={(e) => handleUpdatePopupBanner('imageUrl', e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="popup-link">Target Action Link (Optional)</Label>
+                        <Input 
+                            id="popup-link"
+                            placeholder="e.g. /quizzes or https://external.com"
+                            value={bannerSettings.popupBanner?.actionUrl || ''}
+                            onChange={(e) => handleUpdatePopupBanner('actionUrl', e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Expiration Date & Time (Mandatory)</Label>
+                        <div className="flex gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !bannerSettings.popupBanner?.expiresAt && "text-muted-foreground")}>
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {bannerSettings.popupBanner?.expiresAt ? format(bannerSettings.popupBanner.expiresAt.toDate(), "PPP") : <span>Pick Expiry Date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar 
+                                        mode="single" 
+                                        selected={bannerSettings.popupBanner?.expiresAt?.toDate()} 
+                                        onSelect={(date) => handlePopupExpiryChange(date, bannerSettings.popupBanner?.expiresAt ? format(bannerSettings.popupBanner.expiresAt.toDate(), "HH:mm") : "")} 
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <Input 
+                                type="time" 
+                                className="w-[120px]"
+                                value={bannerSettings.popupBanner?.expiresAt ? format(bannerSettings.popupBanner.expiresAt.toDate(), "HH:mm") : ""}
+                                onChange={(e) => handlePopupExpiryChange(bannerSettings.popupBanner?.expiresAt?.toDate(), e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center space-x-2 mt-6 p-3 bg-white rounded-xl border border-indigo-100">
+                    <Switch 
+                        id="popup-active"
+                        checked={bannerSettings.popupBanner?.isActive || false}
+                        onCheckedChange={(checked) => handleUpdatePopupBanner('isActive', checked)}
+                    />
+                    <Label htmlFor="popup-active" className="font-bold text-indigo-900">Activate Popup globally</Label>
+                </div>
+                {bannerSettings.popupBanner?.expiresAt && bannerSettings.popupBanner.expiresAt.toDate() < new Date() && (
+                    <p className="mt-2 text-xs font-bold text-red-600 flex items-center gap-1"><ShieldAlert className="h-3 w-3"/> EXPIRED: Banner will not show to users.</p>
                 )}
             </div>
           </div>
@@ -2429,7 +2532,7 @@ export default function AdminDashboardPage() {
 
                 {notifTarget === 'user' && (
                     <div className="space-y-2 p-3 border rounded-lg bg-primary/5 animate-in fade-in duration-300">
-                        <Label className="text-xs font-bold uppercase">Find Target User</Label>
+                        <Label className="text-xs font-bold uppercase tracking-wider">Find Target User</Label>
                         <div className="flex gap-2">
                             <Input 
                                 placeholder="user@gmail.com" 
