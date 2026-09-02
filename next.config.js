@@ -6,7 +6,7 @@ const withPWA = createNextPwa({
   // Disable PWA automatic registration because we are manually 
   // registering a unified service worker in src/hooks/use-fcm.ts
   disable: process.env.NODE_ENV === 'development',
-  register: false, // STAYS FALSE: We register manually to avoid conflicts
+  register: false, 
   skipWaiting: true,
   cacheStartUrl: false,
   dynamicStartUrl: false,
@@ -21,9 +21,34 @@ const withPWA = createNextPwa({
     document: '/offline',
   },
   runtimeCaching: [
+    // 1. Static Info Pages - CacheFirst (Since they rarely change and don't fetch from Firestore)
     {
       urlPattern: ({ url }) =>
       [
+       '/about',
+       '/contact',
+       '/privacy',
+       '/terms',
+       '/disclaimer',
+       '/faq',
+      ].includes(url.pathname),
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'static-info-pages',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    // 2. Data-Driven Learning Pages - StaleWhileRevalidate (Fast UI + background update)
+    {
+      urlPattern: ({ url }) =>
+      [
+       '/',
        '/free-notes',
        '/quizzes',
        '/my-profile',
@@ -34,23 +59,22 @@ const withPWA = createNextPwa({
        '/my-courses',
        '/share-reward',
        '/teacher',
-       '/contact',
        '/my-school',
-       '/about',
-      ].includes(url.pathname),
+       '/audio-lectures',
+      ].some(path => url.pathname === path || url.pathname.startsWith(path)),
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'important-pages',
+        cacheName: 'dynamic-learning-pages',
         expiration: {
-          maxEntries: 20,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxEntries: 50,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
         },
         cacheableResponse: {
           statuses: [0, 200],
         },
       },
     },
-    // 1. Next.js Static Chunks (NEW)
+    // 3. Next.js Static Chunks - CacheFirst
     {
       urlPattern: /\/_next\/static\/.*/i,
       handler: 'CacheFirst',
@@ -62,7 +86,7 @@ const withPWA = createNextPwa({
         },
       },
     },
-    // 2. Next.js Data/RSC (NEW)
+    // 4. Next.js Data/RSC - NetworkFirst (Crucial for Client-side Navigation)
     {
       urlPattern: /\/_next\/data\/.*/i,
       handler: 'NetworkFirst',
@@ -71,11 +95,11 @@ const withPWA = createNextPwa({
         networkTimeoutSeconds: 3,
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxAgeSeconds: 24 * 60 * 60,
         },
       },
     },
-    // 3. HTML Documents (UPDATED to NetworkFirst with timeout)
+    // 5. Global Document Fallback - NetworkFirst
     {
       urlPattern: ({ request }) => request.destination === 'document',
       handler: 'NetworkFirst',
@@ -84,24 +108,14 @@ const withPWA = createNextPwa({
         networkTimeoutSeconds: 3,
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxAgeSeconds: 30 * 24 * 60 * 60,
         },
         cacheableResponse: {
           statuses: [0, 200],
         },
       },
     },
-    {
-      urlPattern: ({ url }) => url.pathname === '/',
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'home-page-cache',
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 180 * 24 * 60 * 60,
-        },
-      },
-    },
+    // 6. API Requests - NetworkFirst
     {
       urlPattern: ({ url, request }) => request.method === 'GET' && url.pathname.startsWith('/api/'),
       handler: 'NetworkFirst',
@@ -110,7 +124,22 @@ const withPWA = createNextPwa({
         networkTimeoutSeconds: 5,
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxAgeSeconds: 24 * 60 * 60,
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    // 7. Media & Assets - CacheFirst
+    {
+      urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'static-image-assets',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 180 * 24 * 60 * 60,
         },
         cacheableResponse: {
           statuses: [0, 200],
@@ -124,66 +153,7 @@ const withPWA = createNextPwa({
         cacheName: 'google-fonts',
         expiration: {
           maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60, // 365 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
-    {
-      urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'static-font-assets',
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
-    {
-      urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'static-image-assets',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 180 * 24 * 60 * 60, // 180 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
-    {
-      urlPattern: /\.(?:js)$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-js-assets',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
-    {
-      urlPattern: /\.(?:css)$/i,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-css-assets',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
+          maxAgeSeconds: 365 * 24 * 60 * 60,
         },
       },
     },
