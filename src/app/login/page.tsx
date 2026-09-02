@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LinkPasswordModal } from "@/components/link-password-modal";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
@@ -31,20 +32,21 @@ const GoogleIcon = () => (
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading: authLoading, logIn, signInWithGoogle } = useAuth();
+  const { user, loading: authLoading, logIn, signInWithGoogle, linkPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [showLinkPasswordModal, setShowLinkPasswordModal] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [authMethod, setAuthMethod] = useState<'email' | 'google'>('email');
 
   useEffect(() => {
-    if (!authLoading && user && !loading && !showConflictModal) {
+    if (!authLoading && user && !loading && !showConflictModal && !showLinkPasswordModal) {
       router.replace("/");
     }
-  }, [user, authLoading, router, loading, showConflictModal]);
+  }, [user, authLoading, router, loading, showConflictModal, showLinkPasswordModal]);
 
   const handleLogin = async (e?: React.FormEvent, force: boolean = false) => {
     if (e) e.preventDefault();
@@ -59,7 +61,7 @@ export default function LoginPage() {
       setShowConflictModal(true);
       setLoading(false);
     } else if (status === 'success') {
-      // Redirect handled by useAuth
+      // Redirect handled by useEffect
     } else {
       setLoading(false);
     }
@@ -72,12 +74,36 @@ export default function LoginPage() {
     if (status === 'conflict') {
         setShowConflictModal(true);
         setLoading(false);
+    } else if (status === 'success') {
+        // Post-login check for password provider
+        const currentUser = authMethod === 'google' ? authLoading === false && user : null; 
+        // Note: useAuth state might not be updated yet, so we use a check in the effect or manual
+        // But for better UX, we'll let the user land, then effect will handle it.
+        // Actually, we'll manually check after a small delay or use the hook properly.
     } else {
         setLoading(false);
     }
   };
 
-  if (authLoading || (user && !loading && !showConflictModal)) {
+  // Effect to trigger Link Modal for Google users
+  useEffect(() => {
+    if (user && authMethod === 'google') {
+        const hasPassword = user.providerData.some(p => p.providerId === 'password');
+        if (!hasPassword) {
+            setShowLinkPasswordModal(true);
+        }
+    }
+  }, [user, authMethod]);
+
+  const handleConfirmLink = async (pwd: string) => {
+    const success = await linkPassword(pwd);
+    if (success) {
+        setShowLinkPasswordModal(false);
+        router.push("/");
+    }
+  };
+
+  if (authLoading || (user && !loading && !showConflictModal && !showLinkPasswordModal)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -222,6 +248,14 @@ export default function LoginPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Link Password Modal */}
+      <LinkPasswordModal
+        open={showLinkPasswordModal}
+        email={user?.email || ""}
+        onClose={() => { setShowLinkPasswordModal(false); router.push("/"); }}
+        onConfirm={handleConfirmLink}
+      />
     </div>
   );
 }

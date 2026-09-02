@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LinkPasswordModal } from "@/components/link-password-modal";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
@@ -59,7 +60,7 @@ const CLASS_OPTIONS = [
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading, signUp, signInWithGoogle } = useAuth();
+  const { user, loading: authLoading, signUp, signInWithGoogle, linkPassword } = useAuth();
   const { toast } = useToast();
   
   const [name, setName] = useState("");
@@ -75,13 +76,14 @@ function SignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [showLinkPasswordModal, setShowLinkPasswordModal] = useState(false);
   const [authMethod, setAuthMethod] = useState<'email' | 'google'>('email');
 
   useEffect(() => {
-    if (!authLoading && user && !loading && !showConflictModal) {
+    if (!authLoading && user && !loading && !showConflictModal && !showLinkPasswordModal) {
       router.replace("/");
     }
-  }, [user, authLoading, router, loading, showConflictModal]);
+  }, [user, authLoading, router, loading, showConflictModal, showLinkPasswordModal]);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -114,10 +116,7 @@ function SignupForm() {
     setLoading(true);
     setAuthMethod('email');
     const success = await signUp(name, email, password, finalClass, referralCodeInput);
-    if (success) {
-      // Handled by useAuth
-    }
-    setLoading(false);
+    if (!success) setLoading(false);
   };
 
   const handleGoogleSignup = async (force: boolean = false) => {
@@ -127,12 +126,32 @@ function SignupForm() {
     if (status === 'conflict') {
         setShowConflictModal(true);
         setLoading(false);
+    } else if (status === 'success') {
+        // Modal logic handled by effect
     } else {
         setLoading(false);
     }
   };
 
-  if (authLoading || (user && !loading && !showConflictModal)) {
+  // Effect to trigger Link Modal for Google users
+  useEffect(() => {
+    if (user && authMethod === 'google') {
+        const hasPassword = user.providerData.some(p => p.providerId === 'password');
+        if (!hasPassword) {
+            setShowLinkPasswordModal(true);
+        }
+    }
+  }, [user, authMethod]);
+
+  const handleConfirmLink = async (pwd: string) => {
+    const success = await linkPassword(pwd);
+    if (success) {
+        setShowLinkPasswordModal(false);
+        router.push("/");
+    }
+  };
+
+  if (authLoading || (user && !loading && !showConflictModal && !showLinkPasswordModal)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -333,6 +352,14 @@ function SignupForm() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Link Password Modal */}
+      <LinkPasswordModal
+        open={showLinkPasswordModal}
+        email={user?.email || ""}
+        onClose={() => { setShowLinkPasswordModal(false); router.push("/"); }}
+        onConfirm={handleConfirmLink}
+      />
     </div>
   );
 }

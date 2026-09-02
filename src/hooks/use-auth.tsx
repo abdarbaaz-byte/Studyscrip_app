@@ -18,6 +18,8 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  linkWithCredential,
+  EmailAuthProvider,
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -66,11 +68,11 @@ interface AuthContextType {
   signInWithGoogle: (force?: boolean) => Promise<LoginStatus>;
   logOut: () => void;
   resetPassword: (email: string) => Promise<boolean>;
+  linkPassword: (password: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// The primary super admin email. This user will always have all permissions.
 const SUPER_ADMIN_EMAIL = "abdarbaaz@gmail.com";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -121,7 +123,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const data = docSnap.data();
           setUserRole(data.role || null);
           setUserSchoolId(data.schoolId || null);
-          // Teachers get student management permission by default
           if (data.role === 'teacher') {
             setPermissions(['manage_students']);
           } else {
@@ -181,7 +182,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const sessionToken = Date.now().toString();
       localStorage.setItem('sessionToken', sessionToken);
       
-      // Generate unique referral code for the new user
       const myReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
       await setDoc(userDocRef, {
@@ -204,7 +204,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           creditBalance: 0,
       });
 
-      // Handle the optional referral from someone else
       if (referralCode) {
           await processReferral(referralCode, user.uid);
       }
@@ -225,24 +224,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logIn = async (email: string, password: string, force: boolean = false): Promise<LoginStatus> => {
     try {
-      // 1. Initial sign in to get the UID
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const loggedInUser = userCredential.user;
       
       const userDocRef = doc(db, 'users', loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
       
-      // 2. Check for active session if not forcing
       if (userDoc.exists()) {
         const existingData = userDoc.data();
         if (existingData.activeSessionToken && !force) {
-          // If a session exists and user didn't click "Continue", log them out from current attempt
           await signOut(auth);
           return 'conflict';
         }
       }
 
-      // 3. Proceed with successful session creation
       const sessionToken = Date.now().toString();
       localStorage.setItem('sessionToken', sessionToken);
 
@@ -268,7 +263,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ...userData
          });
       } else {
-         // Ensure referral fields exist for old users
          const existingData = userDoc.data();
          if (!existingData.referralCode) {
              userData.referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -316,7 +310,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userDocRef = doc(db, 'users', loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
 
-      // Check for active session if not forcing (One-Device Policy)
       if (userDoc.exists()) {
         const existingData = userDoc.data();
         if (existingData.activeSessionToken && !force) {
@@ -335,7 +328,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!userDoc.exists()) {
-          // New User via Google
           const myReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
           
           await setDoc(userDocRef, {
@@ -346,7 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               createdAt: new Date().toISOString(),
               readNotifications: [],
               school: "",
-              userClass: "", // To be filled by user later in profile
+              userClass: "",
               mobileNumber: "",
               certificates: [],
               referralCode: myReferralCode,
@@ -355,28 +347,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               ...userData
           });
 
-          // Check for referral code in current URL
           const urlParams = new URLSearchParams(window.location.search);
           const refFromUrl = urlParams.get('ref');
           if (refFromUrl) {
               await processReferral(refFromUrl, loggedInUser.uid);
           }
       } else {
-          // Existing User
           await updateDoc(userDocRef, userData);
       }
 
       toast({ title: "Signed in with Google!" });
-      
-      const docData = (await getDoc(userDocRef)).data() || {};
-      if (docData.role === 'admin' || loggedInUser.email === SUPER_ADMIN_EMAIL) {
-          router.push("/admin/dashboard");
-      } else if (docData.role === 'teacher') {
-          router.push("/teacher/dashboard");
-      } else {
-          router.push("/");
-      }
-
       return 'success';
     } catch (error: any) {
       console.error("Google Auth Error:", error);
@@ -389,7 +369,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logOut = async () => {
-    // Redirect first to avoid client-side error on state change
     router.push("/login");
     try {
       if(user) {
@@ -417,6 +396,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const linkPassword = async (password: string) => {
+    if (!auth.currentUser || !auth.currentUser.email) return false;
+    try {
+      const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+      await linkWithCredential(auth.currentUser, credential);
+      toast({ title: "Password Linked!", description: "You can now login with this password as well." });
+      return true;
+    } catch (error: any) {
+      console.error("Link password error:", error);
+      toast({ variant: "destructive", title: "Linking Failed", description: error.message });
+      return false;
+    }
+  };
+
   const hasPermission = useCallback((permission: UserPermission) => {
     if (user?.email === SUPER_ADMIN_EMAIL) return true;
     return permissions.includes(permission);
@@ -435,6 +428,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
     logOut,
     resetPassword,
+    linkPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
