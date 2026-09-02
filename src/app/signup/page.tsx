@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, Gift, NotebookText } from "lucide-react";
+import { Loader2, Eye, EyeOff, Gift, NotebookText, ShieldAlert } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -18,6 +19,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
 
 const CLASS_OPTIONS = [
   "Class 8th",
@@ -41,7 +59,7 @@ const CLASS_OPTIONS = [
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading, signUp } = useAuth();
+  const { user, loading: authLoading, signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   
   const [name, setName] = useState("");
@@ -56,13 +74,14 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [authMethod, setAuthMethod] = useState<'email' | 'google'>('email');
 
-  // Redirect if already logged in, unless we are currently signing up
   useEffect(() => {
-    if (!authLoading && user && !loading) {
+    if (!authLoading && user && !loading && !showConflictModal) {
       router.replace("/");
     }
-  }, [user, authLoading, router, loading]);
+  }, [user, authLoading, router, loading, showConflictModal]);
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -93,15 +112,27 @@ function SignupForm() {
     }
 
     setLoading(true);
+    setAuthMethod('email');
     const success = await signUp(name, email, password, finalClass, referralCodeInput);
     if (success) {
-      // The user will be redirected from the auth hook after successful login
+      // Handled by useAuth
     }
     setLoading(false);
   };
 
-  // Prevent UI flash while checking auth
-  if (authLoading || (user && !loading)) {
+  const handleGoogleSignup = async (force: boolean = false) => {
+    setLoading(true);
+    setAuthMethod('google');
+    const status = await signInWithGoogle(force);
+    if (status === 'conflict') {
+        setShowConflictModal(true);
+        setLoading(false);
+    } else {
+        setLoading(false);
+    }
+  };
+
+  if (authLoading || (user && !loading && !showConflictModal)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -116,7 +147,7 @@ function SignupForm() {
           <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
           <CardDescription>Start your learning journey with us today.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -238,10 +269,30 @@ function SignupForm() {
             </div>
 
             <Button type="submit" className="w-full mt-2" disabled={loading || !acceptedTerms}>
-               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+               {loading && authMethod === 'email' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account
             </Button>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          <Button 
+            variant="outline" 
+            className="w-full h-11 font-semibold rounded-xl" 
+            onClick={() => handleGoogleSignup()}
+            disabled={loading}
+          >
+            {loading && authMethod === 'google' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+            <span className="ml-2">Continue with Google</span>
+          </Button>
+
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
              <Link href="/login" className="font-medium text-primary hover:underline">
@@ -250,6 +301,38 @@ function SignupForm() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Session Conflict Modal */}
+      <Dialog open={showConflictModal} onOpenChange={setShowConflictModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="flex flex-col items-center text-center">
+            <div className="bg-orange-100 p-3 rounded-full mb-4 text-orange-600">
+              <ShieldAlert className="h-10 w-10" />
+            </div>
+            <DialogTitle className="text-xl font-bold">Active Session Detected</DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              आपका अकाउंट किसी अन्य डिवाइस पर एक्टिव है। क्या आप उस डिवाइस से लॉगआउट करके इस डिवाइस पर लॉगिन करना चाहते हैं?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-4">
+            <Button 
+              variant="outline" 
+              className="flex-1 rounded-xl"
+              onClick={() => setShowConflictModal(false)}
+            >
+              Back
+            </Button>
+            <Button 
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl"
+              onClick={() => handleGoogleSignup(true)}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Logout Other Device & Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

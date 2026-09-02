@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -15,6 +16,8 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -60,6 +63,7 @@ interface AuthContextType {
   hasPermission: (permission: UserPermission) => boolean;
   signUp: (name: string, email: string, password: string, userClass: string, referralCode?: string) => Promise<boolean>;
   logIn: (email: string, password: string, force?: boolean) => Promise<LoginStatus>;
+  signInWithGoogle: (force?: boolean) => Promise<LoginStatus>;
   logOut: () => void;
   resetPassword: (email: string) => Promise<boolean>;
 }
@@ -303,6 +307,87 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async (force: boolean = false): Promise<LoginStatus> => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const loggedInUser = result.user;
+
+      const userDocRef = doc(db, 'users', loggedInUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      // Check for active session if not forcing (One-Device Policy)
+      if (userDoc.exists()) {
+        const existingData = userDoc.data();
+        if (existingData.activeSessionToken && !force) {
+          await signOut(auth);
+          return 'conflict';
+        }
+      }
+
+      const sessionToken = Date.now().toString();
+      localStorage.setItem('sessionToken', sessionToken);
+
+      const userData: any = { activeSessionToken: sessionToken };
+      
+      if (loggedInUser.email === SUPER_ADMIN_EMAIL) {
+          userData.role = 'admin';
+      }
+
+      if (!userDoc.exists()) {
+          // New User via Google
+          const myReferralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+          
+          await setDoc(userDocRef, {
+              uid: loggedInUser.uid,
+              email: loggedInUser.email,
+              displayName: loggedInUser.displayName,
+              photoURL: loggedInUser.photoURL,
+              createdAt: new Date().toISOString(),
+              readNotifications: [],
+              school: "",
+              userClass: "", // To be filled by user later in profile
+              mobileNumber: "",
+              certificates: [],
+              referralCode: myReferralCode,
+              referralCount: 0,
+              creditBalance: 0,
+              ...userData
+          });
+
+          // Check for referral code in current URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const refFromUrl = urlParams.get('ref');
+          if (refFromUrl) {
+              await processReferral(refFromUrl, loggedInUser.uid);
+          }
+      } else {
+          // Existing User
+          await updateDoc(userDocRef, userData);
+      }
+
+      toast({ title: "Signed in with Google!" });
+      
+      const docData = (await getDoc(userDocRef)).data() || {};
+      if (docData.role === 'admin' || loggedInUser.email === SUPER_ADMIN_EMAIL) {
+          router.push("/admin/dashboard");
+      } else if (docData.role === 'teacher') {
+          router.push("/teacher/dashboard");
+      } else {
+          router.push("/");
+      }
+
+      return 'success';
+    } catch (error: any) {
+      console.error("Google Auth Error:", error);
+      if (error.code === 'auth/popup-closed-by-user') {
+          return 'error';
+      }
+      toast({ variant: "destructive", title: "Google Sign-In Failed", description: error.message });
+      return 'error';
+    }
+  };
+
   const logOut = async () => {
     // Redirect first to avoid client-side error on state change
     router.push("/login");
@@ -347,6 +432,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasPermission,
     signUp,
     logIn,
+    signInWithGoogle,
     logOut,
     resetPassword,
   };
