@@ -37,12 +37,16 @@ const faqSections = [
                 answer: "UPI payments ko humari team manually verify karti hai. Is process mein aamtaur par 1 se 24 ghante ka samay lagta hai. Verification hote hi aapko notification mil jayega aur course unlock ho jayega."
             },
             {
-                question: "Refund policy kya hai?",
-                answer: "Kyonki humara content digital (PDF/Video) hai, isliye ek baar access milne ke baad hum refund pradan nahi karte hain. Hum aapse anurodh karte hain ki kharidne se pehle free previews zaroor dekhein."
+                question: "StudyScript Credits ka upyog kaise karein?",
+                answer: "Jab aap kisi course ko khareedne ke liye 'Checkout' page par jaate hain, wahan aapko 'Use credits' ka option dikhega. Is par tick karke aap apne referral credits se discount pa sakte hain ya pura course free mein unlock kar sakte hain."
             },
             {
-                question: "Course/Batch ki validity kitni hoti hai?",
-                answer: "Humare zyadatar courses aur batches ki validity purchase ki tarikh se 1 saal (12 mahine) tak hoti hai. Validity khatam hone ke baad aapko usey renew karna hoga."
+                question: "UPI Reference ID galat enter ho gaya toh kya karein?",
+                answer: "Ghabraiye nahi! Agar aapne galat Transaction ID submit kar di hai, toh login karke 'Support Chat' par jayein aur wahan sahi Transaction ID aur payment ka screenshot bhej dein. Humari team ise manually check karke update kar degi."
+            },
+            {
+                question: "Refund policy kya hai?",
+                answer: "Kyonki humara content digital (PDF/Video) hai, isliye ek baar access milne ke baad hum refund pradan nahi karte hain. Hum aapse anurodh karte hain ki kharidne se pehle free previews zaroor dekhein."
             }
         ]
     },
@@ -55,12 +59,16 @@ const faqSections = [
                 answer: "Aapka saara purchased content 'My Learning' section mein dikhayi dega. Iske alawa aap apni profile mein jaakar 'Payment History' bhi check kar sakte hain."
             },
             {
+                question: "Live class join kaise karein?",
+                answer: "Live class jab start hoti hai, tab aapko app par ek notification milta hai. Aap us subject ke page par jaakar 'Join Live Now' button par click karke class join kar sakte hain. Yaad rahe, live class sirf unhe dikhegi jinhone woh subject ya batch khareeda hai."
+            },
+            {
                 question: "Certificate kaise milega?",
                 answer: "Jab aap koi specialized course poora karte hain, toh admin aapko ek certificate assign karta hai. Yeh certificate aapko 'My Profile' page par 'My Certificates' section mein milega, jahan se aap ise download ya share kar sakte hain."
             },
             {
-                question: "Share & Earn (Referral) program kya hai?",
-                answer: "Aap apne dosto ko apna referral link bhej sakte hain. Jab koi aapke link se join karta hai, toh aapka referral count badhta hai. Zyada referrals hone par aap 'Chat Support' par message karke free course access ya rewards maang sakte hain."
+                question: "Share & Earn (Referral) program se paise kaise kamayein?",
+                answer: "Aap apne dosto ko apna referral link bhej sakte hain. Jab koi aapke link se join karke pehla purchase karta hai, toh aapko ₹20 StudyScript Credits milte hain. Aap in credits se courses kharid sakte hain."
             }
         ]
     },
@@ -71,6 +79,14 @@ const faqSections = [
             {
                 question: "One-Device policy kya hai?",
                 answer: "Security ke liye, ek account ko ek waqt mein sirf ek hi device par chalaya ja sakta hai. Agar aap dusre phone mein login karenge, toh purane phone se apne aap logout ho jayega. Baar-baar aisa karne par account block ho sakta hai."
+            },
+            {
+                question: "Kya main offline padh sakta hoon?",
+                answer: "Haan! StudyScript PWA technology ka upyog karta hai. Aapne jo pages aur PDF pehle visit kiye hain, woh aapka internet band hone par bhi cache se load ho jayenge. Iske alawa courses mein PDF download ka option bhi diya gaya hai."
+            },
+            {
+                question: "Login password bhul gaya hoon, reset kaise karein?",
+                answer: "Login page par 'Forgot password?' link par click karein. Apna register email daalein, hum aapko ek link bhejenge jispar click karke aap naya password bana sakte hain."
             },
             {
                 question: "StudyScript App kaise install karein?",
