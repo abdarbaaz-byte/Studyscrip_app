@@ -36,7 +36,7 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'static-info-pages',
         expiration: {
-          maxEntries: 10,
+          maxEntries: 20, // Increased entries
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
@@ -66,7 +66,7 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'dynamic-learning-pages',
         expiration: {
-          maxEntries: 50,
+          maxEntries: 100, // Increased capacity for more pages
           maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
         },
         cacheableResponse: {
@@ -74,14 +74,14 @@ const withPWA = createNextPwa({
         },
       },
     },
-    // 3. Next.js Static Chunks - CacheFirst
+    // 3. Next.js Static Chunks - CacheFirst (UI Core)
     {
       urlPattern: /\/_next\/static\/.*/i,
       handler: 'CacheFirst',
       options: {
         cacheName: 'static-chunks',
         expiration: {
-          maxEntries: 100,
+          maxEntries: 200,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
       },
@@ -94,8 +94,11 @@ const withPWA = createNextPwa({
         cacheName: 'next-data',
         networkTimeoutSeconds: 3,
         expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60,
+          maxEntries: 100,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // Increased from 1 to 7 days for better offline longevity
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
         },
       },
     },
@@ -107,8 +110,8 @@ const withPWA = createNextPwa({
         cacheName: 'pages',
         networkTimeoutSeconds: 3,
         expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 30 * 24 * 60 * 60,
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
           statuses: [0, 200],
@@ -138,8 +141,8 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'static-image-assets',
         expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 180 * 24 * 60 * 60,
+          maxEntries: 300, // Increased image cache
+          maxAgeSeconds: 180 * 24 * 60 * 60, // 180 days
         },
         cacheableResponse: {
           statuses: [0, 200],
@@ -152,8 +155,8 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'google-fonts',
         expiration: {
-          maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60,
+          maxEntries: 10,
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
         },
       },
     },
