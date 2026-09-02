@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { 
   getFirestore, 
   initializeFirestore, 
@@ -29,6 +29,13 @@ function createFirebaseApp(config: object): FirebaseApp {
 
 const app: FirebaseApp = createFirebaseApp(firebaseConfig);
 const auth = getAuth(app);
+
+// Set long-term persistence for authentication
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
+    console.error("Auth persistence error:", error);
+  });
+}
 
 // Modern Firestore initialization with persistent cache configuration for v11+
 const db = typeof window !== 'undefined' 

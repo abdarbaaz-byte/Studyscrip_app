@@ -154,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = docSnap.data();
         const storedToken = localStorage.getItem('sessionToken');
         
+        // One-device policy check: Only log out if another session has definitely started
         if (data.activeSessionToken && storedToken && data.activeSessionToken !== storedToken) {
           signOut(auth).then(() => {
             localStorage.removeItem('sessionToken');
