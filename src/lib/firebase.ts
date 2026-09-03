@@ -37,14 +37,28 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Modern Firestore initialization with persistent cache configuration for v11+
-const db = typeof window !== 'undefined' 
-  ? initializeFirestore(app, {
+/**
+ * Modern Firestore initialization with persistent cache configuration for v11+
+ * We use a self-executing function to ensure we only call initializeFirestore once.
+ * If it's already been initialized (e.g. during HMR), we fall back to getFirestore().
+ */
+const db = (() => {
+  if (typeof window === 'undefined') {
+    return getFirestore(app);
+  }
+
+  try {
+    return initializeFirestore(app, {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
       })
-    })
-  : getFirestore(app);
+    });
+  } catch (e: any) {
+    // If Firestore is already initialized, initializeFirestore will throw.
+    // In that case, we simply return the existing firestore instance.
+    return getFirestore(app);
+  }
+})();
 
 const storage = getStorage(app);
 let messaging: any;
@@ -53,9 +67,8 @@ if (typeof window !== 'undefined') {
   try {
     // Messaging initialization
     messaging = getMessaging(app);
-    console.log("Firestore persistent cache enabled with multi-tab support.");
   } catch (error) {
-    console.error("Error initializing Firebase services:", error);
+    console.error("Error initializing Firebase messaging:", error);
   }
 }
 
