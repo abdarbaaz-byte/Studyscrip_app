@@ -185,11 +185,11 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     <Accordion type="single" collapsible className="w-full space-y-3">
         {notes.map(folder => (
             <AccordionItem value={folder.id} key={folder.id} className="border rounded-md px-4 bg-secondary/10">
-                <AccordionTrigger className="hover:no-underline font-semibold text-base">
-                    <div className="flex items-center gap-2">
-                        <Folder className="h-4 w-4 text-primary opacity-70" />
-                        {folder.title}
-                        {!hasAccess && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                <AccordionTrigger className="hover:no-underline font-semibold text-base py-5">
+                    <div className="flex items-center gap-3 text-left flex-1 min-w-0 pr-2">
+                        <Folder className="h-5 w-5 text-primary opacity-70 shrink-0" />
+                        <span className="flex-1 text-left leading-tight line-clamp-2">{folder.title}</span>
+                        {!hasAccess && <Lock className="h-4 w-4 text-muted-foreground shrink-0" />}
                     </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-2 space-y-4">
