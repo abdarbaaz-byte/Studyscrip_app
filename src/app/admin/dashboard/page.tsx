@@ -174,6 +174,9 @@ export default function AdminDashboardPage() {
   const [rewardReason, setRewardReason] = useState("");
   const [isGivingReward, setIsGivingReward] = useState(false);
 
+  // State for Purchase Search
+  const [purchaseSearchTerm, setPurchaseSearchTerm] = useState("");
+
 
   useEffect(() => {
     // Redirect non-admin/employee users
@@ -1672,8 +1675,8 @@ export default function AdminDashboardPage() {
               <TableHead>Amounts</TableHead>
               <TableHead>Ref. ID</TableHead>
               <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+            </TableHeader>
+          </TableBody>
           <TableBody>
             {paymentRequests.map((req) => (
               <TableRow key={req.id}>
@@ -1814,67 +1817,91 @@ export default function AdminDashboardPage() {
     </Card>
   );
 
-  const renderPurchaseManagement = () => (
-     <Card>
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">User Purchases</CardTitle>
-        <CardDescription>View and manage all user purchases and manually granted access.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User Email</TableHead>
-              <TableHead>Item Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Purchase Date</TableHead>
-              <TableHead>Expiry Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {purchases.map((purchase) => (
-              <TableRow key={purchase.id}>
-                <TableCell className="font-medium">{purchase.userEmail}</TableCell>
-                <TableCell>{purchase.itemName}</TableCell>
-                <TableCell><Badge variant="secondary" className="capitalize">{purchase.itemType}</Badge></TableCell>
-                <TableCell>{format(purchase.purchaseDate.toDate(), "PPP")}</TableCell>
-                <TableCell>{format(purchase.expiryDate.toDate(), "PPP")}</TableCell>
-                <TableCell className="text-right">
-                  <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="destructive" size="sm" onClick={() => handleRevokeClick(purchase)}>
-                            <Trash2 className="mr-2 h-4 w-4"/> Revoke
-                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                              <AlertDialogTitle>Revoke Access?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                  Are you sure you want to revoke access for <span className="font-bold">{purchase.userEmail}</span> to the item <span className="font-bold">{purchase.itemName}</span>? This action cannot be undone.
-                              </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setPurchaseToRevoke(null)}>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={confirmRevokeAccess}>Revoke Access</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
+  const renderPurchaseManagement = () => {
+    const filteredPurchases = purchases.filter((purchase) => {
+      const search = purchaseSearchTerm.toLowerCase();
+      return (
+        purchase.userEmail.toLowerCase().includes(search) ||
+        purchase.itemName.toLowerCase().includes(search) ||
+        purchase.itemType.toLowerCase().includes(search)
+      );
+    });
+
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="font-headline text-2xl">User Purchases</CardTitle>
+              <CardDescription>View and manage all user purchases and manually granted access.</CardDescription>
+            </div>
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search email, item or type..."
+                value={purchaseSearchTerm}
+                onChange={(e) => setPurchaseSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User Email</TableHead>
+                <TableHead>Item Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Purchase Date</TableHead>
+                <TableHead>Expiry Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-             {purchases.length === 0 && (
-                <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        No purchases found.
-                    </TableCell>
+            </TableHeader>
+            <TableBody>
+              {filteredPurchases.map((purchase) => (
+                <TableRow key={purchase.id}>
+                  <TableCell className="font-medium">{purchase.userEmail}</TableCell>
+                  <TableCell>{purchase.itemName}</TableCell>
+                  <TableCell><Badge variant="secondary" className="capitalize">{purchase.itemType}</Badge></TableCell>
+                  <TableCell>{format(purchase.purchaseDate.toDate(), "PPP")}</TableCell>
+                  <TableCell>{format(purchase.expiryDate.toDate(), "PPP")}</TableCell>
+                  <TableCell className="text-right">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="destructive" size="sm" onClick={() => handleRevokeClick(purchase)}>
+                              <Trash2 className="mr-2 h-4 w-4"/> Revoke
+                           </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Are you sure you want to revoke access for <span className="font-bold">{purchase.userEmail}</span> to the item <span className="font-bold">{purchase.itemName}</span>? This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setPurchaseToRevoke(null)}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={confirmRevokeAccess}>Revoke Access</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
                 </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
+              ))}
+               {filteredPurchases.length === 0 && (
+                  <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                          {purchaseSearchTerm ? "No matching purchases found." : "No purchases found."}
+                      </TableCell>
+                  </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const renderEmployeeManagement = () => (
     <Card>
