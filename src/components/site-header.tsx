@@ -51,6 +51,18 @@ export function SiteHeader() {
     }
   }, [user]);
 
+  // Prevent background scroll when notifications are open
+  useEffect(() => {
+    if (isNotificationOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isNotificationOpen]);
+
   // Effect to handle back press for closing the notifications popover
   useEffect(() => {
     const handleHashChange = () => {
@@ -292,7 +304,7 @@ export function SiteHeader() {
               </Button>
            </a>
 
-           <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
+           <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen} modal={true}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative" onClick={handleMarkAllAsRead}>
                 <Bell className="h-5 w-5" />
