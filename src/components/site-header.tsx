@@ -51,18 +51,6 @@ export function SiteHeader() {
     }
   }, [user]);
 
-  // Prevent background scroll when notifications are open
-  useEffect(() => {
-    if (isNotificationOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isNotificationOpen]);
-
   // Effect to handle back press for closing the notifications popover
   useEffect(() => {
     const handleHashChange = () => {
@@ -319,10 +307,10 @@ export function SiteHeader() {
             <PopoverContent 
               align="end" 
               sideOffset={0}
-              className="w-screen sm:w-96 p-0 h-[calc(100dvh-128px)] sm:h-auto max-h-[calc(100dvh-128px)] sm:max-h-[500px] rounded-none sm:rounded-xl border-x-0 sm:border-x flex flex-col shadow-2xl"
+              className="w-screen sm:w-96 p-0 h-[calc(100dvh-128px)] sm:h-auto max-h-[calc(100dvh-128px)] sm:max-h-[500px] rounded-none sm:rounded-xl border-x-0 sm:border-x flex flex-col shadow-2xl overscroll-contain"
             >
                <div className="p-4 font-bold border-b bg-background sticky top-0 z-10">Notifications</div>
-                <ScrollArea className="flex-1">
+                <ScrollArea className="flex-1 overscroll-contain">
                   {sortedNotifications.length > 0 ? (
                     sortedNotifications.map(notif => {
                       const isRead = readNotificationIds.includes(notif.id);
