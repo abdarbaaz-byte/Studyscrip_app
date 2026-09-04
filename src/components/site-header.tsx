@@ -47,7 +47,9 @@ export function SiteHeader() {
       });
       return () => unsubscribeReadStatus();
     } else {
-      setReadNotificationIds([]);
+      // For guest users, initialize read IDs from localStorage
+      const localRead = JSON.parse(localStorage.getItem('guest_read_notifications') || '[]');
+      setReadNotificationIds(localRead);
     }
   }, [user]);
 
@@ -77,8 +79,15 @@ export function SiteHeader() {
   }, [isNotificationOpen]);
 
   const handleMarkAsRead = (id: string, link?: string) => {
-    if (user && !readNotificationIds.includes(id)) {
-      markNotificationAsRead(user.uid, id);
+    if (!readNotificationIds.includes(id)) {
+      if (user) {
+        markNotificationAsRead(user.uid, id);
+      } else {
+        // Handle guest user read status
+        const updatedRead = [...readNotificationIds, id];
+        localStorage.setItem('guest_read_notifications', JSON.stringify(updatedRead));
+        setReadNotificationIds(updatedRead);
+      }
     }
     if(link) {
       router.push(link);
@@ -87,14 +96,21 @@ export function SiteHeader() {
   };
 
   const handleMarkAllAsRead = () => {
-    if (user && unreadCount > 0) {
+    if (unreadCount > 0) {
       const unreadIds = notifications
         .filter(n => !readNotificationIds.includes(n.id))
         .map(n => n.id);
       
-      unreadIds.forEach(id => {
-        markNotificationAsRead(user.uid, id);
-      });
+      if (user) {
+        unreadIds.forEach(id => {
+          markNotificationAsRead(user.uid, id);
+        });
+      } else {
+        // Handle guest user bulk read
+        const updatedRead = [...readNotificationIds, ...unreadIds];
+        localStorage.setItem('guest_read_notifications', JSON.stringify(updatedRead));
+        setReadNotificationIds(updatedRead);
+      }
     }
   };
 
