@@ -51,6 +51,31 @@ export function SiteHeader() {
     }
   }, [user]);
 
+  // Effect to handle back press for closing the notifications popover
+  useEffect(() => {
+    const handleHashChange = () => {
+      // If hash is removed or changed (back press), close the popover
+      if (window.location.hash !== '#notifications' && isNotificationOpen) {
+        setIsNotificationOpen(false);
+      }
+    };
+
+    if (isNotificationOpen) {
+      // Add a hash to the URL when the popover opens
+      window.location.hash = 'notifications';
+      window.addEventListener('hashchange', handleHashChange);
+    } else {
+      // If the popover is closed manually, but the hash is still there, go back
+      if (window.location.hash === '#notifications') {
+        window.history.back();
+      }
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [isNotificationOpen]);
+
   const handleMarkAsRead = (id: string, link?: string) => {
     if (user && !readNotificationIds.includes(id)) {
       markNotificationAsRead(user.uid, id);
