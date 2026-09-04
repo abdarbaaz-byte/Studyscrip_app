@@ -304,34 +304,41 @@ export function SiteHeader() {
                 <span className="sr-only">Notifications</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-96 p-0">
-               <div className="p-4 font-medium border-b">Notifications</div>
-                <ScrollArea className="h-80">
+            <PopoverContent 
+              align="end" 
+              sideOffset={0}
+              className="w-screen sm:w-96 p-0 h-[calc(100dvh-128px)] sm:h-auto max-h-[calc(100dvh-128px)] sm:max-h-[500px] rounded-none sm:rounded-xl border-x-0 sm:border-x flex flex-col shadow-2xl"
+            >
+               <div className="p-4 font-bold border-b bg-background sticky top-0 z-10">Notifications</div>
+                <ScrollArea className="flex-1">
                   {sortedNotifications.length > 0 ? (
                     sortedNotifications.map(notif => {
                       const isRead = readNotificationIds.includes(notif.id);
                       return (
                        <div 
                          key={notif.id} 
-                         className={cn("p-4 border-b flex gap-3 items-start hover:bg-secondary", notif.link && "cursor-pointer")}
+                         className={cn("p-4 border-b flex gap-3 items-start hover:bg-secondary transition-colors", notif.link && "cursor-pointer")}
                          onClick={() => handleMarkAsRead(notif.id, notif.link)}
                         >
-                        {!isRead && <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary flex-shrink-0" />}
+                        {!isRead && <Circle className="h-2.5 w-2.5 mt-1.5 fill-primary text-primary flex-shrink-0" />}
                         <div className={cn("flex-1 min-w-0", isRead && "pl-5")}>
-                          <p className="font-semibold break-words">{notif.title}</p>
-                          <p className="text-sm text-muted-foreground break-words">{notif.description}</p>
+                          <p className="font-bold text-foreground leading-tight break-words">{notif.title}</p>
+                          <p className="text-sm text-muted-foreground mt-1 leading-relaxed break-words">{notif.description}</p>
                            {notif.link && (
-                              <div className="text-xs text-blue-500 hover:underline break-all flex items-center gap-1 mt-1">
+                              <div className="text-xs text-blue-500 font-bold hover:underline break-all flex items-center gap-1 mt-2">
                                 <LinkIcon className="h-3 w-3"/> Click to view
                               </div>
                            )}
-                          <p className="text-xs text-muted-foreground mt-1">{new Date(notif.timestamp).toLocaleString()}</p>
+                          <p className="text-[10px] font-medium text-muted-foreground mt-2">{new Date(notif.timestamp).toLocaleString()}</p>
                         </div>
                        </div>
                       )
                     })
                   ) : (
-                    <p className="text-center text-muted-foreground p-8">No new notifications.</p>
+                    <div className="flex flex-col items-center justify-center p-12 text-center h-full">
+                      <Bell className="h-12 w-12 text-muted-foreground/20 mb-4" />
+                      <p className="text-muted-foreground font-medium">No new notifications.</p>
+                    </div>
                   )}
                 </ScrollArea>
             </PopoverContent>
