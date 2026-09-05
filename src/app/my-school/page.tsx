@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,7 +28,7 @@ export default function MySchoolPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.push("/login");
+      router.push("/login?redirect=/my-school");
       return;
     }
     if (!userSchoolId) {

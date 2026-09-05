@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,10 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || "/";
   const { user, loading: authLoading, logIn, signInWithGoogle, linkPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,9 +46,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!authLoading && user && !loading && !showConflictModal && !showLinkPasswordModal) {
-      router.replace("/");
+      router.replace(redirectTo);
     }
-  }, [user, authLoading, router, loading, showConflictModal, showLinkPasswordModal]);
+  }, [user, authLoading, router, loading, showConflictModal, showLinkPasswordModal, redirectTo]);
 
   const handleLogin = async (e?: React.FormEvent, force: boolean = false) => {
     if (e) e.preventDefault();
@@ -75,11 +77,7 @@ export default function LoginPage() {
         setShowConflictModal(true);
         setLoading(false);
     } else if (status === 'success') {
-        // Post-login check for password provider
-        const currentUser = authMethod === 'google' ? authLoading === false && user : null; 
-        // Note: useAuth state might not be updated yet, so we use a check in the effect or manual
-        // But for better UX, we'll let the user land, then effect will handle it.
-        // Actually, we'll manually check after a small delay or use the hook properly.
+        // Post-login check for password provider handled by effect
     } else {
         setLoading(false);
     }
@@ -99,7 +97,7 @@ export default function LoginPage() {
     const success = await linkPassword(pwd);
     if (success) {
         setShowLinkPasswordModal(false);
-        router.push("/");
+        router.push(redirectTo);
     }
   };
 
@@ -113,7 +111,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-sm:shadow-none max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
           <CardDescription>Enter your credentials to access your account.</CardDescription>
@@ -217,7 +215,6 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
-      {/* Session Conflict Modal */}
       <Dialog open={showConflictModal} onOpenChange={setShowConflictModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-col items-center text-center">
@@ -249,13 +246,20 @@ export default function LoginPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Link Password Modal */}
       <LinkPasswordModal
         open={showLinkPasswordModal}
         email={user?.email || ""}
-        onClose={() => { setShowLinkPasswordModal(false); router.push("/"); }}
+        onClose={() => { setShowLinkPasswordModal(false); router.push(redirectTo); }}
         onConfirm={handleConfirmLink}
       />
     </div>
   );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-secondary p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+      <LoginForm />
+    </Suspense>
+  )
 }

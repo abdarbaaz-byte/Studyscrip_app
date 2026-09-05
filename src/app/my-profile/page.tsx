@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -70,7 +71,7 @@ export default function MyProfilePage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.push("/login");
+      router.push("/login?redirect=/my-profile");
       return;
     }
     loadProfile();
@@ -238,7 +239,6 @@ export default function MyProfilePage() {
     <div className="container mx-auto px-4 py-8 md:py-12 bg-secondary/10">
       <div className="max-w-4xl mx-auto space-y-8">
         
-        {/* 1. Profile Header Card */}
         <Card className="border-none shadow-2xl overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-indigo-900 text-white">
             <div className="p-8 md:p-10 flex flex-col items-center text-center">
                 <div className="relative group mb-4">
@@ -263,7 +263,6 @@ export default function MyProfilePage() {
             </div>
         </Card>
 
-        {/* 2. Wallet & Referrals Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <Card className="border-none shadow-lg bg-white rounded-3xl p-6 flex items-center gap-6">
                 <div className="bg-orange-100 p-4 rounded-2xl text-orange-600">
@@ -286,7 +285,6 @@ export default function MyProfilePage() {
             </Card>
         </div>
 
-        {/* 3. Personal & Academic Details (Edit/View Mode) */}
         <Card className="shadow-xl rounded-3xl border-none overflow-hidden">
           <CardContent className="p-6 md:p-10">
             {totalLoading ? (
@@ -299,7 +297,6 @@ export default function MyProfilePage() {
           </CardContent>
         </Card>
 
-        {/* 4. History Tabs (Credit History & Payment History) */}
         {!totalLoading && (
           <Card className="shadow-xl rounded-3xl border-none overflow-hidden">
              <CardHeader className="px-8 pt-8 border-b bg-secondary/5">
@@ -403,7 +400,6 @@ export default function MyProfilePage() {
           </Card>
         )}
 
-        {/* 5. Certificates Section (Bottom) */}
         {!totalLoading && (
             <Card className="shadow-xl rounded-3xl border-none overflow-hidden">
                  <CardHeader className="px-8 pt-8">

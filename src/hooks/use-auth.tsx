@@ -33,6 +33,7 @@ export type UserRole = 'admin' | 'employee' | 'teacher' | null;
 export type UserPermission = 
   | 'manage_academics'
   | 'manage_courses'
+  | 'manage_batches'
   | 'manage_free_notes'
   | 'manage_bookstore'
   | 'manage_payment_requests'
@@ -93,6 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserRole(null);
         setPermissions([]);
         setUserSchoolId(null);
+        // Only set loading false if there's no user. 
+        // If there IS a user, wait for the Firestore role check.
         setLoading(false);
       }
     });
@@ -102,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     if (user) { 
+      // Start fetching extra data, keep loading true
+      setLoading(true);
+      
       if (user.email === SUPER_ADMIN_EMAIL) {
           setUserRole('admin');
           setPermissions([
@@ -134,13 +140,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUserSchoolId(null);
         }
         setLoading(false);
+      }, (error) => {
+        console.error("Firestore Auth Sync Error:", error);
+        setLoading(false);
       });
       return () => unsubscribeFirestore();
-    } else {
-      setUserRole(null);
-      setPermissions([]);
-      setUserSchoolId(null);
-      setLoading(false);
     }
   }, [user]);
 
@@ -154,7 +158,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = docSnap.data();
         const storedToken = localStorage.getItem('sessionToken');
         
-        // One-device policy check: Only log out if another session has definitely started
         if (data.activeSessionToken && storedToken && data.activeSessionToken !== storedToken) {
           signOut(auth).then(() => {
             localStorage.removeItem('sessionToken');
@@ -273,16 +276,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       toast({ title: "Logged in successfully!" });
-      
-      const docData = userDoc.exists() ? userDoc.data() : {};
-      if (docData.role === 'admin' || loggedInUser.email === SUPER_ADMIN_EMAIL) {
-        router.push("/admin/dashboard");
-      } else if (docData.role === 'teacher') {
-        router.push("/teacher/dashboard");
-      }
-      else {
-        router.push("/");
-      }
       return 'success';
     } catch (error: any) {
       let description = "An unexpected error occurred. Please try again.";

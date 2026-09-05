@@ -1675,8 +1675,8 @@ export default function AdminDashboardPage() {
               <TableHead>Amounts</TableHead>
               <TableHead>Ref. ID</TableHead>
               <TableHead className="text-right">Actions</TableHead>
-            </TableHeader>
-          </TableBody>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {paymentRequests.map((req) => (
               <TableRow key={req.id}>

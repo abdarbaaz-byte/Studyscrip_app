@@ -24,7 +24,7 @@ export default function MyCoursesPage() {
       return;
     }
     if (!user) {
-      router.push("/login");
+      router.push("/login?redirect=/my-courses");
       return;
     }
 
