@@ -212,7 +212,17 @@ export default function BatchDetailClient({ batch }: { batch: Batch }) {
     const { url, title } = contentToView;
     const driveId = url.match(/file\/d\/([^/]+)/)?.[1];
     let contentUrl = driveId ? `https://drive.google.com/file/d/${driveId}/preview` : url;
-    return <iframe src={contentUrl} className="w-full h-full border-0" title={title} allowFullScreen></iframe>;
+    return (
+      <div className="relative w-full h-full overflow-hidden">
+        <iframe src={contentUrl} className="w-full h-full border-0" title={title} allowFullScreen></iframe>
+        {/* Anti-Popout Overlay for Google Drive PDFs */}
+        {driveId && (
+          <div className="absolute top-0 right-0 w-32 h-12 z-50 bg-secondary flex items-center justify-end pr-4 pointer-events-auto select-none">
+            <Image src="/logo-icon.svg" alt="StudyScript" width={28} height={28} className="opacity-90" />
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (loading || authLoading) {

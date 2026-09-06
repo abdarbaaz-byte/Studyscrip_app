@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Unlock, FileText, Video, Image as ImageIcon, ChevronRight, Loader2 } from "lucide-react";
+import { Lock, Unlock, FileText, Video, Image as ImageIcon, ChevronRight, Loader2, X } from "lucide-react";
 import { type ContentItem, type Chapter, type Subject, type AcademicClass, listenToAcademics } from "@/lib/academics";
 import { useParams, notFound, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -128,7 +128,9 @@ export default function ChapterDetailClientPage() {
     let contentUrl = url;
 
     if (type === 'pdf') {
+        const driveId = getGoogleDriveFileId(url);
         return (
+          <div className="relative w-full h-full overflow-hidden">
              <iframe 
                 src={url} 
                 className="w-full h-full border-0" 
@@ -136,6 +138,13 @@ export default function ChapterDetailClientPage() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
             ></iframe>
+            {/* Anti-Popout Overlay for Google Drive PDFs */}
+            {driveId && (
+              <div className="absolute top-0 right-0 w-32 h-12 z-50 bg-secondary flex items-center justify-end pr-4 pointer-events-auto select-none">
+                <Image src="/logo-icon.svg" alt="StudyScript" width={28} height={28} className="opacity-90" />
+              </div>
+            )}
+          </div>
         );
     }
 
@@ -250,8 +259,9 @@ export default function ChapterDetailClientPage() {
 
        <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
-          <DialogHeader className="p-2 border-b shrink-0">
-            <DialogTitle>{contentToView?.title}</DialogTitle>
+          <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="pl-4">{contentToView?.title}</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-5 w-5"/></Button>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0">
             {renderContentInDialog()}

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio, ArrowRight, ChevronRight, Download, PlayCircle } from "lucide-react";
+import { Lock, Unlock, FileText, Video, Loader2, Image as ImageIcon, Radio, ArrowRight, ChevronRight, Download, PlayCircle, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { checkUserPurchase, createPurchase, getScheduledLiveClassesForItem, type LiveClass } from "@/lib/data";
 import { useRouter } from "next/navigation";
@@ -144,7 +144,9 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
     let contentUrl = url;
 
     if (type === 'pdf') {
+        const driveId = getGoogleDriveFileId(url);
         return (
+          <div className="relative w-full h-full overflow-hidden">
             <iframe
                 src={url}
                 className="w-full h-full border-0"
@@ -152,6 +154,13 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
             ></iframe>
+            {/* Anti-Popout Overlay for Google Drive PDFs */}
+            {driveId && (
+              <div className="absolute top-0 right-0 w-32 h-12 z-50 bg-secondary flex items-center justify-end pr-4 pointer-events-auto select-none">
+                <Image src="/logo-icon.svg" alt="StudyScript" width={28} height={28} className="opacity-90" />
+              </div>
+            )}
+          </div>
         );
     }
 
@@ -251,7 +260,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                       ))}
                     </Accordion>
                     {(course.folders || []).length === 0 && (
-                      <p className="text-center text-muted-foreground py-8">No content available for this course yet.</p>
+                      <p className="text-muted-foreground py-8 text-center">No content available for this course yet.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -303,7 +312,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
                             </div>
                         ))}
                         {(course.downloadContent || []).length === 0 && (
-                            <p className="text-center text-muted-foreground py-10">No downloadable files added for this course yet.</p>
+                            <p className="text-muted-foreground py-10 text-center">No downloadable files added for this course yet.</p>
                         )}
                     </div>
                   </CardContent>
@@ -408,7 +417,7 @@ export default function CourseDetailClientPage({ course }: { course: Course }) {
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
           <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
             <DialogTitle className="truncate pl-4">{contentToView?.title}</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><Download className="h-5 w-5"/></Button>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-5 w-5"/></Button>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0 overflow-auto">
             {renderContentInDialog()}

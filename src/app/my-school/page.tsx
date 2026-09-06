@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { getSchool, type School, getSchoolNotes, type SchoolNote, type ContentItem, getSchoolTests, type Quiz, getSchoolInformation, type SchoolInformation } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks, User, Megaphone, ChevronRight } from "lucide-react";
+import { Loader2, School as SchoolIcon, FileText, BrainCircuit, Video, Image as ImageIcon, ArrowRight, Timer, ListChecks, User, Megaphone, ChevronRight, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -112,6 +111,7 @@ export default function MySchoolPage() {
             contentUrl = `https://drive.google.com/file/d/${driveId}/preview`;
         }
         return (
+          <div className="relative w-full h-full overflow-hidden">
              <iframe 
                 src={contentUrl} 
                 className="w-full h-full border-0" 
@@ -119,6 +119,13 @@ export default function MySchoolPage() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
             ></iframe>
+            {/* Anti-Popout Overlay for Google Drive PDFs */}
+            {driveId && (
+              <div className="absolute top-0 right-0 w-32 h-12 z-50 bg-secondary flex items-center justify-end pr-4 pointer-events-auto select-none">
+                <Image src="/logo-icon.svg" alt="StudyScript" width={28} height={28} className="opacity-90" />
+              </div>
+            )}
+          </div>
         );
     }
 
@@ -299,8 +306,9 @@ export default function MySchoolPage() {
 
     <Dialog open={!!contentToView} onOpenChange={() => setContentToView(null)}>
         <DialogContent className="w-screen h-screen max-w-none p-0 flex flex-col">
-          <DialogHeader className="p-2 border-b shrink-0">
-            <DialogTitle>{contentToView?.title}</DialogTitle>
+          <DialogHeader className="p-2 border-b shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="pl-4">{contentToView?.title}</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setContentToView(null)}><X className="h-5 w-5"/></Button>
           </DialogHeader>
           <div className="flex-1 bg-secondary min-h-0">
             {renderContentInDialog()}
