@@ -2,12 +2,188 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // For development, allow read/write access for a short period.
-    // In production, you should secure this.
-    // For example, only allow authenticated users to write.
-    // allow read, write: if request.auth != null;
-    match /{document=**} {
-      allow read, write: if true;
+    
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isSuperAdmin() {
+      return isLoggedIn() && request.auth.token.email == "abdarbaaz@gmail.com";
+    }
+    
+    function isAdmin() {
+      return isLoggedIn() && (getUserData().role == 'admin' || isSuperAdmin());
+    }
+    
+    function isEmployee() {
+      return isLoggedIn() && getUserData().role == 'employee';
+    }
+    
+    function isStaff() {
+      return isAdmin() || isEmployee();
+    }
+    
+    function isTeacher() {
+        return isLoggedIn() && getUserData().role == 'teacher';
+    }
+    
+    function isOwner(userId) {
+      return isLoggedIn() && request.auth.uid == userId;
+    }
+
+    // ============================================================
+    // COLLECTION RULES
+    // ============================================================
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isStaff();
+      allow create: if isLoggedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isStaff();
+      allow delete: if isAdmin();
+      
+      match /creditHistory/{id} {
+        allow read: if isOwner(userId) || isStaff();
+        allow write: if isStaff(); // Only system/admin can change balance
+      }
+    }
+
+    // 2. Global Public Content (Read-only for public, Write for Staff)
+    match /academics/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /courses/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /batches/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+      
+      match /information/{infoId} {
+        allow read: if true;
+        allow write: if isStaff();
+      }
+      match /messages/{msgId} {
+        allow read: if isLoggedIn();
+        allow create: if isLoggedIn() && request.resource.data.senderId == request.auth.uid;
+        allow delete: if isStaff();
+      }
+    }
+    match /freeNotes/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /audioLectures/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /quizFolders/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /liveClasses/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // 3. Bookstore (Requires Login)
+    match /bookstore/{id} {
+      allow read: if isLoggedIn();
+      allow write: if isStaff();
+    }
+    match /bookRequests/{id} {
+      allow create: if isLoggedIn();
+      allow read, delete: if isStaff();
+    }
+
+    // 4. Quizzes & Attempts
+    match /quizzes/{id} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    match /quizAttempts/{id} {
+      allow create: if isLoggedIn();
+      allow read: if isStaff() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isStaff();
+    }
+
+    // 5. Surveys & Reviews
+    match /liveClassSurveys/{id} {
+      allow create: if true;
+      allow read, delete: if isStaff();
+    }
+    match /reviews/{id} {
+      allow read: if resource.data.status == 'approved' || isStaff();
+      allow create: if true;
+      allow update, delete: if isStaff();
+    }
+
+    // 6. Financial Data (Purchases & Payments)
+    match /paymentRequests/{id} {
+      allow create: if isLoggedIn();
+      allow read: if isStaff() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isStaff();
+    }
+    match /purchases/{id} {
+      allow read: if isStaff() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isStaff();
+    }
+    match /payments/{id} {
+      allow read: if isStaff() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isStaff();
+    }
+
+    // 7. Schools / Institute Portals
+    match /schools/{schoolId} {
+      function isMemberOfSchool() {
+        return isLoggedIn() && (getUserData().schoolId == schoolId);
+      }
+      allow read: if isStaff() || isMemberOfSchool();
+      allow write: if isStaff();
+      
+      match /notes/{id} {
+        allow read: if isStaff() || isMemberOfSchool();
+        allow write: if isStaff() || isTeacher();
+      }
+      match /tests/{id} {
+        allow read: if isStaff() || isMemberOfSchool();
+        allow write: if isStaff() || isTeacher();
+      }
+      match /information/{id} {
+        allow read: if isStaff() || isMemberOfSchool();
+        allow write: if isStaff() || isTeacher();
+      }
+    }
+
+    // 8. One-to-One Support Chats
+    match /chats/{chatId} {
+      allow read, write: if isStaff() || isOwner(chatId);
+    }
+
+    // 9. Push Notification Tokens
+    match /fcmTokens/{deviceId} {
+      // Allow creation/updates for guest and logged in users to ensure notifications work
+      allow read, write: if true; 
+    }
+
+    // 10. Global Broadcasts
+    match /notifications/{id} {
+      allow read: if true;
+      allow write: if isStaff();
     }
   }
 }

@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user.email === SUPER_ADMIN_EMAIL) {
           setUserRole('admin');
           setPermissions([
-            'manage_academics', 'manage_courses', 'manage_free_notes', 
+            'manage_academics', 'manage_courses', 'manage_batches', 'manage_free_notes', 
             'manage_bookstore', 'manage_payment_requests', 'manage_manual_access', 
             'view_purchases', 'view_payments', 'send_notifications', 'manage_chat',
             'manage_quizzes', 'view_quiz_attempts', 'manage_site_settings',
