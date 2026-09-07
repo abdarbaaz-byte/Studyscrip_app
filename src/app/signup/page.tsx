@@ -127,6 +127,8 @@ function SignupForm() {
         setShowConflictModal(true);
         setLoading(false);
     } else if (status === 'success') {
+        // Redirection handled by useEffect, clear blockers
+        setShowConflictModal(false);
         setLoading(false);
     } else {
         setLoading(false);

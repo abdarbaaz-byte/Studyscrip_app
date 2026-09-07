@@ -63,7 +63,8 @@ function LoginForm() {
       setShowConflictModal(true);
       setLoading(false);
     } else if (status === 'success') {
-      // Redirect handled by useEffect, unblock by setting loading false
+      // Redirect handled by useEffect, unblock by setting loading false and closing modal
+      setShowConflictModal(false);
       setLoading(false);
     } else {
       setLoading(false);
@@ -78,7 +79,8 @@ function LoginForm() {
         setShowConflictModal(true);
         setLoading(false);
     } else if (status === 'success') {
-        // Redirection handled by useEffect
+        // Redirection handled by useEffect, clear blockers
+        setShowConflictModal(false);
         setLoading(false);
     } else {
         setLoading(false);
