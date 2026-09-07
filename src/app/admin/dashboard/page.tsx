@@ -34,7 +34,7 @@ import {
 import { AdminCourseForm } from "@/components/admin-course-form";
 import type { Course } from "@/lib/courses";
 import { type Chat, type ChatMessage } from "@/lib/chat";
-import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins, Users, History, ArrowUpRight, ArrowDownRight, Clock, MonitorPlay } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, Send, BookCopy, Loader2, BellRing, UserCheck, Calendar as CalendarIcon, ShoppingCart, ShieldCheck, ShieldAlert, FileText, BookOpen, UserCog, BrainCircuit, BarChart3, Settings, Radio, MessageSquareQuote, CheckCircle, Search, Award, Link as LinkIcon, School as SchoolIcon, User, Layers, Headphones, Gift, LayoutGrid, Save, Inbox, Coins, Users, History, ArrowUpRight, ArrowDownRight, Clock, MonitorPlay, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -115,10 +115,10 @@ export default function AdminDashboardPage() {
   const { user, isAdmin, loading: authLoading, hasPermission, userRole } = useAuth();
   const router = useRouter();
 
-  // State for Targeted Notifications
+  // State for Targeted Notifications (Updated for Multi-Select)
   const [notifTarget, setNotifTarget] = useState<'everyone' | 'user'>('everyone');
   const [notifUserEmail, setNotifUserEmail] = useState("");
-  const [notifUserUid, setNotifUserUid] = useState<string | null>(null);
+  const [selectedTargetUsers, setSelectedTargetUsers] = useState<{ uid: string; email: string }[]>([]);
   const [isSearchingNotifUser, setIsSearchingNotifUser] = useState(false);
 
   // State for Manual Access Grant
@@ -618,13 +618,17 @@ export default function AdminDashboardPage() {
     if (!notifUserEmail.trim()) return;
     setIsSearchingNotifUser(true);
     try {
-        const user = await findUserByEmail(notifUserEmail);
-        if (user) {
-            setNotifUserUid(user.uid);
-            toast({ title: "User Selected", description: `Target: ${user.email}` });
+        const foundUser = await findUserByEmail(notifUserEmail);
+        if (foundUser) {
+            if (!selectedTargetUsers.find(u => u.uid === foundUser.uid)) {
+                setSelectedTargetUsers(prev => [...prev, { uid: foundUser.uid, email: foundUser.email }]);
+                toast({ title: "User Added", description: `${foundUser.email} is added to recipient list.` });
+            } else {
+                toast({ variant: "destructive", title: "User already in list." });
+            }
+            setNotifUserEmail(""); // Clear search bar
         } else {
             toast({ variant: "destructive", title: "User not found." });
-            setNotifUserUid(null);
         }
     } catch (e) {
         toast({ variant: "destructive", title: "Search failed." });
@@ -635,14 +639,14 @@ export default function AdminDashboardPage() {
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!notificationTitle || !notificationMessage) return;
-    if (notifTarget === 'user' && !notifUserUid) {
-        toast({ variant: "destructive", title: "Please select a valid user first." });
+    if (notifTarget === 'user' && selectedTargetUsers.length === 0) {
+        toast({ variant: "destructive", title: "Please select at least one user." });
         return;
     }
 
     setIsSendingNotification(true);
     try {
-        // 1. Send via Targeted API
+        // 1. Prepare Payload
         const payload: any = {
             title: notificationTitle,
             body: notificationMessage,
@@ -654,7 +658,7 @@ export default function AdminDashboardPage() {
             // Broadcasts also save to Firestore for the In-App global list
             await sendNotification(notificationTitle, notificationMessage, notificationLink);
         } else {
-            payload.targetUid = notifUserUid;
+            payload.targetUids = selectedTargetUsers.map(u => u.uid);
             // Targeted/Private notifications are NOT saved to the global 'notifications' collection
         }
 
@@ -667,15 +671,16 @@ export default function AdminDashboardPage() {
         if (!response.ok) throw new Error('API failed to send push notification');
 
         toast({
-            title: notifTarget === 'everyone' ? "Broadcast Sent!" : "Private Message Sent!",
-            description: "Notification delivered via FCM.",
+            title: notifTarget === 'everyone' ? "Broadcast Sent!" : `${selectedTargetUsers.length} Notifications Sent!`,
+            description: "Notifications delivered via FCM.",
         });
         
+        // Reset fields
         setNotificationTitle("");
         setNotificationMessage("");
         setNotificationLink("");
         setNotifUserEmail("");
-        setNotifUserUid(null);
+        setSelectedTargetUsers([]);
 
     } catch (error) {
         console.error("Failed to send notification:", error);
@@ -754,7 +759,7 @@ export default function AdminDashboardPage() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  targetUid: request.userId,
+                  targetUids: [request.userId],
                   title: "Congratulations! 🎉",
                   body: `${request.itemTitle} has been unlocked for you. Happy learning!`,
                   link: request.itemType === 'batch' ? `/batches/${request.itemId}` : request.itemType === 'course' ? `/courses/${request.itemId}` : '/my-courses'
@@ -1085,7 +1090,7 @@ export default function AdminDashboardPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            targetUid: targetUser.uid,
+            targetUids: [targetUser.uid],
             title: "Credits Received! 🥳",
             body: `₹${amountNum} StudyScript Credit has been added: ${rewardReason}`,
             link: '/my-profile'
@@ -2553,16 +2558,31 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="user" id="target-user" />
-                        <Label htmlFor="target-user" className="cursor-pointer">Specific User</Label>
+                        <Label htmlFor="target-user" className="cursor-pointer">Specific Users</Label>
                     </div>
                 </RadioGroup>
 
                 {notifTarget === 'user' && (
-                    <div className="space-y-2 p-3 border rounded-lg bg-primary/5 animate-in fade-in duration-300">
-                        <Label className="text-xs font-bold uppercase tracking-wider">Find Target User</Label>
+                    <div className="space-y-3 p-3 border rounded-lg bg-primary/5 animate-in fade-in duration-300">
+                        <Label className="text-xs font-bold uppercase tracking-wider">Recipient List</Label>
+                        
+                        {selectedTargetUsers.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                {selectedTargetUsers.map(u => (
+                                    <Badge key={u.uid} variant="secondary" className="pl-2 pr-1 py-1 gap-1 flex items-center bg-white border border-primary/20">
+                                        <span className="max-w-[120px] truncate">{u.email}</span>
+                                        <X 
+                                          className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                                          onClick={() => setSelectedTargetUsers(prev => prev.filter(item => item.uid !== u.uid))}
+                                        />
+                                    </Badge>
+                                ))}
+                            </div>
+                        )}
+
                         <div className="flex gap-2">
                             <Input 
-                                placeholder="user@gmail.com" 
+                                placeholder="Add email..." 
                                 value={notifUserEmail}
                                 onChange={(e) => setNotifUserEmail(e.target.value)}
                             />
@@ -2570,7 +2590,6 @@ export default function AdminDashboardPage() {
                                 {isSearchingNotifUser ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4"/>}
                             </Button>
                         </div>
-                        {notifUserUid && <p className="text-[10px] text-green-600 font-bold">✓ User matched</p>}
                     </div>
                 )}
 
@@ -2601,7 +2620,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <Button type="submit" className="w-full" disabled={isSendingNotification}>
                   {isSendingNotification ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                  Send {notifTarget === 'everyone' ? 'Broadcast' : 'Private'} Alert
+                  Send {notifTarget === 'everyone' ? 'Broadcast' : `${selectedTargetUsers.length} Alerts`}
                 </Button>
               </form>
             </CardContent>
