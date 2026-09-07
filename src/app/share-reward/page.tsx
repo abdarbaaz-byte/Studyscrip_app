@@ -48,7 +48,7 @@ export default function ShareRewardPage() {
         await navigator.share({
           title: 'Join StudyScript',
           text: shareText,
-          url: shareUrl,
+          
         });
       } catch (error) {
         console.error('Error sharing:', error);
@@ -81,7 +81,7 @@ export default function ShareRewardPage() {
                 <Gift className="h-12 w-12" />
               </div>
             </div>
-            <CardTitle className="text-3xl md:text-4xl font-black font-headline mb-2">Refer & Earn ₹20 Credits!</CardTitle>
+            <CardTitle className="text-3xl md:text-4xl font-black font-headline mb-2">Refer & Earn ₹ 20 Credits!</CardTitle>
             <CardDescription className="text-white/80 text-lg">
               Earn ₹20 StudyScript Credits for every friend who joins and makes their first purchase.
             </CardDescription>
@@ -137,7 +137,7 @@ export default function ShareRewardPage() {
                 <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center shrink-0 font-bold">3</div>
                 <div>
                   <p className="font-bold">₹20 Credits Payein</p>
-                  <p className="text-sm text-muted-foreground">Jaise hi aapka dost koi **Course ya Batch** pehli baar khareedega, aapke wallet mein ₹20 credits turant add ho jayenge.</p>
+                  <p className="text-sm text-muted-foreground">Jaise hi aapka dost koi Subject, Course ya Batch pehli baar khareedega, aapke wallet mein ₹20 credits turant add ho jayenge.</p>
                 </div>
               </div>
             </CardContent>
@@ -176,7 +176,7 @@ export default function ShareRewardPage() {
                         />
                     </Link>
                 ) : (
-                    <div className="relative aspect-[21/9] w-full overflow-hidden rounded-3xl shadow-lg border-4 border-white">
+                    <div className="relative aspect-[21/9] w-full overflow-hidden rounded-3xl shadow-lg">
                         <Image 
                             src={getGoogleDriveImageUrl(referralBanner.imageUrl)} 
                             alt="Promotion"

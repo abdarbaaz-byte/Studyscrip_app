@@ -116,7 +116,7 @@ function SignupForm() {
     setLoading(true);
     setAuthMethod('email');
     const success = await signUp(name, email, password, finalClass, referralCodeInput);
-    if (!success) setLoading(false);
+    setLoading(false);
   };
 
   const handleGoogleSignup = async (force: boolean = false) => {
@@ -127,7 +127,7 @@ function SignupForm() {
         setShowConflictModal(true);
         setLoading(false);
     } else if (status === 'success') {
-        // Modal logic handled by effect
+        setLoading(false);
     } else {
         setLoading(false);
     }

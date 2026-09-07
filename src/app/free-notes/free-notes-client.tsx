@@ -59,8 +59,8 @@ export default function FreeNotesClient() {
             ></iframe>
             {/* Anti-Popout Overlay for Google Drive PDFs */}
             {driveId && (
-              <div className="absolute top-0 right-0 w-32 h-12 z-50 bg-secondary flex items-center justify-end pr-4 pointer-events-auto select-none">
-                <Image src="/logo-icon.svg" alt="StudyScript" width={28} height={28} className="opacity-90" />
+              <div className="absolute top-0 right-0 w-20 h-16 z-50 bg-transparent flex items-center justify-end pr-4 pointer-events-auto select-none">
+                <Image src="/icons/icon-96x96.png" alt="StudyScript" width={44} height={48} className="opacity-100" />
               </div>
             )}
           </div>
