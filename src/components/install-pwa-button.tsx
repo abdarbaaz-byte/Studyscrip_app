@@ -76,7 +76,7 @@ export function InstallPwaButton() {
   }
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
+    <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10">
         <Button onClick={handleInstallClick} size="lg" className="shadow-2xl">
             <Download className="mr-2 h-5 w-5" />
             Install App

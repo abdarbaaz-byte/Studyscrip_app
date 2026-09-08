@@ -8,8 +8,6 @@ const withPWA = createNextPwa({
   disable: process.env.NODE_ENV === 'development',
   register: false, 
   skipWaiting: true,
-  cacheStartUrl: false,
-  dynamicStartUrl: false,
   cacheOnFrontEndNav: true,
   sw: 'sw.js',
   // CRITICAL FIX: Exclude problematic manifest files that cause 404s on Netlify
@@ -31,13 +29,14 @@ const withPWA = createNextPwa({
        '/terms',
        '/disclaimer',
        '/faq',
+       '/offline',
       ].includes(url.pathname),
       handler: 'CacheFirst',
       options: {
         cacheName: 'static-info-pages',
         expiration: {
           maxEntries: 20, // Increased entries
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxAgeSeconds: 180 * 24 * 60 * 60, // 180 days
         },
         cacheableResponse: {
           statuses: [0, 200],
@@ -66,8 +65,8 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'dynamic-learning-pages',
         expiration: {
-          maxEntries: 100, // Increased capacity for more pages
-          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+          maxEntries: 300, // Increased capacity for more pages
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
           statuses: [0, 200],
@@ -81,10 +80,24 @@ const withPWA = createNextPwa({
       options: {
         cacheName: 'static-chunks',
         expiration: {
-          maxEntries: 200,
+          maxEntries: 500,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
       },
+    },
+    {
+      urlPattern: /\.(?:js|css)$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-js-css-assets',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      }, 
     },
     // 4. Next.js Data/RSC - NetworkFirst (Crucial for Client-side Navigation)
     {
@@ -102,7 +115,29 @@ const withPWA = createNextPwa({
         },
       },
     },
-    // 5. Global Document Fallback - NetworkFirst
+    // 5. NEXT.JS APP ROUTER RSC / FLIGHT REQUESTS // Handles client-side navigation data
+    {
+      urlPattern: ({ url, request }) => {
+        if (request.method !== 'GET') return false;
+        return (
+          url.searchParams.has('_rsc') || url.searchParams.has('__flight__')
+        );
+      },
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'next-rsc-cache',
+        networkTimeoutSeconds: 3,
+        expiration: {
+          maxEntries: 150,
+          maxAgeSeconds: 30 * 24 * 60 * 60,
+        },
+
+        cacheableResponse: {
+          statuses: [0, 200],    
+        },
+      },
+    },
+    // 6. Global Document Fallback - NetworkFirst
     {
       urlPattern: ({ request }) => request.destination === 'document',
       handler: 'NetworkFirst',
@@ -118,7 +153,7 @@ const withPWA = createNextPwa({
         },
       },
     },
-    // 6. API Requests - NetworkFirst
+    // 7. API Requests - NetworkFirst
     {
       urlPattern: ({ url, request }) => request.method === 'GET' && url.pathname.startsWith('/api/'),
       handler: 'NetworkFirst',
@@ -134,7 +169,7 @@ const withPWA = createNextPwa({
         },
       },
     },
-    // 7. Media & Assets - CacheFirst
+    // 8. Media & Assets - CacheFirst
     {
       urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
       handler: 'CacheFirst',
@@ -146,6 +181,35 @@ const withPWA = createNextPwa({
         },
         cacheableResponse: {
           statuses: [0, 200],
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/(?:drive\.google\.com|drive\.usercontent\.google\.com|lh[3-6]\.googleusercontent\.com)\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-drive-images',
+        expiration: {
+          maxEntries: 500,
+          maxAgeSeconds: 180 * 24 * 60 * 60, // 180 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+     // GitHub Raw Images Cache
+    {
+      urlPattern: /^https:\/\/(?:raw\.githubusercontent\.com|user-images\.githubusercontent\.com)\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'github-raw-images',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 180 * 24 * 60 * 60, // 180 days      
+        },
+        cacheableResponse: {
+          statuses: [0, 200],      
         },
       },
     },
@@ -176,6 +240,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'drive.google.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
       },
       {
         protocol: 'https',

@@ -3,7 +3,7 @@ import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc,
 import type { Course, CourseFolder, CourseContent } from './courses';
 import type { ChatMessage, Chat } from './chat';
 import type { Notification } from './notifications';
-import { getAcademicData, type AcademicClass, type Subject } from './academics';
+import { getAcademicData, type AcademicClass, type Subject, type ContentItem } from './academics';
 import { UserPermission } from '@/hooks/use-auth';
 
 // Helper for Manual Revalidation
@@ -37,7 +37,8 @@ export const listenToAcademics = (callback: (classes: AcademicClass[]) => void) 
     });
 };
 export { getAcademicData };
-export type { AcademicClass, Subject } from './academics';
+export type { AcademicClass, Subject, } from './academics';
+export type { Course } from './courses';
 
 // Re-export ContentItem for use in other modules
 export type { ContentItem } from './academics';
@@ -372,7 +373,7 @@ export async function getCourse(docId: string): Promise<Course | null> {
   const courseSnap = await getDoc(courseDocRef);
 
   if (courseSnap.exists()) {
-    const data = courseSnap.data();
+    const data = courseSnap.data() as any;
     
     const sanitizedData = {
       ...data,
@@ -380,7 +381,7 @@ export async function getCourse(docId: string): Promise<Course | null> {
     };
 
     const folders = sanitizedData.folders ? JSON.parse(JSON.stringify(sanitizedData.folders)) : [];
-    return { docId: courseSnap.id, ...sanitizedData, folders } as Course;
+    return { docId: courseSnap.id, ...sanitizedData, folders } as unknown as Course;
   } else {
     return null;
   }
